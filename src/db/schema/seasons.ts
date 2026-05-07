@@ -17,11 +17,14 @@ export const seasonStatusEnum = pgEnum("season_status", [
 // 报名模式：solo = 个人报名（Rivals），team = 队伍整体报名（Major v2）
 export const registrationModeEnum = pgEnum("registration_mode", ["solo", "team"]);
 
-// Bracket 类型
-export const bracketTypeEnum = pgEnum("bracket_type", [
-  "double_elim",
-  "single_elim",
-  "round_robin",
+// 排位赛 / 正赛各自的赛制（拆开是因为一个赛季可能两阶段不同制）
+export const qualifierFormatEnum = pgEnum("qualifier_format", [
+  "round_robin",  // 单循环（Rivals 排位赛：8 队 28 场 BO1）
+  "swiss",        // 瑞士轮（备选）
+]);
+export const playoffFormatEnum = pgEnum("playoff_format", [
+  "double_elim",  // 双败淘汰（Rivals 正赛默认）
+  "single_elim",  // 单败淘汰
 ]);
 
 export const seasons = pgTable("seasons", {
@@ -39,8 +42,10 @@ export const seasons = pgTable("seasons", {
   hasCaptainVoting: boolean("has_captain_voting").notNull().default(true),
   // 是否有蛇形选秀环节
   hasDraft: boolean("has_draft").notNull().default(true),
-  // Bracket 类型（null = 无淘汰赛阶段）
-  bracketType: bracketTypeEnum("bracket_type").default("double_elim"),
+  // 排位赛赛制（null = 无排位赛阶段）
+  qualifierFormat: qualifierFormatEnum("qualifier_format").default("round_robin"),
+  // 正赛赛制（null = 无正赛阶段，纯排位赛）
+  playoffFormat: playoffFormatEnum("playoff_format").default("double_elim"),
   // 每支队伍总人数（含队长）
   teamSize: integer("team_size").notNull().default(7),
   // 首发人数

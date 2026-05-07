@@ -34,9 +34,14 @@ export function showDraft(season: Season): boolean {
   return season.hasDraft;
 }
 
-/** 是否展示 Bracket 视图 */
-export function showBracket(season: Season): boolean {
-  return season.bracketType !== null;
+/** 是否展示排位赛视图 */
+export function showQualifier(season: Season): boolean {
+  return season.qualifierFormat !== null;
+}
+
+/** 是否展示正赛 Bracket 视图 */
+export function showPlayoffBracket(season: Season): boolean {
+  return season.playoffFormat !== null;
 }
 
 /** 是否为个人报名模式 */

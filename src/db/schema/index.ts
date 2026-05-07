@@ -5,4 +5,5 @@ export * from "./teams";
 export * from "./votes";
 export * from "./draft";
 export * from "./matches";
+export * from "./match-maps";
 export * from "./audit";

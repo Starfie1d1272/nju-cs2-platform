@@ -52,6 +52,10 @@ export const ErrorCode = {
   MATCH_NOT_FOUND: "MATCH_NOT_FOUND",
   MATCH_INVALID_TRANSITION: "MATCH_INVALID_TRANSITION",
   MATCH_INVALID_SCORE: "MATCH_INVALID_SCORE",
+  MATCH_MAP_INVALID: "MATCH_MAP_INVALID",
+  MATCH_MAP_DUPLICATE: "MATCH_MAP_DUPLICATE",          // 同一 mapName 出现两次
+  MATCH_MAP_ORDER_CONFLICT: "MATCH_MAP_ORDER_CONFLICT",// mapOrder 已存在
+  MATCH_FORMAT_MISMATCH: "MATCH_FORMAT_MISMATCH",      // BO1 录入 2 张图等
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
@@ -100,4 +104,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   MATCH_NOT_FOUND: "比赛不存在",
   MATCH_INVALID_TRANSITION: "比赛状态变更不合法",
   MATCH_INVALID_SCORE: "比分不合法",
+  MATCH_MAP_INVALID: "地图不在当前赛季 mappool 中",
+  MATCH_MAP_DUPLICATE: "同一张图不能在系列赛中出现两次",
+  MATCH_MAP_ORDER_CONFLICT: "该图序号已被使用",
+  MATCH_FORMAT_MISMATCH: "提交的图数与比赛 BO 格式不一致",
 };

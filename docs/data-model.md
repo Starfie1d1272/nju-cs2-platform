@@ -24,7 +24,8 @@ erDiagram
     registration_mode registration_mode "solo | team"
     bool has_captain_voting
     bool has_draft
-    bracket_type bracket_type "double_elim | single_elim | round_robin | null"
+    qualifier_format qualifier_format "round_robin | swiss | null"
+    playoff_format playoff_format "double_elim | single_elim | null"
     int team_size
     int starter_count
     timestamp start_at
@@ -99,7 +100,9 @@ erDiagram
     uuid season_id FK
     uuid team_a_id FK
     uuid team_b_id FK
-    int score_a
+    match_stage stage "qualifier | playoff"
+    match_format format "bo1 | bo3 | bo5"
+    int score_a "系列赛比分（如 BO3 中 2:1）"
     int score_b
     match_status status
     text bracket_node_id
@@ -107,6 +110,19 @@ erDiagram
     timestamp completed_at
     timestamp created_at
     timestamp updated_at
+  }
+
+  match_maps {
+    uuid id PK
+    uuid match_id FK
+    int map_order "1-based, 最大 5"
+    text map_name "如 de_inferno"
+    uuid picked_by_team_id FK "决胜图为 null"
+    side team_a_start_side "t | ct | null"
+    int score_a
+    int score_b
+    timestamp completed_at
+    timestamp created_at
   }
 
   audit_logs {
@@ -127,6 +143,7 @@ erDiagram
   seasons ||--o{ draft_picks : "records"
   seasons ||--o{ matches : "hosts"
   seasons ||--o{ audit_logs : "logs"
+  matches ||--o{ match_maps : "consists_of"
   teams ||--o{ team_members : "has"
   teams ||--o{ draft_picks : "makes"
   season_registrations ||--o{ captain_votes : "voter"
@@ -196,6 +213,28 @@ erDiagram
 | `finished` | 已结束 |
 | `cancelled` | 已取消 |
 
+### `match_stage`
+| 值 | 说明 |
+|---|---|
+| `qualifier` | 排位赛（28 场单循环 BO1） |
+| `playoff` | 正赛（双败淘汰） |
+
+### `match_format`
+| 值 | 说明 |
+|---|---|
+| `bo1` | 一局定胜负，主要用于排位赛 |
+| `bo3` | 三局两胜，正赛大部分轮次 |
+| `bo5` | 五局三胜，仅总决赛 |
+
+### `qualifier_format` / `playoff_format`
+排位赛与正赛各自的赛制，独立配置。`null` 表示该阶段不存在。
+
+### `side`
+| 值 | 说明 |
+|---|---|
+| `t` | 进攻方（恐怖分子） |
+| `ct` | 防守方（反恐精英） |
+
 ---
 
 ## 唯一约束 & 关键索引
@@ -208,6 +247,7 @@ erDiagram
 | `captain_votes` | `UNIQUE(voter_registration_id, candidate_registration_id)` |
 | `draft_state` | `UNIQUE(season_id)` |
 | `draft_picks` | `UNIQUE(client_request_id)` |
+| `match_maps` | `UNIQUE(match_id, map_order)` |
 
 建议索引（`drizzle-kit` 迁移中添加）：
 - `season_registrations(season_id, status)` — 审核列表过滤

@@ -44,6 +44,13 @@
 | 双方队伍不同 | — | Server Action / DB CHECK | 建议加 CHECK：`team_a_id != team_b_id` |
 | 比分非负 | — | Zod + DB CHECK | `score_a >= 0 AND score_b >= 0` |
 | 状态合法迁移 | — | Server Action | 见 `state-machines.md` |
+| stage 与赛季阶段一致 | — | Server Action | 排位赛/正赛状态校验 |
+| **match_maps** | | | |
+| (match_id, map_order) 唯一 | `UNIQUE(match_id, map_order)` | — | 防止序号冲突 |
+| 同一 mapName 不重复 | — | Server Action | DB 不便表达，应用层 COUNT |
+| map_order 不超出 BO 上限 | — | Server Action | BO1≤1, BO3≤3, BO5≤5 |
+| 单图比分非负且不超 30 | — | Zod + DB CHECK | 加分赛除外 |
+| pickedByTeamId 属于 match 双方 | — | Server Action | DB 无法表达跨表约束 |
 | **audit_logs** | | | |
 | 不允许修改 | RLS DENY UPDATE/DELETE | — | append-only |
 
@@ -74,6 +81,13 @@ ALTER TABLE matches ADD CONSTRAINT matches_teams_different
 ALTER TABLE matches ADD CONSTRAINT matches_score_nonnegative
   CHECK ((score_a IS NULL OR score_a >= 0)
      AND (score_b IS NULL OR score_b >= 0));
+
+-- match_maps
+ALTER TABLE match_maps ADD CONSTRAINT match_maps_score_range
+  CHECK ((score_a IS NULL OR (score_a >= 0 AND score_a <= 30))
+     AND (score_b IS NULL OR (score_b >= 0 AND score_b <= 30)));
+ALTER TABLE match_maps ADD CONSTRAINT match_maps_order_range
+  CHECK (map_order >= 1 AND map_order <= 5);
 ```
 
 实施方式：通过 Drizzle 的 `unique()` / `check()` 函数加进 schema，再 `db:generate`。

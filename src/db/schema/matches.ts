@@ -2,7 +2,6 @@ import { pgTable, uuid, integer, text, timestamp, pgEnum } from "drizzle-orm/pg-
 import { seasons } from "./seasons";
 import { teams } from "./teams";
 
-// TODO: add more match statuses if needed (e.g. forfeit, cancelled)
 export const matchStatusEnum = pgEnum("match_status", [
   "scheduled",
   "in_progress",
@@ -10,15 +9,31 @@ export const matchStatusEnum = pgEnum("match_status", [
   "cancelled",
 ]);
 
+// 比赛阶段：排位赛 / 正赛
+export const matchStageEnum = pgEnum("match_stage", ["qualifier", "playoff"]);
+
+// 比赛格式：BO1 / BO3 / BO5（决定 BP 流程与图数）
+export const matchFormatEnum = pgEnum("match_format", ["bo1", "bo3", "bo5"]);
+
 export const matches = pgTable("matches", {
   id: uuid("id").primaryKey().defaultRandom(),
   seasonId: uuid("season_id").notNull().references(() => seasons.id),
   teamAId: uuid("team_a_id").notNull().references(() => teams.id),
   teamBId: uuid("team_b_id").notNull().references(() => teams.id),
+
+  // ── 比赛元数据 ────────────────────────────────────────────────────────
+  stage: matchStageEnum("stage").notNull(),                              // qualifier | playoff
+  format: matchFormatEnum("format").notNull().default("bo1"),            // bo1 | bo3 | bo5
+  // ──────────────────────────────────────────────────────────────────────
+
+  // 整场系列赛比分（如 BO3 中 2:1）
+  // 单图比分见 match_maps 表
   scoreA: integer("score_a"),
   scoreB: integer("score_b"),
+
   status: matchStatusEnum("status").notNull().default("scheduled"),
-  bracketNodeId: text("bracket_node_id"), // brackets-manager node reference
+  bracketNodeId: text("bracket_node_id"),  // brackets-manager 节点引用
+
   scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

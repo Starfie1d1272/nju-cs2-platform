@@ -1,5 +1,5 @@
 {
-  "id": "9d4d83e7-4b16-44e7-88c4-61eea6aa8db6",
+  "id": "ef734bba-ade9-4846-be03-c9cd6bbc7446",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -432,9 +432,17 @@
           "notNull": true,
           "default": true
         },
-        "bracket_type": {
-          "name": "bracket_type",
-          "type": "bracket_type",
+        "qualifier_format": {
+          "name": "qualifier_format",
+          "type": "qualifier_format",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'round_robin'"
+        },
+        "playoff_format": {
+          "name": "playoff_format",
+          "type": "playoff_format",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": false,
@@ -881,6 +889,21 @@
           "primaryKey": false,
           "notNull": true
         },
+        "stage": {
+          "name": "stage",
+          "type": "match_stage",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "format": {
+          "name": "format",
+          "type": "match_format",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'bo1'"
+        },
         "score_a": {
           "name": "score_a",
           "type": "integer",
@@ -981,16 +1004,135 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.match_maps": {
+      "name": "match_maps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_order": {
+          "name": "map_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_name": {
+          "name": "map_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "picked_by_team_id": {
+          "name": "picked_by_team_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "team_a_start_side": {
+          "name": "team_a_start_side",
+          "type": "side",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score_a": {
+          "name": "score_a",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score_b": {
+          "name": "score_b",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "match_maps_match_id_matches_id_fk": {
+          "name": "match_maps_match_id_matches_id_fk",
+          "tableFrom": "match_maps",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "match_maps_picked_by_team_id_teams_id_fk": {
+          "name": "match_maps_picked_by_team_id_teams_id_fk",
+          "tableFrom": "match_maps",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "picked_by_team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "match_maps_match_id_map_order_unique": {
+          "name": "match_maps_match_id_map_order_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "match_id",
+            "map_order"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
-    "public.bracket_type": {
-      "name": "bracket_type",
+    "public.playoff_format": {
+      "name": "playoff_format",
       "schema": "public",
       "values": [
         "double_elim",
-        "single_elim",
-        "round_robin"
+        "single_elim"
+      ]
+    },
+    "public.qualifier_format": {
+      "name": "qualifier_format",
+      "schema": "public",
+      "values": [
+        "round_robin",
+        "swiss"
       ]
     },
     "public.registration_mode": {
@@ -1043,6 +1185,23 @@
         "waitlisted"
       ]
     },
+    "public.match_format": {
+      "name": "match_format",
+      "schema": "public",
+      "values": [
+        "bo1",
+        "bo3",
+        "bo5"
+      ]
+    },
+    "public.match_stage": {
+      "name": "match_stage",
+      "schema": "public",
+      "values": [
+        "qualifier",
+        "playoff"
+      ]
+    },
     "public.match_status": {
       "name": "match_status",
       "schema": "public",
@@ -1051,6 +1210,14 @@
         "in_progress",
         "finished",
         "cancelled"
+      ]
+    },
+    "public.side": {
+      "name": "side",
+      "schema": "public",
+      "values": [
+        "t",
+        "ct"
       ]
     }
   },

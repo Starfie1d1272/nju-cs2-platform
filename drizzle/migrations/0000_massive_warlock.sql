@@ -1,10 +1,14 @@
-CREATE TYPE "public"."bracket_type" AS ENUM('double_elim', 'single_elim', 'round_robin');--> statement-breakpoint
+CREATE TYPE "public"."playoff_format" AS ENUM('double_elim', 'single_elim');--> statement-breakpoint
+CREATE TYPE "public"."qualifier_format" AS ENUM('round_robin', 'swiss');--> statement-breakpoint
 CREATE TYPE "public"."registration_mode" AS ENUM('solo', 'team');--> statement-breakpoint
 CREATE TYPE "public"."season_kind" AS ENUM('rivals', 'major');--> statement-breakpoint
 CREATE TYPE "public"."season_status" AS ENUM('draft', 'registration', 'voting', 'drafting', 'playing', 'finished', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."position" AS ENUM('entry', 'awper', 'support', 'lurker', 'igl');--> statement-breakpoint
 CREATE TYPE "public"."registration_status" AS ENUM('pending', 'approved', 'rejected', 'waitlisted');--> statement-breakpoint
+CREATE TYPE "public"."match_format" AS ENUM('bo1', 'bo3', 'bo5');--> statement-breakpoint
+CREATE TYPE "public"."match_stage" AS ENUM('qualifier', 'playoff');--> statement-breakpoint
 CREATE TYPE "public"."match_status" AS ENUM('scheduled', 'in_progress', 'finished', 'cancelled');--> statement-breakpoint
+CREATE TYPE "public"."side" AS ENUM('t', 'ct');--> statement-breakpoint
 CREATE TABLE "audit_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"season_id" uuid,
@@ -62,7 +66,8 @@ CREATE TABLE "seasons" (
 	"registration_mode" "registration_mode" DEFAULT 'solo' NOT NULL,
 	"has_captain_voting" boolean DEFAULT true NOT NULL,
 	"has_draft" boolean DEFAULT true NOT NULL,
-	"bracket_type" "bracket_type" DEFAULT 'double_elim',
+	"qualifier_format" "qualifier_format" DEFAULT 'round_robin',
+	"playoff_format" "playoff_format" DEFAULT 'double_elim',
 	"team_size" integer DEFAULT 7 NOT NULL,
 	"starter_count" integer DEFAULT 5 NOT NULL,
 	"start_at" timestamp with time zone,
@@ -118,6 +123,8 @@ CREATE TABLE "matches" (
 	"season_id" uuid NOT NULL,
 	"team_a_id" uuid NOT NULL,
 	"team_b_id" uuid NOT NULL,
+	"stage" "match_stage" NOT NULL,
+	"format" "match_format" DEFAULT 'bo1' NOT NULL,
 	"score_a" integer,
 	"score_b" integer,
 	"status" "match_status" DEFAULT 'scheduled' NOT NULL,
@@ -126,6 +133,20 @@ CREATE TABLE "matches" (
 	"completed_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "match_maps" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"match_id" uuid NOT NULL,
+	"map_order" integer NOT NULL,
+	"map_name" text NOT NULL,
+	"picked_by_team_id" uuid,
+	"team_a_start_side" "side",
+	"score_a" integer,
+	"score_b" integer,
+	"completed_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "match_maps_match_id_map_order_unique" UNIQUE("match_id","map_order")
 );
 --> statement-breakpoint
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_season_id_seasons_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."seasons"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -144,4 +165,6 @@ ALTER TABLE "captain_votes" ADD CONSTRAINT "captain_votes_voter_registration_id_
 ALTER TABLE "captain_votes" ADD CONSTRAINT "captain_votes_candidate_registration_id_season_registrations_id_fk" FOREIGN KEY ("candidate_registration_id") REFERENCES "public"."season_registrations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matches" ADD CONSTRAINT "matches_season_id_seasons_id_fk" FOREIGN KEY ("season_id") REFERENCES "public"."seasons"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matches" ADD CONSTRAINT "matches_team_a_id_teams_id_fk" FOREIGN KEY ("team_a_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "matches" ADD CONSTRAINT "matches_team_b_id_teams_id_fk" FOREIGN KEY ("team_b_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "matches" ADD CONSTRAINT "matches_team_b_id_teams_id_fk" FOREIGN KEY ("team_b_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "match_maps" ADD CONSTRAINT "match_maps_match_id_matches_id_fk" FOREIGN KEY ("match_id") REFERENCES "public"."matches"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "match_maps" ADD CONSTRAINT "match_maps_picked_by_team_id_teams_id_fk" FOREIGN KEY ("picked_by_team_id") REFERENCES "public"."teams"("id") ON DELETE no action ON UPDATE no action;

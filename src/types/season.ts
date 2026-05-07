@@ -12,7 +12,8 @@ export type SeasonStatus =
   | "archived";
 
 export type RegistrationMode = "solo" | "team";
-export type BracketType = "double_elim" | "single_elim" | "round_robin";
+export type QualifierFormat = "round_robin" | "swiss";
+export type PlayoffFormat = "double_elim" | "single_elim";
 
 /**
  * Capability 字段——业务逻辑的唯一判断依据。
@@ -29,7 +30,10 @@ export interface SeasonCapabilities {
   registrationMode: RegistrationMode;
   hasCaptainVoting: boolean;
   hasDraft: boolean;
-  bracketType: BracketType | null;
+  /** 排位赛赛制；null = 无排位赛阶段 */
+  qualifierFormat: QualifierFormat | null;
+  /** 正赛赛制；null = 无正赛阶段（如纯排位赛娱乐赛）*/
+  playoffFormat: PlayoffFormat | null;
   teamSize: number;
   starterCount: number;
 }
@@ -50,22 +54,24 @@ export interface Season extends SeasonCapabilities {
 
 // ── 种子默认值 ────────────────────────────────────────────────────────────
 
-/** Rivals 赛事的默认 capability 配置 */
+/** Rivals 赛事的默认 capability 配置（排位赛 28 场 BO1 + 双败正赛）*/
 export const RIVALS_DEFAULT_CAPABILITIES: SeasonCapabilities = {
   registrationMode: "solo",
   hasCaptainVoting: true,
   hasDraft: true,
-  bracketType: "double_elim",
+  qualifierFormat: "round_robin",
+  playoffFormat: "double_elim",
   teamSize: 7,
   starterCount: 5,
 };
 
-/** Major 赛事的默认 capability 配置（v2，自由组队）*/
+/** Major 赛事的默认 capability 配置（v2，自由组队 + 双败）*/
 export const MAJOR_DEFAULT_CAPABILITIES: SeasonCapabilities = {
   registrationMode: "team",
   hasCaptainVoting: false,
   hasDraft: false,
-  bracketType: "double_elim",
+  qualifierFormat: "round_robin",
+  playoffFormat: "double_elim",
   teamSize: 5,
   starterCount: 5,
 };

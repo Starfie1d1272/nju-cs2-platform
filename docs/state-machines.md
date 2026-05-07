@@ -162,6 +162,37 @@ cancelled
 
 比分录入时必须同步调用 `lib/bracket/advanceMatch()`，不允许仅更新 `matches` 表而不推进 bracket。
 
+### BO3 / BO5 系列赛与 match_maps 关系
+
+- BO1：`match_maps` 写 1 行（决胜图，无 picked_by）
+- BO3：`match_maps` 写 0–3 行；进度即赛程进度
+- BO5：`match_maps` 写 0–5 行；总决赛专用
+- 提交完 `getWinThreshold(format)` 张获胜图后，自动 finished
+- v1 由 admin 录入；完整 BP 状态机为后续阶段（参见 `docs/draft-flow.md` 文风为 BP 单独建文档）
+
+**BP 流程定义见规则书 §5.3**，分 BO1 / BO3 / BO5 三套不同步骤。BO5 总决赛特殊：胜者组冠军作 Team A 连 ban 2 张作为优势，剩 5 张进入选图。
+
+---
+
+## 6. MatchMap（单图）
+
+### 状态图
+
+```
+created (mapOrder + mapName 已确定，比分待录入)
+  ↓ [admin: record score]
+completed (scoreA + scoreB 非 null + completedAt 写入)
+```
+
+### 约束
+
+| 当前 | 可迁移至 | 触发方 |
+|---|---|---|
+| `created` | `completed` | admin |
+| `completed` | （不可逆） | — |
+
+`match_maps` 行不允许删除（即使比赛 `cancelled`），保留历史。
+
 ---
 
 ## 5. CaptainVote（队长投票）

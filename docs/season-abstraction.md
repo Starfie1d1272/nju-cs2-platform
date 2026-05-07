@@ -15,9 +15,12 @@
 | `registrationMode` | `solo \| team` | `solo` | `team` | 个人报名 vs 队伍报名 |
 | `hasCaptainVoting` | `boolean` | `true` | `false` | 是否有队长投票环节 |
 | `hasDraft` | `boolean` | `true` | `false` | 是否有蛇形选秀 |
-| `bracketType` | `double_elim \| ...` | `double_elim` | `double_elim` | Bracket 类型 |
+| `qualifierFormat` | `round_robin \| swiss \| null` | `round_robin` | `round_robin` | 排位赛赛制 |
+| `playoffFormat` | `double_elim \| single_elim \| null` | `double_elim` | `double_elim` | 正赛赛制 |
 | `teamSize` | `integer` | `7` | `5` | 每队人数 |
 | `starterCount` | `integer` | `5` | `5` | 首发人数 |
+
+**为什么 qualifier 与 playoff 拆开**：Rivals 是"排位赛 + 正赛"两阶段，未来娱乐赛可能仅有排位赛或仅有正赛，必须能独立配置。
 
 **这意味着**：未来新增娱乐赛、All-Star 赛、1v1 赛等，只需在数据库里配置一行不同的 capability，不需要修改任何业务代码。
 
@@ -56,7 +59,8 @@ if (season.hasDraft) { showDraftPage() }
 | 报名表单类型 | `registrationMode` | `solo`（个人） | `team`（队伍，v2） |
 | 队长投票入口 | `hasCaptainVoting` | `true` | `false` |
 | 蛇形选秀入口 | `hasDraft` | `true` | `false` |
-| Bracket 视图 | `bracketType !== null` | `double_elim` | `double_elim` |
+| 排位赛展示 | `qualifierFormat !== null` | `round_robin` | `round_robin` |
+| Bracket 视图 | `playoffFormat !== null` | `double_elim` | `double_elim` |
 
 **v1 代码中 capability 检查的位置**（统一用 `lib/utils/season.ts` 的工具函数）：
 - `[seasonSlug]/draft/page.tsx`：`if (!showDraft(season)) return <ComingSoon />`

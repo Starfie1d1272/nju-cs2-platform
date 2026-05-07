@@ -1,8 +1,8 @@
-# NJU CS2 Platform · Claude Code 工程手册
+# RivalHub · Claude Code 工程手册
 
 ## 项目概述
 
-南京大学 CS2 社团多赛事管理平台，支持 NJU Rivals（春季）和 NJU Major（秋季）两个赛事品牌的全流程运营：报名 → 审核 → 队长投票 → 蛇形选秀 → 队伍展示 → 赛程 + Bracket 视图 → 部署。
+RivalHub 是面向 CS2 社群赛事的多赛事管理平台，当前支持 NJU Rivals（春季）和 NJU Major（秋季）两个赛事品牌的全流程运营：报名 → 审核 → 队长投票 → 蛇形选秀 → 队伍展示 → 赛程 + Bracket 视图 → 部署。
 
 当前阶段：**Phase 1（脚手架）已完成，Phase 2+ 为业务实现。**
 

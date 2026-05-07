@@ -1,4 +1,4 @@
-# NJU CS2 Platform · v1 开发路线图
+# RivalHub · v1 开发路线图
 
 > 所有阶段均在 Rivals 单赛事内推进，但每个新增表/路由/组件都按多赛事抽象设计（带 `season_id`、走 `/[seasonSlug]/...`）。
 > 每阶段结束 commit + push，在此文件更新 checkbox。

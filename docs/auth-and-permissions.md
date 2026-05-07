@@ -152,7 +152,7 @@ interface AdminSessionData {
 
 const sessionOptions = {
   password: process.env.ADMIN_SESSION_SECRET, // ≥ 32 字符随机串
-  cookieName: "nju-cs2-admin",
+  cookieName: "rivalhub-admin",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,

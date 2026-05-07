@@ -1,6 +1,6 @@
-# NJU CS2 Platform
+# RivalHub
 
-> 南京大学 CS2 社团赛事管理平台 — NJU Rivals & NJU Major
+> CS2 社群赛事管理平台 — 支持 NJU Rivals & NJU Major
 > 报名 · 选秀 · 赛程一体化
 
 ## 功能概览
@@ -52,6 +52,8 @@ pnpm seed
 pnpm dev
 # → http://localhost:3000
 ```
+
+Phase 1 本地前端验证成功时，`http://localhost:3000` 首页应显示 `RivalHub`。
 
 ### Phase 1 仅验证脚手架（无需真实数据库）
 

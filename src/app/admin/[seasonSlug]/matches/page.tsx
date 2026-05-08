@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { eq, count, asc, and } from "drizzle-orm";
+import { eq, count, asc, and, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons, matches, teams } from "@/db/schema";
+import { seasons, matches, teams, matchMaps } from "@/db/schema";
 import { requireSeasonAdmin } from "@/lib/auth/session";
 import { calculateStandings } from "@/lib/standings";
 import { GenerateScheduleCard } from "@/components/matches/GenerateScheduleCard";
@@ -9,6 +9,9 @@ import { GeneratePlayoffCard } from "@/components/matches/GeneratePlayoffCard";
 import { StandingsTable } from "@/components/matches/StandingsTable";
 import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
 import { ScoreInput } from "@/components/matches/ScoreInput";
+import { MapByMapInput } from "@/components/matches/MapByMapInput";
+import { ScheduledAtInput } from "@/components/matches/ScheduledAtInput";
+import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -43,9 +46,44 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
     }),
   ]);
 
+  // 查进行中的比赛的地图记录（供 MapByMapInput 用）
+  const inProgressMatchIds = allMatches
+    .filter((m) => m.status === "in_progress" && m.format !== "bo1")
+    .map((m) => m.id);
+  const allMapRecords = inProgressMatchIds.length > 0
+    ? await db.query.matchMaps.findMany({
+        where: inArray(matchMaps.matchId, inProgressMatchIds),
+        orderBy: [asc(matchMaps.mapOrder)],
+      })
+    : [];
+  const mapsByMatchId = new Map<string, typeof allMapRecords>();
+  for (const r of allMapRecords) {
+    const arr = mapsByMatchId.get(r.matchId) ?? [];
+    arr.push(r);
+    mapsByMatchId.set(r.matchId, arr);
+  }
+
   const teamMap = new Map(allTeams.map((t) => [t.id, t.name]));
   const qualifierMatches = allMatches.filter((m) => m.stage === "qualifier");
   const playoffMatches = allMatches.filter((m) => m.stage === "playoff");
+
+  // 已完成比赛的地图列表（用于 OCR 录入面板）
+  const finishedMatchIds = allMatches
+    .filter((m) => m.status === "finished")
+    .map((m) => m.id);
+  const allMaps =
+    finishedMatchIds.length > 0
+      ? await db.query.matchMaps.findMany({
+          where: inArray(matchMaps.matchId, finishedMatchIds),
+          orderBy: (t, { asc }) => [asc(t.mapOrder)],
+        })
+      : [];
+  const mapsByMatch = new Map<string, typeof allMaps>();
+  for (const map of allMaps) {
+    const arr = mapsByMatch.get(map.matchId) ?? [];
+    arr.push(map);
+    mapsByMatch.set(map.matchId, arr);
+  }
 
   const matchCount = allMatches.length;
   const qualifierCount = qualifierMatches.length;
@@ -168,15 +206,25 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                         {m.status !== "finished" && m.status !== "cancelled" && (
                           <>
                             <Separator />
+                            <ScheduledAtInput
+                              matchId={m.id}
+                              currentScheduledAt={m.scheduledAt}
+                            />
                             <ScoreInput
                               matchId={m.id}
                               teamAName={teamAName}
                               teamBName={teamBName}
                               currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                              isBO1
+                              format={m.format as "bo1" | "bo3" | "bo5"}
                             />
                           </>
                         )}
+                        {m.status === "finished" && (mapsByMatch.get(m.id) ?? []).map((map) => (
+                          <div key={map.id}>
+                            <Separator />
+                            <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
+                          </div>
+                        ))}
                       </Card>
                     );
                   })}
@@ -222,15 +270,44 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                         {m.status !== "finished" && m.status !== "cancelled" && (
                           <>
                             <Separator />
-                            <ScoreInput
+                            <ScheduledAtInput
                               matchId={m.id}
-                              teamAName={teamAName}
-                              teamBName={teamBName}
-                              currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                              isBO1={false}
+                              currentScheduledAt={m.scheduledAt}
                             />
+                            {m.status === "in_progress" && m.format !== "bo1" ? (
+                              <MapByMapInput
+                                matchId={m.id}
+                                format={m.format as "bo3" | "bo5"}
+                                teamAName={teamAName}
+                                teamBName={teamBName}
+                                teamAId={m.teamAId}
+                                teamBId={m.teamBId}
+                                completedMaps={(mapsByMatchId.get(m.id) ?? []).map((r) => ({
+                                  mapOrder: r.mapOrder,
+                                  mapName: r.mapName,
+                                  scoreA: r.scoreA ?? 0,
+                                  scoreB: r.scoreB ?? 0,
+                                  pickedByTeamId: r.pickedByTeamId,
+                                  teamAStartSide: r.teamAStartSide as "t" | "ct" | null,
+                                }))}
+                              />
+                            ) : (
+                              <ScoreInput
+                                matchId={m.id}
+                                teamAName={teamAName}
+                                teamBName={teamBName}
+                                currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
+                                format={m.format as "bo1" | "bo3" | "bo5"}
+                              />
+                            )}
                           </>
                         )}
+                        {m.status === "finished" && (mapsByMatch.get(m.id) ?? []).map((map) => (
+                          <div key={map.id}>
+                            <Separator />
+                            <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
+                          </div>
+                        ))}
                       </Card>
                     );
                   })}

@@ -1,4 +1,5 @@
-import { pgTable, uuid, integer, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, uuid, integer, text, timestamp, pgEnum, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { seasons } from "./seasons";
 import { teams } from "./teams";
 
@@ -38,7 +39,13 @@ export const matches = pgTable("matches", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => ({
+  // 双方不能是同一支队
+  teamsAreDifferent: check("matches_teams_different", sql`${t.teamAId} != ${t.teamBId}`),
+  // 系列赛比分非负
+  scoreANonNegative: check("matches_score_a_nonneg", sql`${t.scoreA} IS NULL OR ${t.scoreA} >= 0`),
+  scoreBNonNegative: check("matches_score_b_nonneg", sql`${t.scoreB} IS NULL OR ${t.scoreB} >= 0`),
+}));
 
 export type Match = typeof matches.$inferSelect;
 export type NewMatch = typeof matches.$inferInsert;

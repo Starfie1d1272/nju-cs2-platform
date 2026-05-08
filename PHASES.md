@@ -94,9 +94,9 @@
 
 ## Phase 7 — 选秀直播间（围观）
 
-- [ ] `draftState` + `draftPicks` Realtime 订阅
-- [ ] `/[seasonSlug]/draft` 围观页：8 队网格 + 倒计时 + 剩余选手池
-- [ ] 已选 / 未选 / 当前轮次高亮
+- [x] `draftState` + `draftPicks` Realtime 订阅（`DraftLiveRoom` 订阅两张表，10 秒轮询兜底）
+- [x] `/[seasonSlug]/draft` 围观页：8 队网格 + 倒计时 + 剩余选手池（`DraftLiveRoom` / `TeamDraftGrid` / `PlayerPool` / `DraftCountdown`）
+- [x] 已选 / 当前轮次高亮
 - [ ] 手机端响应式布局
 
 ---
@@ -137,13 +137,26 @@
 **自动生成流程**
 - [x] admin 页面「生成赛程」按钮：赛季状态为 `playing` 且尚无 matches 时可用
 - [x] Server Action `generateSchedule(seasonId)`：按赛制 insert 所有 `matches`（`status: scheduled`，`scheduledAt: null`）
-- [ ] 管理员在赛程列表逐场填入 `scheduledAt`（已有 `updateMatchStatus`，`scheduledAt` 编辑 UI 待补）
+- [x] 管理员在赛程列表逐场填入 `scheduledAt`（`ScheduledAtInput` 组件 + `updateMatchScheduledAt` Server Action）
 
 **Bracket 视图**
 - [x] `brackets-manager` 双败淘汰赛数据结构初始化
 - [x] `brackets-viewer` 渲染集成（注入 season theme_color）
 - [x] `/[seasonSlug]/matches` 总览页（bracket 图 + 赛程列表联动）
-- [ ] 比赛详情页与 bracket 节点双向跳转
+- [x] 比赛详情页与 bracket 节点双向跳转（BracketView 点击跳转 + 详情页"查看对阵图"回链）
+
+---
+
+## Phase 11.5 — 玩家数据展示（player-stats 录入已完成，展示待做）
+
+OCR 录入流程已完成（PR #28），数据保存在 `match_player_stats` 表。待补展示侧：
+
+- [ ] **比赛详情页数据表**：`/[seasonSlug]/matches/[matchId]` 每张地图下方加 K/D/A、ADR、RWS、Rating、WE 数据表格（Server Component，读 `getPlayerStatsByMap`）
+- [ ] **个人统计聚合**：用户主页展示跨地图赛事数据（场均 K/D/A、Rating 等，按赛季分组）
+- [ ] **赛季排行榜**：`/[seasonSlug]/stats` 页面，按 Rating/ADR/KD 等指标排名（类似 HLTV Stats 页）
+- [ ] **队伍聚合统计**：队伍场均数据（团队 ADR、胜率等）
+
+> 以上均为 v1 拓展功能，可按需推进，不阻塞 Phase 12 部署。
 
 ---
 
@@ -164,3 +177,7 @@
 - 历史赛季归档多届展示
 - 用户账号设置页
 - i18n 多语言支持
+- **[ 待调研 ] 赛后玩家数据自动化**：每图打完后自动拉取 KDA / Rating / WE 等个人数据，无需 admin 手动录入。
+  - Valve 官匹有分享码方案（`CSGO-xxxxx`），但完美平台 / LAN 赛不适用，需另行调研
+  - 方向：完美平台赛后 API 逆向 / CS2 服务器 GOTV demo 解析 / 赛事组委提供数据导出
+  - 落地前需确认数据来源和维护成本

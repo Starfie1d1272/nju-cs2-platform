@@ -110,7 +110,7 @@ export async function seed() {
         userRows.push({
           email: `seed-p${String(idx).padStart(2, "0")}@rivalhu.b`,
           steamName: `${TEAM_NAMES[t]}_${TEAM_POSITIONS[p].toUpperCase()}_${idx}`,
-          perfectId: `PW${100000 + idx}`,
+          perfectName: `${TEAM_NAMES[t]}_${TEAM_POSITIONS[p].toUpperCase()}`,
         });
       }
     }
@@ -176,9 +176,9 @@ export async function seed() {
           teamAId: insertedTeams[0].id,
           teamBId: insertedTeams[1].id,
           stage: "qualifier" as const,
-          format: "bo3" as const,
-          scoreA: 2,
-          scoreB: 0,
+          format: "bo1" as const,
+          scoreA: 13,
+          scoreB: 8,
           status: "finished" as const,
           scheduledAt: new Date(now.getTime() - 7 * DAY),
           completedAt: new Date(now.getTime() - 7 * DAY + 2 * 3600 * 1000),
@@ -188,19 +188,19 @@ export async function seed() {
           teamAId: insertedTeams[2].id,
           teamBId: insertedTeams[3].id,
           stage: "qualifier" as const,
-          format: "bo3" as const,
-          scoreA: 1,
-          scoreB: 2,
+          format: "bo1" as const,
+          scoreA: 5,
+          scoreB: 13,
           status: "finished" as const,
           scheduledAt: new Date(now.getTime() - 5 * DAY),
-          completedAt: new Date(now.getTime() - 5 * DAY + 3 * 3600 * 1000),
+          completedAt: new Date(now.getTime() - 5 * DAY + 2 * 3600 * 1000),
         },
         {
           seasonId: playingSeason.id,
           teamAId: insertedTeams[4].id,
           teamBId: insertedTeams[5].id,
           stage: "qualifier" as const,
-          format: "bo3" as const,
+          format: "bo1" as const,
           status: "in_progress" as const,
           scheduledAt: new Date(now.getTime() - 3600 * 1000),
         },
@@ -209,66 +209,36 @@ export async function seed() {
           teamAId: insertedTeams[6].id,
           teamBId: insertedTeams[7].id,
           stage: "qualifier" as const,
-          format: "bo3" as const,
+          format: "bo1" as const,
           status: "scheduled" as const,
           scheduledAt: new Date(now.getTime() + 2 * DAY),
         },
       ])
       .returning();
 
-    // 已完成比赛的地图记录
+    // 已完成比赛的地图记录（BO1 只有一张图）
     await db.insert(matchMaps).values([
-      // Match 1: Nova 2:0 Frost
+      // Match 1: Nova 13:8 Frost (de_mirage)
       {
         matchId: insertedMatches[0].id,
         mapOrder: 1,
         mapName: "de_mirage",
-        pickedByTeamId: insertedTeams[0].id,
+        pickedByTeamId: null,
         teamAStartSide: "ct" as const,
         scoreA: 13,
         scoreB: 8,
-        completedAt: new Date(now.getTime() - 7 * DAY + 3600 * 1000),
-      },
-      {
-        matchId: insertedMatches[0].id,
-        mapOrder: 2,
-        mapName: "de_inferno",
-        pickedByTeamId: insertedTeams[1].id,
-        teamAStartSide: "t" as const,
-        scoreA: 13,
-        scoreB: 5,
         completedAt: new Date(now.getTime() - 7 * DAY + 2 * 3600 * 1000),
       },
-      // Match 2: Ember 1:2 Abyss
+      // Match 2: Ember 5:13 Abyss (de_ancient)
       {
         matchId: insertedMatches[1].id,
         mapOrder: 1,
-        mapName: "de_nuke",
-        pickedByTeamId: insertedTeams[2].id,
-        teamAStartSide: "ct" as const,
-        scoreA: 13,
-        scoreB: 7,
-        completedAt: new Date(now.getTime() - 5 * DAY + 3600 * 1000),
-      },
-      {
-        matchId: insertedMatches[1].id,
-        mapOrder: 2,
         mapName: "de_ancient",
-        pickedByTeamId: insertedTeams[3].id,
+        pickedByTeamId: null,
         teamAStartSide: "t" as const,
         scoreA: 5,
         scoreB: 13,
         completedAt: new Date(now.getTime() - 5 * DAY + 2 * 3600 * 1000),
-      },
-      {
-        matchId: insertedMatches[1].id,
-        mapOrder: 3,
-        mapName: "de_dust2",
-        pickedByTeamId: null,
-        teamAStartSide: "t" as const,
-        scoreA: 9,
-        scoreB: 13,
-        completedAt: new Date(now.getTime() - 5 * DAY + 3 * 3600 * 1000),
       },
     ]);
 

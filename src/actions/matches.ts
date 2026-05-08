@@ -416,19 +416,7 @@ export async function recordMapResult(
       throw new AppError(ErrorCode.VALIDATION_FAILED, `地图 ${mapName} 在本场比赛中已存在`);
     }
 
-    // 录入本图
-    await db.insert(matchMaps).values({
-      matchId,
-      mapOrder,
-      mapName,
-      pickedByTeamId,
-      teamAStartSide,
-      scoreA,
-      scoreB,
-      completedAt: new Date(),
-    });
-
-    // 重新统计地图胜场（含刚录入的）
+    // 统计加入本图后的地图胜场（纯计算，不写 DB）
     const allMaps = [...existingMaps, { scoreA, scoreB }];
     let mapWinsA = 0;
     let mapWinsB = 0;
@@ -439,57 +427,77 @@ export async function recordMapResult(
     }
 
     const season = await getSeasonOrThrow(match.seasonId);
-    let seriesFinished = false;
+    const seriesFinished = mapWinsA >= maxWins || mapWinsB >= maxWins;
 
-    if (mapWinsA >= maxWins || mapWinsB >= maxWins) {
-      // 系列赛结束：自动写大比分并推进 bracket
-      await db.update(matches).set({
-        scoreA: mapWinsA,
-        scoreB: mapWinsB,
-        status: "finished",
+    // 如果系列赛结束且有 bracket，提前计算 bracket 推进结果（纯计算，不写 DB）
+    let updatedBracketData: Database | null = null;
+    let resolvedMatches: Array<{ teamAParticipantId: number; teamBParticipantId: number; bracketMatchId: number }> = [];
+    let seasonTeams: Awaited<ReturnType<typeof db.query.teams.findMany>> = [];
+
+    if (seriesFinished && season.bracketData && match.bracketNodeId) {
+      const { updatedData, newResolvedMatches } = await bracketAdvance(
+        match.bracketNodeId,
+        mapWinsA,
+        mapWinsB,
+        season.bracketData as Database
+      );
+      updatedBracketData = updatedData as Database;
+      resolvedMatches = newResolvedMatches;
+      seasonTeams = await db.query.teams.findMany({
+        where: eq(teams.seasonId, match.seasonId),
+        orderBy: [asc(teams.draftOrder)],
+      });
+    }
+
+    // 所有写操作放入同一事务，确保原子性
+    await db.transaction(async (tx) => {
+      await tx.insert(matchMaps).values({
+        matchId,
+        mapOrder,
+        mapName,
+        pickedByTeamId,
+        teamAStartSide,
+        scoreA,
+        scoreB,
         completedAt: new Date(),
-        updatedAt: new Date(),
-      }).where(eq(matches.id, matchId));
+      });
 
-      if (season.bracketData && match.bracketNodeId) {
-        const { updatedData, newResolvedMatches } = await bracketAdvance(
-          match.bracketNodeId,
-          mapWinsA,
-          mapWinsB,
-          season.bracketData as Database
-        );
-        await db.update(seasons).set({ bracketData: updatedData as Database, updatedAt: new Date() }).where(eq(seasons.id, match.seasonId));
+      if (seriesFinished) {
+        await tx.update(matches).set({
+          scoreA: mapWinsA,
+          scoreB: mapWinsB,
+          status: "finished",
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        }).where(eq(matches.id, matchId));
 
-        const seasonTeams = await db.query.teams.findMany({
-          where: eq(teams.seasonId, match.seasonId),
-          orderBy: [asc(teams.draftOrder)],
-        });
-        for (const bm of newResolvedMatches) {
-          const teamA = seasonTeams[bm.teamAParticipantId];
-          const teamB = seasonTeams[bm.teamBParticipantId];
-          if (!teamA || !teamB) continue;
-          await db.insert(matches).values({
-            seasonId: match.seasonId,
-            teamAId: teamA.id,
-            teamBId: teamB.id,
-            stage: "playoff",
-            format: "bo3",
-            status: "scheduled",
-            bracketNodeId: bm.bracketMatchId.toString(),
-          });
+        if (updatedBracketData) {
+          await tx.update(seasons).set({ bracketData: updatedBracketData, updatedAt: new Date() }).where(eq(seasons.id, match.seasonId));
+          for (const bm of resolvedMatches) {
+            const teamA = seasonTeams[bm.teamAParticipantId];
+            const teamB = seasonTeams[bm.teamBParticipantId];
+            if (!teamA || !teamB) continue;
+            await tx.insert(matches).values({
+              seasonId: match.seasonId,
+              teamAId: teamA.id,
+              teamBId: teamB.id,
+              stage: "playoff",
+              format: "bo3",
+              status: "scheduled",
+              bracketNodeId: bm.bracketMatchId.toString(),
+            });
+          }
         }
       }
 
-      seriesFinished = true;
-    }
-
-    await db.insert(auditLogs).values({
-      seasonId: match.seasonId,
-      action: "match.record_map_result",
-      actorId: session.email,
-      targetId: matchId,
-      targetType: "match",
-      meta: { mapOrder, mapName, scoreA, scoreB, seriesFinished },
+      await tx.insert(auditLogs).values({
+        seasonId: match.seasonId,
+        action: "match.record_map_result",
+        actorId: session.email,
+        targetId: matchId,
+        targetType: "match",
+        meta: { mapOrder, mapName, scoreA, scoreB, seriesFinished },
+      });
     });
 
     revalidatePath(`/admin/${season.slug}/matches`);

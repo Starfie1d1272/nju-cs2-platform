@@ -351,6 +351,51 @@ export async function recordMatchResult(
   }
 }
 
+// ── 更新比赛时间 ──────────────────────────────────────────────────────────
+
+/**
+ * 设置或清除比赛的预定时间（scheduledAt）。
+ * 已完成或已取消的比赛不允许修改。
+ */
+export async function updateMatchScheduledAt(
+  matchId: string,
+  scheduledAt: Date | null
+): Promise<ActionResult<void>> {
+  try {
+    const match = await getMatchOrThrow(matchId);
+    const session = await requireSeasonAdmin(match.seasonId);
+
+    if (match.status === "finished" || match.status === "cancelled") {
+      throw new AppError(ErrorCode.MATCH_INVALID_TRANSITION, "已结束或已取消的比赛不能修改时间");
+    }
+
+    await db
+      .update(matches)
+      .set({ scheduledAt, updatedAt: new Date() })
+      .where(eq(matches.id, matchId));
+
+    const season = await getSeasonOrThrow(match.seasonId);
+    await db.insert(auditLogs).values({
+      seasonId: match.seasonId,
+      action: "match.update_scheduled_at",
+      actorId: session.email,
+      targetId: matchId,
+      targetType: "match",
+      meta: { scheduledAt: scheduledAt?.toISOString() ?? null },
+    });
+
+    revalidatePath(`/admin/${season.slug}/matches`);
+    revalidatePath(`/${season.slug}/matches`);
+    revalidatePath(`/${season.slug}/matches/${matchId}`);
+
+    return ok(undefined);
+  } catch (e) {
+    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
+    console.error("[updateMatchScheduledAt]", e);
+    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+  }
+}
+
 // ── 生成正赛（基于积分榜种子） ────────────────────────────────────────────
 
 /**

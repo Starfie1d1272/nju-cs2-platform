@@ -99,7 +99,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   DRAFT_NOT_YOUR_TURN: "当前轮次不是您的队伍",
   DRAFT_DEADLINE_PASSED: "本轮选择时间已过",
   PLAYER_ALREADY_PICKED: "该选手已被选走",
-  TEAM_POSITION_CAP_EXCEEDED: "该位置在本队已达 3 人上限",
+  TEAM_POSITION_CAP_EXCEEDED: "该位置在本队已达 2 人上限",
 
   MATCH_NOT_FOUND: "比赛不存在",
   MATCH_INVALID_TRANSITION: "比赛状态变更不合法",

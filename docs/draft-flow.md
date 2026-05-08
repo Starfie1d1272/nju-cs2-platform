@@ -42,7 +42,7 @@ SELECT * FROM draft_state
 
 -- 3. 校验：目标选手未被选（draft_picks 中不存在该 registration_id）
 
--- 4. 校验：同主选位置约束（该队同位置已选 < 3 人）
+-- 4. 校验：同主选位置约束（该队同位置已选 < 2 人）
 SELECT COUNT(*) FROM team_members tm
   JOIN season_registrations sr ON sr.id = tm.registration_id
   WHERE tm.team_id = $teamId

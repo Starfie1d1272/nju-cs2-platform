@@ -1,4 +1,4 @@
-import { pgTable, uuid, integer, real, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, integer, real, text, timestamp, unique } from "drizzle-orm/pg-core";
 import { matches } from "./matches";
 import { matchMaps } from "./match-maps";
 import { users } from "./users";
@@ -32,7 +32,9 @@ export const matchPlayerStats = pgTable("match_player_stats", {
   verifiedByAdmin: text("verified_by_admin"),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => ({
+  uniqueMapPlayer: unique().on(t.mapId, t.perfectName),
+}));
 
 export type MatchPlayerStat = typeof matchPlayerStats.$inferSelect;
 export type NewMatchPlayerStat = typeof matchPlayerStats.$inferInsert;

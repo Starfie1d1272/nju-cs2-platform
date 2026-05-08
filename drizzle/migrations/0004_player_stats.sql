@@ -22,4 +22,5 @@ CREATE TABLE "match_player_stats" (
 --> statement-breakpoint
 ALTER TABLE "match_player_stats" ADD CONSTRAINT "match_player_stats_match_id_matches_id_fk" FOREIGN KEY ("match_id") REFERENCES "public"."matches"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "match_player_stats" ADD CONSTRAINT "match_player_stats_map_id_match_maps_id_fk" FOREIGN KEY ("map_id") REFERENCES "public"."match_maps"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "match_player_stats" ADD CONSTRAINT "match_player_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "match_player_stats" ADD CONSTRAINT "match_player_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "match_player_stats" ADD CONSTRAINT "match_player_stats_map_id_perfect_name_unique" UNIQUE("map_id","perfect_name");

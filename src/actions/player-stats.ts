@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { matchMaps } from "@/db/schema/match-maps";
 import { matches } from "@/db/schema/matches";
 import { matchPlayerStats } from "@/db/schema/player-stats";
+import { auditLogs } from "@/db/schema/audit";
 import { users } from "@/db/schema/users";
 import { seasonRegistrations } from "@/db/schema/registrations";
 import { ok, fail } from "@/types/action";
@@ -88,8 +89,7 @@ export async function extractStatsFromScreenshot(
       return fail({ code: e.code, message: e.message });
     }
     console.error("[extractStatsFromScreenshot]", e);
-    const msg = e instanceof Error ? e.message : ERROR_MESSAGES.INTERNAL_ERROR;
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: msg });
+    return fail({ code: ErrorCode.INTERNAL_ERROR, message: "OCR 识别失败，请检查截图格式后重试" });
   }
 }
 
@@ -109,32 +109,46 @@ export async function savePlayerStats(
     });
     if (!map) throw new AppError(ErrorCode.NOT_FOUND, "地图记录不存在");
 
+    const match = await db.query.matches.findFirst({
+      where: eq(matches.id, map.matchId),
+    });
+    if (!match) throw new AppError(ErrorCode.NOT_FOUND, "比赛记录不存在");
+
     await db.transaction(async (tx) => {
       await tx.delete(matchPlayerStats).where(eq(matchPlayerStats.mapId, mapId));
 
-      if (stats.length === 0) return;
+      if (stats.length > 0) {
+        await tx.insert(matchPlayerStats).values(
+          stats.map((s) => ({
+            matchId: map.matchId,
+            mapId,
+            perfectName: s.perfectName as string,
+            userId: s.userId ?? undefined,
+            kills: s.kills ?? undefined,
+            deaths: s.deaths ?? undefined,
+            assists: s.assists ?? undefined,
+            hsPercent: s.hsPercent ?? undefined,
+            firstKills: s.firstKills ?? undefined,
+            multiKills: s.multiKills ?? undefined,
+            clutches: s.clutches ?? undefined,
+            adr: s.adr ?? undefined,
+            rws: s.rws ?? undefined,
+            ratingPro: s.ratingPro ?? undefined,
+            we: s.we ?? undefined,
+            verifiedByAdmin: actor,
+            verifiedAt: new Date(),
+          }))
+        );
+      }
 
-      await tx.insert(matchPlayerStats).values(
-        stats.map((s) => ({
-          matchId: map.matchId,
-          mapId,
-          perfectName: s.perfectName as string,
-          userId: s.userId ?? undefined,
-          kills: s.kills ?? undefined,
-          deaths: s.deaths ?? undefined,
-          assists: s.assists ?? undefined,
-          hsPercent: s.hsPercent ?? undefined,
-          firstKills: s.firstKills ?? undefined,
-          multiKills: s.multiKills ?? undefined,
-          clutches: s.clutches ?? undefined,
-          adr: s.adr ?? undefined,
-          rws: s.rws ?? undefined,
-          ratingPro: s.ratingPro ?? undefined,
-          we: s.we ?? undefined,
-          verifiedByAdmin: actor,
-          verifiedAt: new Date(),
-        }))
-      );
+      await tx.insert(auditLogs).values({
+        seasonId: match.seasonId,
+        action: "match.save_player_stats",
+        actorId: actor,
+        targetId: mapId,
+        targetType: "match_map",
+        meta: { playerCount: stats.length, matchId: map.matchId },
+      });
     });
 
     return ok({ saved: stats.length });

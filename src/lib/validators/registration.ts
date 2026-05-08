@@ -43,9 +43,9 @@ export const registrationSchema = z
       .min(1, "请填写 QQ 号")
       .regex(/^\d{5,12}$/, "请输入有效的 QQ 号（5-12 位数字）"),
 
-    perfectId: z
+    perfectName: z
       .string()
-      .min(1, "请填写完美平台 ID"),
+      .min(1, "请填写完美平台昵称"),
 
     steamName: z
       .string()

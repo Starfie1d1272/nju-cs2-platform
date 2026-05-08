@@ -22,6 +22,13 @@
       "when": 1778263091081,
       "tag": "0002_fair_ikaris",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1747008000000,
+      "tag": "0003_rename_perfect_id",
+      "breakpoints": true
     }
   ]
 }

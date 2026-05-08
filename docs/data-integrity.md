@@ -53,6 +53,10 @@
 | map_order 不超出 BO 上限 | — | Server Action | BO1≤1, BO3≤3, BO5≤5 |
 | 单图比分非负且不超 30 | — | Zod + DB CHECK | 加分赛除外 |
 | pickedByTeamId 属于 match 双方 | — | Server Action | DB 无法表达跨表约束 |
+| **match_player_stats** | | | |
+| (map_id, perfect_name) 唯一 | `UNIQUE(map_id, perfect_name)` | — | 同一地图同一昵称不重复 |
+| 数值字段非负 | — | Zod nonnegative（OCR 后校验） | DB 未加 CHECK，由 OCR Zod schema 保证 |
+| 保存前人工审核 | — | Server Action（admin 确认后写库） | OCR 结果不直接入库，需 admin 二次确认 |
 | **audit_logs** | | | |
 | 不允许修改 | RLS DENY UPDATE/DELETE | — | append-only |
 | **admin_users** | | | |

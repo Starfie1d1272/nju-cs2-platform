@@ -54,11 +54,12 @@ Next.js App Router (Vercel Edge / Node.js)
 | `admin.ts` | Root 登录、审核报名、邀请码管理（createInviteCode + seasonId）、密码修改、管理员管理 |
 | `captains.ts` | 投 / 撤销队长票 |
 | `draft.ts` | pick 选手、autoPick 超时 |
-| `matches.ts` | 创建比赛、录入比分（含 match_maps）、取消比赛 |
+| `matches.ts` | 创建比赛、录入比分（含 match_maps）、取消比赛、设置 scheduledAt |
+| `player-stats.ts` | OCR 识别记分板截图（extractStatsFromScreenshot）、保存玩家数据（savePlayerStats）、查询地图数据（getPlayerStatsByMap） |
 
 ### DB 层（`src/db/`）
 
-- `schema/` — Drizzle 表定义，12 张表（含 `admin_users` + `admin_invites`），严格 `season_id` 外键
+- `schema/` — Drizzle 表定义，13 张表（含 `admin_users` + `admin_invites` + `match_player_stats`），严格 `season_id` 外键
 - `client.ts` — Drizzle + pg Pool 单例（IPv4），通过 `DATABASE_URL` 连接 Supabase
 - `seed.ts` — 种子数据（示例赛季 + 根管理员 RivalHub_root）
 
@@ -66,6 +67,7 @@ Next.js App Router (Vercel Edge / Node.js)
 
 - `auth/session.ts` — 双 Cookie iron-session：`rivalhub-session`（所有用户）+ `rivalhub-admin`（root 紧急）；`requireAdmin` / `requireSuperAdmin` / `requireSeasonAdmin` / `requireAuth`
 - `auth/supabase.ts` — Supabase client（用户 magic link + Storage）
+- `ocr/scoreboard.ts` — SiliconFlow Qwen-VL 记分板识别（base64 → Zod 校验 → PlayerRowOCR[]），不写库，结果返回给 action 供 admin 确认
 - `realtime/subscribe.ts` — Supabase Realtime 订阅封装
 - `config/` — 报名默认配置（位置、段位、上限等，`REGISTRATION_DEFAULTS`）
 - `validators/` — Zod schema（中文错误消息）：`registration.ts`（含段位门槛跨字段校验）、`match.ts`（createMatch / recordMatchResult）

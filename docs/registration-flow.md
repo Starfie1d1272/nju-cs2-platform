@@ -85,7 +85,7 @@ GROUP BY primary_position;
 | `email` | 邮箱（用于 Magic Link） | 有效 email 格式 |
 | `studentId` | 学号 | 非空；毕业生填「毕业年份+学院」 |
 | `qq` | QQ 号 | 5-12 位数字 |
-| `perfectId` | 完美平台 ID | 非空 |
+| `perfectName` | 完美平台昵称（记分板显示名） | 非空 |
 | `steamName` | Steam 昵称 | 非空 |
 | `steam64` | Steam 64 位 ID | 17 位纯数字 |
 | `steamProfileUrl` | Steam 个人资料链接 | steamcommunity.com 域名 |

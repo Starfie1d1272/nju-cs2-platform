@@ -12,7 +12,7 @@ erDiagram
     uuid[] admin_season_id "season_admin 管辖赛季列表，默认空数组"
     text student_id "学号；毕业生填毕业年份+学院"
     text qq
-    text perfect_id "完美平台 ID"
+    text perfect_name "完美平台昵称（记分板显示名）"
     text steam_name "Steam 昵称"
     text steam64 "Steam 64-bit ID"
     text steam_profile_url "Steam 个人资料链接"
@@ -141,6 +141,28 @@ erDiagram
     timestamp created_at
   }
 
+  match_player_stats {
+    uuid id PK
+    uuid match_id FK
+    uuid map_id FK
+    text perfect_name "记分板原始昵称"
+    uuid user_id FK "可 null：未匹配用户"
+    int kills
+    int deaths
+    int assists
+    int hs_percent "0–100"
+    int first_kills
+    int multi_kills
+    int clutches
+    real adr
+    real rws
+    real rating_pro
+    real we "0.0–16.0"
+    text verified_by_admin
+    timestamp verified_at
+    timestamp created_at
+  }
+
   audit_logs {
     uuid id PK
     uuid season_id FK
@@ -187,6 +209,9 @@ erDiagram
   seasons ||--o{ matches : "hosts"
   seasons ||--o{ audit_logs : "logs"
   matches ||--o{ match_maps : "consists_of"
+  matches ||--o{ match_player_stats : "has"
+  match_maps ||--o{ match_player_stats : "has"
+  users ||--o{ match_player_stats : "identified_as"
   teams ||--o{ team_members : "has"
   teams ||--o{ draft_picks : "makes"
   season_registrations ||--o{ captain_votes : "voter"
@@ -315,6 +340,7 @@ erDiagram
 | `match_maps` | `UNIQUE(match_id, map_order)` |
 | `admin_users` | `UNIQUE(username)` |
 | `admin_invites` | `UNIQUE(code)` |
+| `match_player_stats` | `UNIQUE(map_id, perfect_name)` |
 
 建议索引（`drizzle-kit` 迁移中添加）：
 - `season_registrations(season_id, status)` — 审核列表过滤

@@ -17,14 +17,17 @@
 | 功能 | 说明 | 状态 |
 |---|---|---|
 | 多赛事抽象 | capability 驱动多赛事共存，路由前缀 `/[seasonSlug]/` | ✅ 架构就绪 |
-| 玩家报名 | Zod 校验、位置满员检测、NJUBox 截图链接、Magic Link 邮件 | ✅ Phase 4 基本完成 |
+| 玩家报名 | Zod 校验、位置满员检测、NJUBox 截图链接、Magic Link 邮件 | ✅ Phase 4 |
 | 管理员审核 | 通过 / 拒绝 / 等待名单 + audit log + 邀请码管理 + 管理员账户管理 | ✅ Phase 5 |
 | 队长投票 | 全体选手投票，Realtime 票数，得票前 8 名为队长 | ✅ Phase 6 |
 | 蛇形选秀直播间 | Realtime 围观，倒计时，剩余选手池 | 🔄 Phase 7 |
 | 队长选秀面板 | 事务行锁、幂等 pick、超时 Cron 自动递补 | 🔄 Phase 8 |
 | 队伍展示 | 7 人阵容按位置排版，首发/替补分区，队长 badge | ✅ Phase 9 |
-| 赛程管理 | 比赛详情 + 地图结果 + 管理员录分/取消 | ✅ Phase 10 |
-| Bracket 视图 | `brackets-manager` 双败淘汰图 | 🔄 Phase 11 |
+| 赛程管理 | 比赛详情 + 地图结果 + 管理员录分 / 取消 | ✅ Phase 10 |
+| BO3/BO5 逐图录入 | 按图录入回合数，大比分自动统计，达到 maxWins 自动结束系列赛并推进 bracket | ✅ Phase 10+ |
+| 比赛时间编辑 | 管理员设置 / 清除各场 `scheduledAt`，写 audit log | ✅ Phase 11 |
+| Bracket 视图 | `brackets-manager` 双败淘汰图，bracket 节点↔比赛详情双向跳转 | ✅ Phase 11 |
+| 玩家数据 OCR | 管理员上传完美平台记分板截图 → SiliconFlow Qwen-VL 识别 → 人工审核确认 → 写入数据库 | ✅ Phase 11.5 |
 | 部署上线 | Vercel + 自定义域名 + Cron + E2E 验证 | 🔄 Phase 12 |
 
 ## 技术栈

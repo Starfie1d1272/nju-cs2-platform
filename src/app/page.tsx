@@ -67,7 +67,7 @@ export default function HomePage() {
         <h1 className="text-4xl sm:text-5xl font-bold text-[var(--text-primary)] mb-4 leading-tight">
           {APP_BRAND.name}
           <span className="block text-[var(--text-secondary)] text-2xl sm:text-3xl font-medium mt-2">
-            CS2 社群赛事管理平台
+            电竞社群赛事管理平台
           </span>
         </h1>
 

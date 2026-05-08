@@ -11,8 +11,16 @@ const pgConfig: any = {
   connectionString,
   ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
   family: 4, // force IPv4 to avoid DNS resolution issues with Supabase
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 };
 const pool = new Pool(pgConfig);
+
+// Prevent pool-level errors from crashing the Next.js process
+pool.on("error", (err) => {
+  console.error("[db] pool error:", err.message);
+});
 
 export const db = drizzle(pool, { schema });
 

@@ -8,8 +8,12 @@ erDiagram
     uuid id PK
     uuid auth_id UK "Supabase auth.users"
     text email UK
-    text steam64
+    text student_id "学号；毕业生填毕业年份+学院"
     text qq
+    text perfect_id "完美平台 ID"
+    text steam_name "Steam 昵称"
+    text steam64 "Steam 64-bit ID"
+    text steam_profile_url "Steam 个人资料链接"
     timestamp created_at
     timestamp updated_at
   }
@@ -146,6 +150,31 @@ erDiagram
     timestamp created_at
   }
 
+  admin_users {
+    uuid id PK
+    text username UK
+    text password_hash "scrypt(salt+password)"
+    admin_role role
+    bool is_active
+    timestamp created_at
+    timestamp updated_at
+  }
+
+  admin_invites {
+    uuid id PK
+    text code UK
+    uuid created_by FK
+    admin_role role
+    int max_uses
+    int used_count
+    text[] used_by_usernames
+    timestamp expires_at
+    bool is_active
+    timestamp created_at
+  }
+
+  admin_users ||--o{ admin_invites : "creates"
+
   users ||--o{ season_registrations : "has"
   seasons ||--o{ season_registrations : "contains"
   seasons ||--o{ teams : "has"
@@ -211,6 +240,12 @@ erDiagram
 | `rejected` | 已拒绝 |
 | `waitlisted` | 等待名单 |
 
+### `admin_role`
+| 值 | 说明 |
+|---|---|
+| `super_admin` | 超级管理员（可管理其他管理员） |
+| `admin` | 普通管理员（审核报名等日常操作） |
+
 ### `match_status`
 | 值 | 说明 |
 |---|---|
@@ -267,6 +302,8 @@ erDiagram
 | `draft_state` | `UNIQUE(season_id)` |
 | `draft_picks` | `UNIQUE(client_request_id)` |
 | `match_maps` | `UNIQUE(match_id, map_order)` |
+| `admin_users` | `UNIQUE(username)` |
+| `admin_invites` | `UNIQUE(code)` |
 
 建议索引（`drizzle-kit` 迁移中添加）：
 - `season_registrations(season_id, status)` — 审核列表过滤
@@ -281,6 +318,6 @@ erDiagram
 
 1. 每个主选位置上限 15 人（应用层 Server Action 校验，不用 DB 触发器）。
 2. 每位选手每届赛事只能投 3 票（应用层计数校验）。
-3. 每队同主选位置不超过 3 人（选秀 pick 时 Server Action 校验）。
+3. 每队同主选位置不超过 2 人（选秀 pick 时 Server Action 校验）。
 4. 选秀共 6 轮，每队选 6 人（队长本人 + 6 pick = 7 人）。
 5. 时间字段统一 UTC 存储，`Asia/Shanghai` 展示。

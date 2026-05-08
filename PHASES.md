@@ -22,24 +22,24 @@
 
 ## Phase 2 — 数据层
 
-- [ ] 创建 Supabase 项目（Postgres + Auth + Storage）
-- [ ] `pnpm db:push` 推送所有表（10 张）
-- [ ] RLS：默认拒绝所有，按表逐条开放最小权限
-- [ ] Storage bucket：`registration-screenshots`（私有，需 admin 可查）
-- [ ] 运行种子脚本：两个示例赛季占位行
-- [ ] 验证 Drizzle Studio 可查询
+- [x] 创建 Supabase 项目（Postgres + Auth + Storage）
+- [x] `pnpm db:push` / 直接 SQL 迁移推送所有表
+- [ ] RLS：默认拒绝所有，按表逐条开放最小权限（暂缓，Phase 12 前完成）
+- [ ] Storage bucket：`registration-screenshots`（暂缓；截图改用 NJUBox 分享链接）
+- [x] 运行种子脚本：示例赛季占位行
+- [x] 验证 Drizzle Studio 可查询
 
 ---
 
-## Phase 3 — 全局 UI
+## Phase 3 — 全局 UI ✅
 
-- [ ] shadcn 基础组件安装（Button / Card / Badge / Input / Select / Toast / Dialog）
-- [ ] Header：多赛季导航（Active 赛季 + draft 状态赛季显示"敬请期待"）
-- [ ] Footer：品牌信息、Github 链接
-- [ ] 首页：活跃赛季检测 + 跳转
-- [ ] `/seasons`：历史赛季归档
-- [ ] 赛季 layout：注入 `theme_color` CSS variable
-- [ ] Tailwind tokens 落地（见 `docs/ui-tokens.md`）
+- [x] shadcn 基础组件安装（Button / Card / Badge / Input / Select / Toast / Dialog）
+- [x] Header：多赛季导航（Active 赛季 + draft 状态赛季显示"敬请期待"）
+- [x] Footer：品牌信息、Github 链接
+- [x] 首页：活跃赛季检测 + 跳转
+- [x] `/seasons`：历史赛季归档
+- [x] 赛季 layout：注入 `theme_color` CSS variable
+- [x] Tailwind tokens 落地（见 `docs/ui-tokens.md`）
 
 ---
 
@@ -55,13 +55,20 @@
 
 ---
 
-## Phase 5 — 管理审核
+## Phase 5 — 管理审核 ✅
 
-- [ ] iron-session 接入（`getAdminSession` / `requireAdmin`）
-- [ ] `/admin/login` 登录页（invite code + password）
-- [ ] `/admin/[seasonSlug]/registrations` 审核列表
-- [ ] 通过 / 拒绝 / 等待名单 Server Action + audit log
-- [ ] 报名截图预览（Storage 签名 URL）
+- [x] iron-session 接入（`getAdminSession` / `requireAdmin` + session 含 adminId/username/role）
+- [x] `admin_users` + `admin_invites` 表（scrypt 密码哈希 + 邀请码追踪）
+- [x] 种子脚本写入根管理员 `RivalHub_root` + 自动生成 `ADMIN_SESSION_SECRET`
+- [x] `/admin/login` 登录页（用户名 + 密码，DB 查询 + scrypt 验证）
+- [x] `/admin/register` 邀请码注册页（新管理员自设用户名密码）
+- [x] `/admin/[seasonSlug]/registrations` 审核列表 + 状态迁移校验
+- [x] 通过 / 拒绝 / 等待名单 Server Action + audit log（含审核人用户名）
+- [x] 报名截图预览（NJUBox URL 跳转查看）
+- [x] `/admin/invites` 邀请码管理（创建 / 撤销 / 查看使用记录）
+- [x] `/admin/users` 管理员列表（停用 / 重新启用）
+- [x] `/admin/settings` 修改密码
+- [x] 管理后台统一导航栏 + 仪表盘
 
 ---
 
@@ -86,7 +93,7 @@
 ## Phase 8 — 选秀队长端 + 超时 Cron
 
 - [ ] `pickPlayer` Server Action（Postgres 事务 + SELECT FOR UPDATE + 幂等键）
-- [ ] 同位置 ≤ 3 人约束校验
+- [ ] 同位置 ≤ 2 人约束校验
 - [ ] `/[seasonSlug]/draft/captain` 队长选秀面板（仅当前轮队长可操作）
 - [ ] `/api/cron/draft-timeout` Cron route：超时按 peak_rating 降序自动 pick
 - [ ] `autoPick` Server Action

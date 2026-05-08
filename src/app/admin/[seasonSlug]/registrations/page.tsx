@@ -1,14 +1,80 @@
-// TODO: admin registration review — list, filter by status, approve/reject/waitlist
-interface AdminRegistrationsPageProps {
+import { notFound } from "next/navigation";
+import { eq, desc } from "drizzle-orm";
+import { db } from "@/db/client";
+import { seasons, seasonRegistrations, users } from "@/db/schema";
+import {
+  RegistrationReviewList,
+  type RegistrationRow,
+} from "@/components/admin/RegistrationReviewList";
+
+interface PageProps {
   params: Promise<{ seasonSlug: string }>;
 }
 
-export default async function AdminRegistrationsPage({ params }: AdminRegistrationsPageProps) {
+export default async function AdminRegistrationsPage({ params }: PageProps) {
   const { seasonSlug } = await params;
+
+  // 1. 查赛季
+  const season = await db.query.seasons.findFirst({
+    where: eq(seasons.slug, seasonSlug),
+  });
+  if (!season) notFound();
+
+  // 2. 查报名记录 + 用户信息
+  const rows = await db
+    .select({
+      id: seasonRegistrations.id,
+      primaryPosition: seasonRegistrations.primaryPosition,
+      secondaryPosition: seasonRegistrations.secondaryPosition,
+      peakRank: seasonRegistrations.peakRank,
+      peakRankSeason: seasonRegistrations.peakRankSeason,
+      peakRating: seasonRegistrations.peakRating,
+      currentSeasonPeakRank: seasonRegistrations.currentSeasonPeakRank,
+      currentRating: seasonRegistrations.currentRating,
+      screenshotUrls: seasonRegistrations.screenshotUrls,
+      gameplayStyle: seasonRegistrations.gameplayStyle,
+      competitionHistory: seasonRegistrations.competitionHistory,
+      notes: seasonRegistrations.notes,
+      willingToBeCaptain: seasonRegistrations.willingToBeCaptain,
+      status: seasonRegistrations.status,
+      createdAt: seasonRegistrations.createdAt,
+      email: users.email,
+      studentId: users.studentId,
+      steamName: users.steamName,
+      steam64: users.steam64,
+      steamProfileUrl: users.steamProfileUrl,
+      qq: users.qq,
+    })
+    .from(seasonRegistrations)
+    .leftJoin(users, eq(seasonRegistrations.userId, users.id))
+    .where(eq(seasonRegistrations.seasonId, season.id))
+    .orderBy(desc(seasonRegistrations.createdAt));
+
+  const registrations: RegistrationRow[] = rows.map((r) => ({
+    ...r,
+    status: r.status ?? "pending",
+    email: r.email ?? "",
+    screenshotUrls: r.screenshotUrls ?? [],
+    createdAt: r.createdAt?.toISOString() ?? "",
+    competitionHistory: r.competitionHistory ?? null,
+    notes: r.notes ?? null,
+    studentId: r.studentId ?? null,
+    steamName: r.steamName ?? null,
+    steam64: r.steam64 ?? null,
+    steamProfileUrl: r.steamProfileUrl ?? null,
+    qq: r.qq ?? null,
+  }));
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">报名审核 · {seasonSlug.toUpperCase()}</h1>
-      <p className="text-[var(--text-secondary)]">报名列表加载中...</p>
+    <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">报名审核 · {season.name}</h1>
+        <p className="text-sm text-[var(--text-secondary)] mt-1">
+          共 {registrations.length} 份报名 · 赛季状态：{season.status}
+        </p>
+      </div>
+
+      <RegistrationReviewList registrations={registrations} />
     </div>
   );
 }

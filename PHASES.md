@@ -100,19 +100,19 @@
 
 ---
 
-## Phase 9 — 队伍展示页
+## Phase 9 — 队伍展示页 ✅
 
-- [ ] `/[seasonSlug]/teams` 列表页（8 队卡片）
-- [ ] `/[seasonSlug]/teams/[teamId]` 详情页（7 人按位置排版，队长标识）
+- [x] `/[seasonSlug]/teams` 列表页（8 队卡片，按 draftOrder 排序）
+- [x] `/[seasonSlug]/teams/[teamId]` 详情页（首发/替补分区，队长 badge）
 
 ---
 
-## Phase 10 — 比赛详情
+## Phase 10 — 比赛详情 ✅
 
-- [ ] `createMatch` / `recordMatchResult` Server Action
-- [ ] `/[seasonSlug]/matches/[matchId]` 详情页（双方阵容、比分、地图结果、状态机）
-- [ ] `/admin/[seasonSlug]/matches` 管理员录入比分
-- [ ] 比赛状态机：`scheduled → in_progress → finished`
+- [x] `createMatch` / `recordMatchResult` / `cancelMatch` Server Action
+- [x] `/[seasonSlug]/matches/[matchId]` 详情页（双方阵容、比分、地图结果、状态）
+- [x] `/admin/[seasonSlug]/matches` 管理员赛程表（创建/录分/取消）
+- [x] 比赛状态机：`scheduled → in_progress → finished`，`scheduled → cancelled`
 
 ---
 

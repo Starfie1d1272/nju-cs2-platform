@@ -11,10 +11,6 @@ export const POSITION_LABELS: Record<Position, { cn: string; en: string }> = {
   support: { cn: "辅助",   en: "Support" },
 };
 
-// 空字符串 → undefined 的预处理辅助
-const optionalStr = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
-
 export const registrationSchema = z.object({
   seasonId: z.string().uuid("赛季 ID 格式不正确"),
 
@@ -23,35 +19,45 @@ export const registrationSchema = z.object({
     .min(1, "请填写电子邮件")
     .email("请输入有效的电子邮件地址"),
 
-  steam64: optionalStr(
-    z.string().regex(/^\d{17}$/, "Steam64 ID 应为 17 位纯数字")
-  ),
+  // 可选字符串用 .refine 代替 z.preprocess，避免破坏 RHF 类型推断
+  steam64: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^\d{17}$/.test(v), {
+      message: "Steam64 ID 应为 17 位纯数字",
+    }),
 
-  qq: optionalStr(
-    z.string().regex(/^\d{5,12}$/, "请输入有效的 QQ 号（5-12 位数字）")
-  ),
+  qq: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^\d{5,12}$/.test(v), {
+      message: "请输入有效的 QQ 号（5-12 位数字）",
+    }),
 
   primaryPosition: z.enum(positionValues, {
     errorMap: () => ({ message: "请选择主要位置" }),
   }),
 
-  secondaryPosition: optionalStr(z.enum(positionValues)),
+  secondaryPosition: z.enum(positionValues).optional(),
 
-  // CS2 Premier 分 0-35000，留余量到 50000
-  peakRating: z.preprocess(
-    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
-    z.number().int().min(0, "评分不能为负").max(50000, "评分最大 50000").optional()
-  ),
+  // 使用 RHF 的 setValueAs 把空字符串转成 undefined，schema 只处理数字
+  peakRating: z
+    .number()
+    .int()
+    .min(0, "评分不能为负")
+    .max(50000, "评分最大 50000")
+    .optional(),
 
-  screenshotUrl: optionalStr(
-    z.string().url("请输入有效的链接（以 http:// 或 https:// 开头）")
-  ),
+  screenshotUrl: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^https?:\/\/.+/.test(v), {
+      message: "请输入有效的链接（以 http:// 或 https:// 开头）",
+    }),
 
   willingToBeCaptain: z.boolean().default(false),
 
-  notes: optionalStr(
-    z.string().max(500, "备注不超过 500 字")
-  ),
+  notes: z.string().max(500, "备注不超过 500 字").optional(),
 
   antiCheatPledge: z.literal(true, {
     errorMap: () => ({ message: "请勾选反作弊承诺方可提交" }),
@@ -60,6 +66,6 @@ export const registrationSchema = z.object({
 
 export type RegistrationFormData = z.infer<typeof registrationSchema>;
 
-// MAX_PER_POSITION：每个主选位置的报名上限（草稿约束，管理员可豁免）
-// 8 队 × 7 人 = 56，5 个位置，各位置人数不均，预留 buffer 到 15
+// 每个主选位置的报名上限（软约束，管理员可豁免）
+// 8 队 × 7 人 = 56，5 个位置各约 11，预留 buffer 到 15
 export const MAX_PER_POSITION = 15;

@@ -25,7 +25,7 @@ export default async function AdminInvitesPage() {
 
   return (
     <div className="min-h-screen">
-      <AdminNav current="邀请码" username={admin.adminUsername} />
+      <AdminNav username={admin.adminUsername} />
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <h1 className="text-2xl font-bold mb-6">邀请码管理</h1>

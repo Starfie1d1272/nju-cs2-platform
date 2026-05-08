@@ -2,11 +2,19 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 
+
 export interface AdminSessionData {
   isAdmin: boolean;
   adminId?: string;
   adminUsername?: string;
   adminRole?: "super_admin" | "admin";
+}
+
+export interface AuthenticatedAdmin extends AdminSessionData {
+  isAdmin: true;
+  adminId: string;
+  adminUsername: string;
+  adminRole: "super_admin" | "admin";
 }
 
 function sessionOptions() {
@@ -34,12 +42,12 @@ export async function getAdminSession() {
 }
 
 /** Server Action 用：非管理员直接抛 UNAUTHORIZED */
-export async function requireAdmin(): Promise<AdminSessionData> {
+export async function requireAdmin(): Promise<AuthenticatedAdmin> {
   const session = await getAdminSession();
-  if (!session.isAdmin) {
+  if (!session.isAdmin || !session.adminId || !session.adminUsername || !session.adminRole) {
     throw new AppError(ErrorCode.UNAUTHORIZED, ERROR_MESSAGES.UNAUTHORIZED);
   }
-  return session;
+  return session as AuthenticatedAdmin;
 }
 
 /** Server Component 用：非管理员返回 null，由调用方 redirect */

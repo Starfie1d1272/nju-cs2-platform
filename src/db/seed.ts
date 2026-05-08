@@ -54,6 +54,11 @@ export async function seed() {
 
   if (root) {
     console.log("Created root admin: RivalHub_root");
+    console.warn(
+      "\n⚠️  根管理员已创建，请立即登录后修改默认密码！\n" +
+      "   用户名: RivalHub_root\n" +
+      "   初始密码: RivalHub_password\n"
+    );
   } else {
     console.log("Root admin already exists, skipping.");
   }

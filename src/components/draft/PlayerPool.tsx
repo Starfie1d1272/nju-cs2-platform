@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import type { DraftPlayerRow } from "@/lib/draft/data";
-import { positionValues, POSITION_LABELS } from "@/lib/validators/registration";
+import { POSITION_LABELS } from "@/lib/validators/registration";
 
 interface PlayerPoolProps {
   players: DraftPlayerRow[];
+  seasonPositions: string[];
 }
 
-export function PlayerPool({ players }: PlayerPoolProps) {
+export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
   const [filter, setFilter] = useState<string>("all");
 
   const grouped = useMemo(() => {
@@ -21,10 +22,18 @@ export function PlayerPool({ players }: PlayerPoolProps) {
     return map;
   }, [players]);
 
+  const positionOptions = useMemo(() => {
+    const ordered = [...seasonPositions];
+    for (const position of grouped.keys()) {
+      if (!ordered.includes(position)) ordered.push(position);
+    }
+    return ordered;
+  }, [grouped, seasonPositions]);
+
   const positions: readonly string[] =
     filter === "all"
-      ? positionValues
-      : positionValues.filter((v) => v === filter);
+      ? positionOptions
+      : positionOptions.filter((position) => position === filter);
 
   const total = players.length;
 
@@ -50,12 +59,12 @@ export function PlayerPool({ players }: PlayerPoolProps) {
         >
           全部 ({total})
         </button>
-        {positionValues.map((pos) => {
+        {positionOptions.map((pos) => {
           const count = grouped.get(pos)?.length ?? 0;
           return (
             <button
               key={pos}
-              onClick={() => setFilter(pos === filter ? "all" : pos as string)}
+              onClick={() => setFilter(pos === filter ? "all" : pos)}
               disabled={count === 0}
               className={`text-xs px-2 py-1 rounded transition-colors ${
                 pos === filter

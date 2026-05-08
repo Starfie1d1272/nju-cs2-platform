@@ -11,10 +11,17 @@ import type { DraftFullData } from "@/lib/draft/data";
 
 interface DraftLiveRoomProps {
   data: DraftFullData;
+  seasonId: string;
   seasonSlug: string;
+  seasonPositions: string[];
 }
 
-export function DraftLiveRoom({ data, seasonSlug: _seasonSlug }: DraftLiveRoomProps) {
+export function DraftLiveRoom({
+  data,
+  seasonId,
+  seasonSlug: _seasonSlug,
+  seasonPositions,
+}: DraftLiveRoomProps) {
   const router = useRouter();
   const { state, teams, snakeOrder, remainingPlayers, completedPicks, totalPicks, maxPicks } =
     data;
@@ -31,15 +38,25 @@ export function DraftLiveRoom({ data, seasonSlug: _seasonSlug }: DraftLiveRoomPr
   useEffect(() => {
     const supabase = createBrowserClient();
     const channel = supabase
-      .channel("draft-live")
+      .channel(`draft-live:${seasonId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "draft_state" },
+        {
+          event: "*",
+          schema: "public",
+          table: "draft_state",
+          filter: `season_id=eq.${seasonId}`,
+        },
         () => router.refresh(),
       )
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "draft_picks" },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "draft_picks",
+          filter: `season_id=eq.${seasonId}`,
+        },
         () => router.refresh(),
       )
       .subscribe();
@@ -47,7 +64,7 @@ export function DraftLiveRoom({ data, seasonSlug: _seasonSlug }: DraftLiveRoomPr
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [router, seasonId]);
 
   // 确定当前选秀队
   const pickingTeamId = isLive ? state?.currentTeamId ?? null : null;
@@ -111,7 +128,7 @@ export function DraftLiveRoom({ data, seasonSlug: _seasonSlug }: DraftLiveRoomPr
       {isLive && snakeOrder.length > 0 && (
         <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] overflow-x-auto">
           <span>蛇形顺序：</span>
-          {snakeOrder.map((tid, i) => {
+          {snakeOrder.map((tid) => {
             const t = teams.find((tt) => tt.teamId === tid);
             const isNow = tid === pickingTeamId;
             return (
@@ -166,7 +183,7 @@ export function DraftLiveRoom({ data, seasonSlug: _seasonSlug }: DraftLiveRoomPr
         <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 uppercase tracking-wider">
           剩余选手池 ({remainingPlayers.length})
         </h2>
-        <PlayerPool players={remainingPlayers} />
+        <PlayerPool players={remainingPlayers} seasonPositions={seasonPositions} />
       </section>
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCountdownSeconds, isDeadlinePassed } from "@/lib/utils/date";
 
 interface DraftCountdownProps {
   deadline: string | null; // ISO string
@@ -26,7 +25,7 @@ export function DraftCountdown({ deadline, isActive }: DraftCountdownProps) {
   }
 
   if (!isActive) {
-    const remaining = getCountdownSeconds(new Date(deadline));
+    const remaining = getCountdownSeconds(deadline, now);
     return (
       <span className="text-sm text-[var(--text-muted)] tabular">
         {formatTime(remaining)}
@@ -34,7 +33,7 @@ export function DraftCountdown({ deadline, isActive }: DraftCountdownProps) {
     );
   }
 
-  if (isDeadlinePassed(deadline)) {
+  if (isDeadlinePassed(deadline, now)) {
     return (
       <span className="text-sm text-red-400 font-medium tabular">
         已超时
@@ -42,7 +41,7 @@ export function DraftCountdown({ deadline, isActive }: DraftCountdownProps) {
     );
   }
 
-  const remaining = getCountdownSeconds(deadline);
+  const remaining = getCountdownSeconds(deadline, now);
   const urgent = remaining < 30;
 
   return (
@@ -54,6 +53,14 @@ export function DraftCountdown({ deadline, isActive }: DraftCountdownProps) {
       {formatTime(remaining)}
     </span>
   );
+}
+
+function getCountdownSeconds(deadline: string, now: number): number {
+  return Math.max(0, Math.floor((new Date(deadline).getTime() - now) / 1000));
+}
+
+function isDeadlinePassed(deadline: string, now: number): boolean {
+  return new Date(deadline).getTime() <= now;
 }
 
 function formatTime(seconds: number): string {

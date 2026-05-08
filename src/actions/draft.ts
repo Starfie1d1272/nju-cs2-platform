@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons, teams, draftState, draftPicks, auditLogs } from "@/db/schema";
+import { seasons, teams, draftState, auditLogs } from "@/db/schema";
 import { ok, fail, type ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { requireAdmin } from "@/lib/auth/session";
@@ -15,7 +15,7 @@ import {
   type PauseDraftInput,
   type ResumeDraftInput,
 } from "@/lib/validators/draft";
-import { DRAFT_ROUND_TIMEOUT_SECONDS } from "@/types/draft";
+import { DRAFT_ROUND_TIMEOUT_SECONDS, DRAFT_TEAMS } from "@/types/draft";
 import { getSnakeOrder } from "@/lib/draft/rules";
 
 // ── 启动选秀 ───────────────────────────────────────────
@@ -73,6 +73,18 @@ export async function startDraft(
         throw new AppError(
           ErrorCode.VALIDATION_FAILED,
           "该赛季没有队伍，请先确认队长生成队伍",
+        );
+      }
+      if (seasonTeams.length !== DRAFT_TEAMS) {
+        throw new AppError(
+          ErrorCode.VALIDATION_FAILED,
+          `选秀需要 ${DRAFT_TEAMS} 支队伍，当前为 ${seasonTeams.length} 支`,
+        );
+      }
+      if (!hasSequentialDraftOrder(seasonTeams)) {
+        throw new AppError(
+          ErrorCode.VALIDATION_FAILED,
+          `队伍 draft order 必须为 1-${DRAFT_TEAMS} 且不能重复`,
         );
       }
 
@@ -223,6 +235,15 @@ export async function resumeDraft(
 
 function failValidation(message: string): ActionResult<never> {
   return fail({ code: ErrorCode.VALIDATION_FAILED, message });
+}
+
+function hasSequentialDraftOrder(teamRows: { draftOrder: number }[]): boolean {
+  const orders = new Set(teamRows.map((team) => team.draftOrder));
+  if (orders.size !== DRAFT_TEAMS) return false;
+  for (let order = 1; order <= DRAFT_TEAMS; order++) {
+    if (!orders.has(order)) return false;
+  }
+  return true;
 }
 
 function actionError(scope: string, e: unknown): ActionResult<never> {

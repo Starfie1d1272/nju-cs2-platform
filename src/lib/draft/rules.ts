@@ -62,7 +62,7 @@ export function isDraftComplete(
 
 /**
  * 统计每队各主选位置人数
- * 返回 Map<teamId, Record<position, count>>
+ * 返回 Map<teamId, Map<position, count>>
  */
 export function computeTeamPositionCounts(
   members: { teamId: string; primaryPosition: string }[],

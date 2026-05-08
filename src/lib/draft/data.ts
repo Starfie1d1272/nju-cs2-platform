@@ -1,4 +1,4 @@
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
   draftState,
@@ -8,7 +8,7 @@ import {
   seasonRegistrations,
   users,
 } from "@/db/schema";
-import { DRAFT_TEAMS } from "@/types/draft";
+import { DRAFT_TEAMS, DRAFT_TOTAL_ROUNDS } from "@/types/draft";
 import { getSnakeOrder } from "./rules";
 
 // ── 数据类型 ─────────────────────────────────────────────
@@ -47,7 +47,7 @@ export interface DraftLiveState {
 export interface DraftFullData {
   state: DraftLiveState | null;
   teams: DraftTeamSlot[];
-  snakeOrder: string[]; // team IDs in snake order for current/next round
+  snakeOrder: string[]; // team IDs in snake order for the current round
   remainingPlayers: DraftPlayerRow[];
   completedPicks: {
     teamId: string;
@@ -64,7 +64,7 @@ export interface DraftFullData {
 // ── 查询函数 ─────────────────────────────────────────────
 
 export async function getDraftData(seasonId: string): Promise<DraftFullData> {
-  const maxPicks = DRAFT_TEAMS * 6; // 48
+  const maxPicks = DRAFT_TEAMS * DRAFT_TOTAL_ROUNDS;
 
   // 1. 选秀状态
   const state = await db.query.draftState.findFirst({
@@ -78,33 +78,9 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
     .where(eq(teams.seasonId, seasonId))
     .orderBy(asc(teams.draftOrder));
 
-  const memberRows =
-    teamRows.length > 0
-      ? await db
-          .select({
-            teamId: teamMembers.teamId,
-            registrationId: teamMembers.registrationId,
-            isStarter: teamMembers.isStarter,
-            steamName: users.steamName,
-            primaryPosition: seasonRegistrations.primaryPosition,
-          })
-          .from(teamMembers)
-          .innerJoin(
-            seasonRegistrations,
-            eq(teamMembers.registrationId, seasonRegistrations.id),
-          )
-          .leftJoin(users, eq(seasonRegistrations.userId, users.id))
-          .where(
-            eq(
-              teamMembers.teamId,
-              teamRows[0]?.id ?? "", // placeholder, all teams in season
-            ),
-          )
-      : [];
-
-  // Reload members for all teams properly
+  const teamIds = teamRows.map((team) => team.id);
   const allMembers =
-    teamRows.length > 0
+    teamIds.length > 0
       ? await db
           .select({
             teamId: teamMembers.teamId,
@@ -119,6 +95,7 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
             eq(teamMembers.registrationId, seasonRegistrations.id),
           )
           .leftJoin(users, eq(seasonRegistrations.userId, users.id))
+          .where(inArray(teamMembers.teamId, teamIds))
       : [];
 
   // 3. 所有 picks

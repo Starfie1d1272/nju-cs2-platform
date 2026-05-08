@@ -73,7 +73,7 @@ export function TeamDraftGrid({
             </div>
 
             {/* 已选队员 */}
-            {team.members.map((m, i) => (
+            {team.members.map((m) => (
               <div key={m.registrationId} className="text-xs mb-0.5">
                 <span className="text-[var(--text-secondary)]">
                   R{m.pickRound}P{m.pickNumber}{" "}

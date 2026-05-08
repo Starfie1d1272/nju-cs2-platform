@@ -80,7 +80,12 @@ export default async function DraftPage({ params }: DraftPageProps) {
           </p>
         </Card>
       ) : (
-        <DraftLiveRoom data={data} seasonSlug={seasonSlug} />
+        <DraftLiveRoom
+          data={data}
+          seasonId={season.id}
+          seasonSlug={seasonSlug}
+          seasonPositions={season.positions}
+        />
       )}
     </main>
   );

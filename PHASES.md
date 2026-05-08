@@ -57,11 +57,11 @@
 
 ## Phase 5 — 管理审核
 
-- [ ] iron-session 接入（`getAdminSession` / `requireAdmin`）
-- [ ] `/admin/login` 登录页（invite code + password）
-- [ ] `/admin/[seasonSlug]/registrations` 审核列表
-- [ ] 通过 / 拒绝 / 等待名单 Server Action + audit log
-- [ ] 报名截图预览（Storage 签名 URL）
+- [x] iron-session 接入（`getAdminSession` / `requireAdmin`）
+- [x] `/admin/login` 登录页（invite code + password）
+- [x] `/admin/[seasonSlug]/registrations` 审核列表
+- [x] 通过 / 拒绝 / 等待名单 Server Action + audit log
+- [x] 报名截图预览（NJUBox URL 跳转查看）
 
 ---
 

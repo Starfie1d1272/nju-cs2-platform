@@ -1,0 +1,66 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { adminLogin } from "@/actions/admin";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export function AdminLoginForm() {
+  const [inviteCode, setInviteCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    startTransition(async () => {
+      const result = await adminLogin(inviteCode, password);
+      // adminLogin redirects on success, so we only get here on failure
+      if (!result.success) {
+        setError(result.error.message);
+      }
+    });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="invite-code">邀请码</Label>
+        <Input
+          id="invite-code"
+          type="text"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value)}
+          placeholder="请输入管理员邀请码"
+          required
+          autoFocus
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="password">密码</Label>
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="请输入管理员密码"
+          required
+        />
+      </div>
+
+      {error && (
+        <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      <Button type="submit" className="w-full" disabled={isPending}>
+        {isPending ? "登录中..." : "登录"}
+      </Button>
+    </form>
+  );
+}

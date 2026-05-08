@@ -1,0 +1,281 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { reviewRegistration } from "@/actions/admin";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { POSITION_LABELS } from "@/lib/validators/registration";
+
+// ── 类型 ──────────────────────────────────────────────
+
+export interface RegistrationRow {
+  id: string;
+  primaryPosition: string;
+  secondaryPosition: string;
+  peakRank: string;
+  peakRankSeason: string;
+  peakRating: number;
+  currentSeasonPeakRank: string;
+  currentRating: number;
+  screenshotUrls: string[];
+  gameplayStyle: string;
+  competitionHistory: string | null;
+  notes: string | null;
+  willingToBeCaptain: boolean;
+  status: string;
+  createdAt: string;
+  // user
+  email: string;
+  studentId: string | null;
+  steamName: string | null;
+  steam64: string | null;
+  steamProfileUrl: string | null;
+  qq: string | null;
+}
+
+type FilterStatus = "all" | "pending" | "approved" | "rejected" | "waitlisted";
+
+// ── 状态徽章 ──────────────────────────────────────────
+
+const STATUS_STYLES: Record<string, string> = {
+  pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  approved: "bg-green-500/10 text-green-600 border-green-500/20",
+  rejected: "bg-red-500/10 text-red-600 border-red-500/20",
+  waitlisted: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "待审核",
+  approved: "已通过",
+  rejected: "已拒绝",
+  waitlisted: "等待名单",
+};
+
+// ── 位置标签 ──────────────────────────────────────────
+
+function positionLabel(key: string): string {
+  return POSITION_LABELS[key as keyof typeof POSITION_LABELS]?.cn ?? key;
+}
+
+// ── 组件 ──────────────────────────────────────────────
+
+interface Props {
+  registrations: RegistrationRow[];
+}
+
+export function RegistrationReviewList({ registrations }: Props) {
+  const [filter, setFilter] = useState<FilterStatus>("pending");
+  const [isPending, startTransition] = useTransition();
+
+  const filtered =
+    filter === "all"
+      ? registrations
+      : registrations.filter((r) => r.status === filter);
+
+  const counts: Record<FilterStatus, number> = {
+    all: registrations.length,
+    pending: registrations.filter((r) => r.status === "pending").length,
+    approved: registrations.filter((r) => r.status === "approved").length,
+    rejected: registrations.filter((r) => r.status === "rejected").length,
+    waitlisted: registrations.filter((r) => r.status === "waitlisted").length,
+  };
+
+  function handleReview(registrationId: string, status: "approved" | "rejected" | "waitlisted") {
+    const label = STATUS_LABELS[status];
+    startTransition(async () => {
+      const result = await reviewRegistration({ registrationId, status });
+      if (!result.success) {
+        toast.error(result.error.message);
+      } else {
+        toast.success(`已${label}`);
+      }
+    });
+  }
+
+  const FILTERS: { key: FilterStatus; label: string }[] = [
+    { key: "all", label: "全部" },
+    { key: "pending", label: "待审核" },
+    { key: "approved", label: "已通过" },
+    { key: "rejected", label: "已拒绝" },
+    { key: "waitlisted", label: "等待名单" },
+  ];
+
+  return (
+    <div>
+      {/* 筛选标签 */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {FILTERS.map((f) => (
+          <Button
+            key={f.key}
+            variant={filter === f.key ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label} ({counts[f.key]})
+          </Button>
+        ))}
+      </div>
+
+      <Separator className="mb-4" />
+
+      {/* 列表 */}
+      {filtered.length === 0 ? (
+        <p className="text-[var(--text-secondary)] py-8 text-center">
+          暂无{STATUS_LABELS[filter] ?? ""}报名
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((r) => (
+            <Card key={r.id} className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                {/* 左侧：用户信息 */}
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">{r.steamName ?? r.email}</span>
+                    <Badge variant="outline" className={STATUS_STYLES[r.status]}>
+                      {STATUS_LABELS[r.status]}
+                    </Badge>
+                    {r.willingToBeCaptain && (
+                      <Badge variant="secondary" className="text-xs">
+                        队长意向
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="text-sm text-[var(--text-secondary)] space-y-0.5">
+                    <p>
+                      位置：{positionLabel(r.primaryPosition)}（主）|{" "}
+                      {positionLabel(r.secondaryPosition)}（次）
+                    </p>
+                    <p>
+                      最高段位：{r.peakRank}（{r.peakRankSeason}）Rating {r.peakRating}
+                      {" | "}当前赛季：{r.currentSeasonPeakRank} Rating {r.currentRating}
+                    </p>
+                    <p>
+                      {r.email}
+                      {r.qq && ` | QQ: ${r.qq}`}
+                      {r.studentId && ` | 学号: ${r.studentId}`}
+                    </p>
+                    {r.steam64 && (
+                      <p>
+                        Steam64: {r.steam64}
+                        {r.steamProfileUrl && (
+                          <>
+                            {" | "}
+                            <a
+                              href={r.steamProfileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline hover:text-[var(--text-primary)]"
+                            >
+                              Steam 主页
+                            </a>
+                          </>
+                        )}
+                      </p>
+                    )}
+                    {r.gameplayStyle && <p>风格：{r.gameplayStyle}</p>}
+                    {r.competitionHistory && <p>比赛经历：{r.competitionHistory}</p>}
+                    {r.notes && <p>备注：{r.notes}</p>}
+                  </div>
+
+                  {/* 截图链接 */}
+                  {r.screenshotUrls.length > 0 && (
+                    <div className="flex gap-2 mt-1 flex-wrap">
+                      {r.screenshotUrls.map((url, i) => (
+                        <a
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                          截图 {i + 1}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 右侧：操作按钮 */}
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  {r.status === "pending" && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "approved")}
+                      >
+                        通过
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "waitlisted")}
+                      >
+                        等待
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "rejected")}
+                      >
+                        拒绝
+                      </Button>
+                    </>
+                  )}
+                  {r.status === "waitlisted" && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "approved")}
+                      >
+                        通过
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "rejected")}
+                      >
+                        拒绝
+                      </Button>
+                    </>
+                  )}
+                  {r.status === "approved" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={isPending}
+                      onClick={() => handleReview(r.id, "rejected")}
+                    >
+                      撤销通过
+                    </Button>
+                  )}
+                  {r.status === "rejected" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isPending}
+                      onClick={() => handleReview(r.id, "approved")}
+                    >
+                      改为通过
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

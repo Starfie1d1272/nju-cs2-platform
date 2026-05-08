@@ -1,9 +1,17 @@
-// TODO: admin login — invite code + password, iron-session cookie
+import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
+
 export default function AdminLoginPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-md">
-      <h1 className="text-3xl font-bold mb-8">管理员登录</h1>
-      <p className="text-[var(--text-secondary)]">登录表单加载中...</p>
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold">管理员登录</h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            请输入邀请码和密码以访问管理后台
+          </p>
+        </div>
+        <AdminLoginForm />
+      </div>
     </div>
   );
 }

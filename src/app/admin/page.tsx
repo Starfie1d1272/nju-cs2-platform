@@ -1,0 +1,52 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { db } from "@/db/client";
+import { seasons } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { checkAdminSession } from "@/lib/auth/session";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+
+export default async function AdminDashboardPage() {
+  const admin = await checkAdminSession();
+  if (!admin) redirect("/admin/login");
+
+  const allSeasons = await db
+    .select()
+    .from(seasons)
+    .orderBy(seasons.createdAt);
+
+  return (
+    <div className="min-h-screen">
+      <div className="border-b border-[var(--border)] bg-[var(--surface)]/50">
+        <div className="container mx-auto px-4 h-12 flex items-center gap-6 text-sm">
+          <span className="font-semibold">管理后台</span>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 className="text-2xl font-bold mb-6">赛季列表</h1>
+
+        {allSeasons.length === 0 ? (
+          <p className="text-[var(--text-secondary)]">暂无赛季数据</p>
+        ) : (
+          <div className="space-y-3">
+            {allSeasons.map((s) => (
+              <Link key={s.id} href={`/admin/${s.slug}/registrations`}>
+                <Card className="p-4 hover:bg-[var(--surface)] transition-colors cursor-pointer flex items-center justify-between">
+                  <div>
+                    <span className="font-medium">{s.name}</span>
+                    <span className="text-sm text-[var(--text-secondary)] ml-2">
+                      {s.slug}
+                    </span>
+                  </div>
+                  <Badge variant="outline">{s.status}</Badge>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

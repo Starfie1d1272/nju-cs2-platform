@@ -16,6 +16,35 @@
 
   /* Radius */
   --radius: 0.5rem;
+
+  /* shadcn CSS variable mappings (dark theme) */
+  --background: 216 28% 7%;
+  --foreground: 213 27% 94%;
+  --card: 215 24% 10%;
+  --card-foreground: 213 27% 94%;
+  --popover: 215 24% 10%;
+  --popover-foreground: 213 27% 94%;
+  --primary: 213 27% 94%;
+  --primary-foreground: 216 28% 7%;
+  --secondary: 215 20% 14%;
+  --secondary-foreground: 213 27% 94%;
+  --muted: 215 20% 14%;
+  --muted-foreground: 215 9% 55%;
+  --accent: 215 20% 14%;
+  --accent-foreground: 213 27% 94%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 215 14% 21%;
+  --input: 215 14% 21%;
+  --ring: 213 27% 94%;
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
+
+  /* Season theme color (overridden per-season in layout) */
+  --season-primary: #f97316;
 }
 
 body {

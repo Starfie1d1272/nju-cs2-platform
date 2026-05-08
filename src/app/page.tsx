@@ -29,7 +29,7 @@ const seasons: Array<{
     kind: "选秀联赛",
     status: "registration",
     themeColor: "#f97316",
-    description: "南京大学 CS2 社群选秀联赛，120 选手 · 8 队伍 · 双败淘汰。",
+    description: "南京大学 CS2 社群选秀联赛，56 选手 · 8 队伍 · 双败淘汰。",
     schedule: "2026 年春季",
   },
 ];

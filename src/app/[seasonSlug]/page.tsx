@@ -15,7 +15,7 @@ const MOCK_SEASONS: Record<string, {
     name: "2026 NJU Rivals",
     kind: "选秀联赛",
     status: "registration",
-    description: "南京大学 CS2 社群选秀联赛，120 选手 · 8 队伍 · 双败淘汰。报名开放至 2026 春季。",
+    description: "南京大学 CS2 社群选秀联赛，56 选手 · 8 队伍 · 双败淘汰。报名开放至 2026 春季。",
     themeColor: "#f97316",
     schedule: "2026 年春季",
   },

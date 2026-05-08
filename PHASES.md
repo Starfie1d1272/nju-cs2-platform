@@ -94,9 +94,9 @@
 
 ## Phase 7 — 选秀直播间（围观）
 
-- [ ] `draftState` + `draftPicks` Realtime 订阅
-- [ ] `/[seasonSlug]/draft` 围观页：8 队网格 + 倒计时 + 剩余选手池
-- [ ] 已选 / 未选 / 当前轮次高亮
+- [x] `draftState` + `draftPicks` Realtime 订阅（`DraftLiveRoom` 订阅两张表，10 秒轮询兜底）
+- [x] `/[seasonSlug]/draft` 围观页：8 队网格 + 倒计时 + 剩余选手池（`DraftLiveRoom` / `TeamDraftGrid` / `PlayerPool` / `DraftCountdown`）
+- [x] 已选 / 当前轮次高亮
 - [ ] 手机端响应式布局
 
 ---

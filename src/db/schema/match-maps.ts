@@ -1,4 +1,5 @@
-import { pgTable, uuid, integer, text, timestamp, pgEnum, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, integer, text, timestamp, pgEnum, unique, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { matches } from "./matches";
 import { teams } from "./teams";
 
@@ -42,6 +43,11 @@ export const matchMaps = pgTable(
   (t) => ({
     // 一场比赛内 mapOrder 唯一
     uniqueMatchOrder: unique().on(t.matchId, t.mapOrder),
+    // mapOrder 在 1-5 之间（BO5 上限）
+    mapOrderRange: check("match_maps_order_range", sql`${t.mapOrder} >= 1 AND ${t.mapOrder} <= 5`),
+    // 单图比分非负（无上限，兼容加时赛）
+    scoreANonNeg: check("match_maps_score_a_nonneg", sql`${t.scoreA} IS NULL OR ${t.scoreA} >= 0`),
+    scoreBNonNeg: check("match_maps_score_b_nonneg", sql`${t.scoreB} IS NULL OR ${t.scoreB} >= 0`),
   })
 );
 

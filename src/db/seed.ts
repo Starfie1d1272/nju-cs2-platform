@@ -110,7 +110,7 @@ export async function seed() {
         userRows.push({
           email: `seed-p${String(idx).padStart(2, "0")}@rivalhu.b`,
           steamName: `${TEAM_NAMES[t]}_${TEAM_POSITIONS[p].toUpperCase()}_${idx}`,
-          perfectId: `PW${100000 + idx}`,
+          perfectName: `${TEAM_NAMES[t]}_${TEAM_POSITIONS[p].toUpperCase()}`,
         });
       }
     }

@@ -62,7 +62,7 @@ export async function submitRegistration(input: RegistrationFormData) {
       steam64: data.steam64,
       qq: data.qq,
       studentId: data.studentId,
-      perfectId: data.perfectId,
+      perfectName: data.perfectName,
       steamName: data.steamName,
       steamProfileUrl: data.steamProfileUrl,
     };

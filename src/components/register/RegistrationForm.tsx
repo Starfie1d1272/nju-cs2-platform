@@ -163,13 +163,13 @@ export function RegistrationForm({
             </div>
           </div>
 
-          {/* 完美 ID */}
+          {/* 完美昵称 */}
           <div>
-            <Label htmlFor="perfectId" className="text-[var(--text-secondary)] mb-1.5 block">
-              完美平台 ID <Required />
+            <Label htmlFor="perfectName" className="text-[var(--text-secondary)] mb-1.5 block">
+              完美平台昵称 <Required />
             </Label>
-            <Input id="perfectId" placeholder="完美对战平台 ID" className={inputCls} {...register("perfectId")} />
-            <FieldError name="perfectId" />
+            <Input id="perfectName" placeholder="完美对战平台昵称" className={inputCls} {...register("perfectName")} />
+            <FieldError name="perfectName" />
           </div>
 
           {/* Steam 昵称 + Steam64 */}

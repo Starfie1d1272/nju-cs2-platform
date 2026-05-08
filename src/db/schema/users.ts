@@ -16,7 +16,7 @@ export const users = pgTable("users", {
   // 基础信息（跨赛季持久）
   studentId: text("student_id"),          // 学号，毕业生填"毕业年份+学院"
   qq: text("qq"),
-  perfectId: text("perfect_id"),          // 完美平台 ID
+  perfectName: text("perfect_name"),       // 完美平台昵称
   steamName: text("steam_name"),          // Steam 昵称
   steam64: text("steam64"),               // Steam 64 位 ID
   steamProfileUrl: text("steam_profile_url"), // Steam 个人资料链接

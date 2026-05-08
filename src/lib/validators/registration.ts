@@ -17,6 +17,12 @@ export const RANK_LABELS = REGISTRATION_DEFAULTS.ranks.labels;
 // ── 每位置报名上限 ──────────────────────────────────
 export const MAX_PER_POSITION = REGISTRATION_DEFAULTS.maxPerPosition;
 
+// ── 报名段位门槛（满足其一即可）──────────────────────
+// 当前赛季最高段位 ≥ A，或历史最高段位 ≥ A+
+export const RANK_ORDER = REGISTRATION_DEFAULTS.ranks.values;
+const RANK_IDX_A   = RANK_ORDER.indexOf("A");    // 7
+const RANK_IDX_A_PLUS = RANK_ORDER.indexOf("A+"); // 8
+
 // ── 验证 schema ──────────────────────────────────────
 export const registrationSchema = z
   .object({
@@ -160,7 +166,18 @@ export const registrationSchema = z
   .refine((data) => data.secondaryPosition !== data.primaryPosition, {
     message: "次选位置不能与主选位置相同",
     path: ["secondaryPosition"],
-  });
+  })
+  .refine(
+    (data) => {
+      const currentIdx = RANK_ORDER.indexOf(data.currentSeasonPeakRank as typeof RANK_ORDER[number]);
+      const peakIdx    = RANK_ORDER.indexOf(data.peakRank as typeof RANK_ORDER[number]);
+      return currentIdx >= RANK_IDX_A || peakIdx >= RANK_IDX_A_PLUS;
+    },
+    {
+      message: "报名资格：当前赛季最高段位需达到 A，或历史最高段位需达到 A+",
+      path: ["currentSeasonPeakRank"],
+    },
+  );
 
 // ── 导出类型 ─────────────────────────────────────────
 export type RegistrationFormData = z.infer<typeof registrationSchema>;

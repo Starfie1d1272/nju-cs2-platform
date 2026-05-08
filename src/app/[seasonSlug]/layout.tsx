@@ -1,11 +1,10 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { eq } from "drizzle-orm";
+import { db } from "@/db/client";
+import { seasons } from "@/db/schema";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { hexToRgbString } from "@/lib/utils/color";
-
-// Mock season data — replaced with DB query in Phase 4+
-const MOCK_SEASONS: Record<string, { name: string; themeColor: string }> = {
-  "2026-nju-rivals": { name: "2026 NJU Rivals", themeColor: "#f97316" },
-};
 
 interface SeasonLayoutProps {
   children: React.ReactNode;
@@ -14,7 +13,9 @@ interface SeasonLayoutProps {
 
 export async function generateMetadata({ params }: SeasonLayoutProps): Promise<Metadata> {
   const { seasonSlug } = await params;
-  const season = MOCK_SEASONS[seasonSlug];
+  const season = await db.query.seasons.findFirst({
+    where: eq(seasons.slug, seasonSlug),
+  });
   return {
     title: season?.name ?? seasonSlug,
   };
@@ -22,8 +23,14 @@ export async function generateMetadata({ params }: SeasonLayoutProps): Promise<M
 
 export default async function SeasonLayout({ children, params }: SeasonLayoutProps) {
   const { seasonSlug } = await params;
-  const season = MOCK_SEASONS[seasonSlug];
-  const themeColor = season?.themeColor ?? "#f97316";
+
+  const season = await db.query.seasons.findFirst({
+    where: eq(seasons.slug, seasonSlug),
+  });
+
+  if (!season) notFound();
+
+  const themeColor = season.themeColor ?? "#f97316";
 
   return (
     <div
@@ -37,7 +44,7 @@ export default async function SeasonLayout({ children, params }: SeasonLayoutPro
         <Breadcrumb
           items={[
             { label: "首页", href: "/" },
-            { label: season?.name ?? seasonSlug },
+            { label: season.name },
           ]}
         />
       </div>

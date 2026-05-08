@@ -67,8 +67,8 @@ export const REGISTRATION_DEFAULTS = {
   /** 每个主选位置报名人数上限 */
   maxPerPosition: 15,
 
-  /** 天梯截图数量 */
-  screenshotCount: 5,
+  /** 天梯截图：单个 NJUBox 分享链接 */
+  screenshotCount: 1,
 } as const;
 
 export type PositionValue =

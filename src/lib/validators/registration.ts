@@ -108,29 +108,13 @@ export const registrationSchema = z
       .max(50000, "WE 最大 50000")
       .optional(),
 
-    // ── 截图（5 张天梯近期对局 URL）──
-    // 截图数量由 REGISTRATION_DEFAULTS.screenshotCount 控制，
-    // 但 Zod schema 仍需显式列出每个字段（Zod 不支持动态 key 推导）
-    screenshotUrl1: z
+    // ── 天梯截图（NJUBox 分享链接）──
+    screenshotUrl: z
       .string()
-      .min(1, "请填写第 1 张截图链接")
-      .url("请输入有效的链接"),
-    screenshotUrl2: z
-      .string()
-      .min(1, "请填写第 2 张截图链接")
-      .url("请输入有效的链接"),
-    screenshotUrl3: z
-      .string()
-      .min(1, "请填写第 3 张截图链接")
-      .url("请输入有效的链接"),
-    screenshotUrl4: z
-      .string()
-      .min(1, "请填写第 4 张截图链接")
-      .url("请输入有效的链接"),
-    screenshotUrl5: z
-      .string()
-      .min(1, "请填写第 5 张截图链接")
-      .url("请输入有效的链接"),
+      .min(1, "请填写 NJUBox 分享链接")
+      .refine((v) => /^https?:\/\/.+/.test(v), {
+        message: "请输入有效的链接（以 http:// 或 https:// 开头）",
+      }),
 
     // ── 风格与经历 ──
     gameplayStyle: z

@@ -418,28 +418,32 @@ export function RegistrationForm({
       {/* ═══════════════════════════════════════ 天梯截图 ═══ */}
       <section>
         <SectionTitle>近两周天梯截图</SectionTitle>
-        <p className="text-sm text-[var(--text-secondary)] mb-4">
-          请提供近两周 5 场天梯对局的截图链接（建议上传至图床后粘贴 URL）
-        </p>
-        <div className="space-y-3">
-          {([1, 2, 3, 4, 5] as const).map((n) => {
-            const fieldName = `screenshotUrl${n}` as const;
-            return (
-              <div key={n}>
-                <Label htmlFor={fieldName} className="text-[var(--text-secondary)] mb-1.5 block">
-                  第 {n} 张截图 <Required />
-                </Label>
-                <Input
-                  id={fieldName}
-                  type="url"
-                  placeholder="https://..."
-                  className={inputCls}
-                  {...register(fieldName)}
-                />
-                <FieldError name={fieldName} />
-              </div>
-            );
-          })}
+        <div className="rounded-md bg-[var(--bg-overlay)] border border-[var(--border)] p-4 mb-4">
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+            请将近两周 5 场天梯对局截图上传至
+            <a
+              href="https://box.nju.edu.cn"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[var(--season-primary)] hover:underline mx-1"
+            >
+              NJUBox
+            </a>
+            并获取分享链接，粘贴到下方。
+          </p>
+        </div>
+        <div>
+          <Label htmlFor="screenshotUrl" className="text-[var(--text-secondary)] mb-1.5 block">
+            NJUBox 分享链接 <Required />
+          </Label>
+          <Input
+            id="screenshotUrl"
+            type="url"
+            placeholder="https://box.nju.edu.cn/d/..."
+            className={inputCls}
+            {...register("screenshotUrl")}
+          />
+          <FieldError name="screenshotUrl" />
         </div>
       </section>
 

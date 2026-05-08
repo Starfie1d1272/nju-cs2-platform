@@ -106,13 +106,7 @@ export async function submitRegistration(input: RegistrationFormData) {
     }
 
     // 6. 插入报名记录
-    const screenshotUrls = [
-      data.screenshotUrl1,
-      data.screenshotUrl2,
-      data.screenshotUrl3,
-      data.screenshotUrl4,
-      data.screenshotUrl5,
-    ];
+    const screenshotUrls = [data.screenshotUrl];
 
     const [registration] = await db
       .insert(seasonRegistrations)

@@ -9,7 +9,7 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="min-h-screen">
-      <AdminNav current="修改密码" username={admin.adminUsername} />
+      <AdminNav username={admin.adminUsername} />
 
       <div className="container mx-auto px-4 py-8 max-w-md">
         <h1 className="text-2xl font-bold mb-2">修改密码</h1>

@@ -19,7 +19,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <AdminNav current="赛季列表" username={admin.adminUsername} />
+      <AdminNav username={admin.adminUsername} />
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="flex items-center justify-between mb-6">

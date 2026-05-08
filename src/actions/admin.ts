@@ -72,22 +72,6 @@ function validateTransition(
   }
 }
 
-async function checkPositionAvailability(seasonId: string, primaryPosition: string) {
-  const [posCount] = await db
-    .select({ count: count() })
-    .from(seasonRegistrations)
-    .where(
-      and(
-        eq(seasonRegistrations.seasonId, seasonId),
-        eq(seasonRegistrations.primaryPosition, primaryPosition),
-        inArray(seasonRegistrations.status, ["pending", "approved"]),
-      ),
-    );
-  if (Number(posCount?.count ?? 0) >= MAX_PER_POSITION) {
-    throw new AppError(ErrorCode.POSITION_FULL, ERROR_MESSAGES.POSITION_FULL);
-  }
-}
-
 // ── 管理员登录 ──────────────────────────────────────────
 
 export async function adminLogin(username: string, password: string) {
@@ -216,6 +200,7 @@ export async function reviewRegistration(input: ReviewInput) {
       validateTransition(reg.status as RegistrationStatus, targetStatus, season.status);
 
       if (targetStatus === "approved") {
+        // 只统计已通过的，不含自身（自身是 pending/waitlisted，未算入上限）
         const [posCount] = await tx
           .select({ count: count() })
           .from(seasonRegistrations)
@@ -223,7 +208,7 @@ export async function reviewRegistration(input: ReviewInput) {
             and(
               eq(seasonRegistrations.seasonId, reg.seasonId),
               eq(seasonRegistrations.primaryPosition, reg.primaryPosition),
-              inArray(seasonRegistrations.status, ["pending", "approved"]),
+              eq(seasonRegistrations.status, "approved"),
             ),
           );
         if (Number(posCount?.count ?? 0) >= MAX_PER_POSITION) {
@@ -283,6 +268,10 @@ export async function createInviteCode(input: {
 }) {
   const admin = await requireAdmin();
   const { role = "admin", maxUses = 1, expiresInHours } = input;
+
+  if (role === "super_admin" && admin.adminRole !== "super_admin") {
+    return fail({ code: ErrorCode.FORBIDDEN, message: "仅超级管理员可创建 super_admin 邀请码" });
+  }
   const code = randomBytes(8).toString("hex");
 
   const expiresAt = expiresInHours
@@ -291,7 +280,7 @@ export async function createInviteCode(input: {
 
   await db.insert(adminInvites).values({
     code,
-    createdBy: admin.adminId!,
+    createdBy: admin.adminId,
     role,
     maxUses,
     expiresAt,
@@ -372,6 +361,10 @@ export async function deactivateAdminUser(adminId: string) {
     return fail({ code: ErrorCode.VALIDATION_FAILED, message: "不能停用自己的账户" });
   }
 
+  if (admin.adminRole !== "super_admin") {
+    return fail({ code: ErrorCode.FORBIDDEN, message: "仅超级管理员可执行此操作" });
+  }
+
   const target = await db.query.adminUsers.findFirst({
     where: eq(adminUsers.id, adminId),
   });
@@ -380,9 +373,6 @@ export async function deactivateAdminUser(adminId: string) {
   }
   if (target.username === "RivalHub_root") {
     return fail({ code: ErrorCode.FORBIDDEN, message: "不能停用根管理员" });
-  }
-  if (admin.adminRole !== "super_admin") {
-    return fail({ code: ErrorCode.FORBIDDEN, message: "仅超级管理员可执行此操作" });
   }
 
   await db

@@ -24,11 +24,16 @@ async function main() {
      RETURNING id`,
     ["RivalHub_root", pwHash],
   );
-  console.log(
-    res.rows.length > 0
-      ? "Created root admin: RivalHub_root"
-      : "Root admin already exists",
-  );
+  if (res.rows.length > 0) {
+    console.log("Created root admin: RivalHub_root");
+    console.warn(
+      "\n⚠️  根管理员已创建，请立即登录后修改默认密码！\n" +
+      "   用户名: RivalHub_root\n" +
+      "   初始密码: RivalHub_password\n"
+    );
+  } else {
+    console.log("Root admin already exists");
+  }
 
   // Insert seasons
   for (const season of [

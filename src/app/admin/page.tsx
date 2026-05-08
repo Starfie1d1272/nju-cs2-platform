@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { checkAdminSession } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboardPage() {
   const admin = await checkAdminSession();
@@ -19,13 +19,37 @@ export default async function AdminDashboardPage() {
   return (
     <div className="min-h-screen">
       <div className="border-b border-[var(--border)] bg-[var(--surface)]/50">
-        <div className="container mx-auto px-4 h-12 flex items-center gap-6 text-sm">
-          <span className="font-semibold">管理后台</span>
+        <div className="container mx-auto px-4 h-12 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-6">
+            <span className="font-semibold">管理后台</span>
+            <nav className="flex items-center gap-4 text-[var(--text-secondary)]">
+              <span className="text-[var(--text-primary)]">赛季列表</span>
+              <Link
+                href="/admin/invites"
+                className="hover:text-[var(--text-primary)] transition-colors"
+              >
+                邀请码
+              </Link>
+            </nav>
+          </div>
+          <span className="text-[var(--text-secondary)]">
+            {admin.adminUsername}
+            {admin.adminRole === "super_admin" && (
+              <Badge variant="outline" className="ml-2 text-xs">超管</Badge>
+            )}
+          </span>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6">赛季列表</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">赛季列表</h1>
+          <Link href="/admin/invites">
+            <Button variant="outline" size="sm">
+              管理邀请码
+            </Button>
+          </Link>
+        </div>
 
         {allSeasons.length === 0 ? (
           <p className="text-[var(--text-secondary)]">暂无赛季数据</p>

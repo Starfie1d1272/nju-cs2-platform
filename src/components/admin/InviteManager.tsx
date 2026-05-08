@@ -16,6 +16,7 @@ interface InviteRow {
   role: "super_admin" | "admin";
   maxUses: number;
   usedCount: number;
+  usedByUsernames: string[];
   expiresAt: string | null;
   isActive: boolean;
   createdAt: string;
@@ -43,7 +44,6 @@ export function InviteManager({
         toast.error(result.error.message);
       } else {
         toast.success(`邀请码已生成：${result.data.code}`);
-        // 客户端即时追加新行
         setInvites((prev) => [
           {
             id: "",
@@ -51,6 +51,7 @@ export function InviteManager({
             role: result.data.role,
             maxUses: result.data.maxUses,
             usedCount: 0,
+            usedByUsernames: [],
             expiresAt: result.data.expiresAt,
             isActive: true,
             createdAt: new Date().toISOString(),
@@ -150,6 +151,9 @@ export function InviteManager({
                   <span>
                     使用 {inv.usedCount}/{inv.maxUses}
                   </span>
+                  {inv.usedByUsernames.length > 0 && (
+                    <span>使用者：{inv.usedByUsernames.join("、")}</span>
+                  )}
                   {inv.expiresAt && (
                     <span>
                       过期：{new Date(inv.expiresAt).toLocaleDateString("zh-CN")}

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
-import { eq, and, count, inArray, desc } from "drizzle-orm";
+import { eq, and, count, inArray, desc, ne, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, seasonRegistrations, auditLogs, adminUsers, adminInvites } from "@/db/schema";
 import { ok, fail } from "@/types/action";
@@ -99,6 +99,10 @@ export async function adminLogin(username: string, password: string) {
     return fail({ code: ErrorCode.UNAUTHORIZED, message: "用户名或密码错误" });
   }
 
+  if (!user.isActive) {
+    return fail({ code: ErrorCode.UNAUTHORIZED, message: "该账户已被停用" });
+  }
+
   if (!verifyPassword(password, user.passwordHash)) {
     return fail({ code: ErrorCode.UNAUTHORIZED, message: "用户名或密码错误" });
   }
@@ -162,12 +166,13 @@ export async function registerAdmin(
     })
     .returning();
 
-  // 更新邀请码使用次数
+  // 更新邀请码使用次数 + 记录使用人
   await db
     .update(adminInvites)
     .set({
       usedCount: invite.usedCount + 1,
       isActive: invite.usedCount + 1 >= invite.maxUses ? false : invite.isActive,
+      usedByUsernames: sql`array_append(${adminInvites.usedByUsernames}, ${username})`,
     })
     .where(eq(adminInvites.id, invite.id));
 
@@ -312,4 +317,96 @@ export async function getInviteCodes() {
     .limit(50);
 
   return ok(invites);
+}
+
+// ── 修改密码 ──────────────────────────────────────────
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const admin = await requireAdmin();
+
+  if (!newPassword || newPassword.length < 8) {
+    return fail({ code: ErrorCode.VALIDATION_FAILED, message: "新密码至少 8 个字符" });
+  }
+
+  const user = await db.query.adminUsers.findFirst({
+    where: eq(adminUsers.id, admin.adminId!),
+  });
+  if (!user) {
+    return fail({ code: ErrorCode.NOT_FOUND, message: "管理员账户不存在" });
+  }
+
+  if (!verifyPassword(currentPassword, user.passwordHash)) {
+    return fail({ code: ErrorCode.VALIDATION_FAILED, message: "当前密码错误" });
+  }
+
+  await db
+    .update(adminUsers)
+    .set({
+      passwordHash: hashPassword(newPassword),
+      updatedAt: new Date(),
+    })
+    .where(eq(adminUsers.id, user.id));
+
+  return ok(undefined);
+}
+
+// ── 管理员列表 ────────────────────────────────────────
+
+export async function listAdminUsers() {
+  await requireAdmin();
+
+  const rows = await db
+    .select()
+    .from(adminUsers)
+    .orderBy(adminUsers.createdAt);
+
+  return ok(rows);
+}
+
+export async function deactivateAdminUser(adminId: string) {
+  const admin = await requireAdmin();
+
+  // 不能停用自己的账户
+  if (admin.adminId === adminId) {
+    return fail({ code: ErrorCode.VALIDATION_FAILED, message: "不能停用自己的账户" });
+  }
+
+  // 不能停用根管理员
+  const target = await db.query.adminUsers.findFirst({
+    where: eq(adminUsers.id, adminId),
+  });
+  if (!target) {
+    return fail({ code: ErrorCode.NOT_FOUND, message: "管理员不存在" });
+  }
+  if (target.username === "RivalHub_root") {
+    return fail({ code: ErrorCode.FORBIDDEN, message: "不能停用根管理员" });
+  }
+  // 仅 super_admin 可停用其他管理员
+  if (admin.adminRole !== "super_admin") {
+    return fail({ code: ErrorCode.FORBIDDEN, message: "仅超级管理员可执行此操作" });
+  }
+
+  await db
+    .update(adminUsers)
+    .set({ isActive: false, updatedAt: new Date() })
+    .where(eq(adminUsers.id, adminId));
+
+  revalidatePath("/admin/users");
+  return ok(undefined);
+}
+
+export async function reactivateAdminUser(adminId: string) {
+  const admin = await requireAdmin();
+
+  if (admin.adminRole !== "super_admin") {
+    return fail({ code: ErrorCode.FORBIDDEN, message: "仅超级管理员可执行此操作" });
+  }
+
+  await db
+    .update(adminUsers)
+    .set({ isActive: true, updatedAt: new Date() })
+    .where(eq(adminUsers.id, adminId));
+
+  revalidatePath("/admin/users");
+  return ok(undefined);
 }

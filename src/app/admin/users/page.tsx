@@ -1,26 +1,23 @@
 import { redirect } from "next/navigation";
-import { desc } from "drizzle-orm";
-import { db } from "@/db/client";
-import { adminInvites } from "@/db/schema";
-import { checkAdminSession } from "@/lib/auth/session";
-import { InviteManager } from "@/components/admin/InviteManager";
 import Link from "next/link";
+import { db } from "@/db/client";
+import { adminUsers } from "@/db/schema";
+import { checkAdminSession } from "@/lib/auth/session";
+import { AdminUserList } from "@/components/admin/AdminUserList";
 
-export default async function AdminInvitesPage() {
+export default async function AdminUsersPage() {
   const admin = await checkAdminSession();
   if (!admin) redirect("/admin/login");
 
   const rows = await db
     .select()
-    .from(adminInvites)
-    .orderBy(desc(adminInvites.createdAt))
-    .limit(50);
+    .from(adminUsers)
+    .orderBy(adminUsers.createdAt);
 
-  const invites = rows.map((r) => ({
-    ...r,
-    usedByUsernames: r.usedByUsernames ?? [],
-    expiresAt: r.expiresAt?.toISOString() ?? null,
-    createdAt: r.createdAt?.toISOString() ?? "",
+  const users = rows.map((u) => ({
+    ...u,
+    createdAt: u.createdAt?.toISOString() ?? "",
+    updatedAt: u.updatedAt?.toISOString() ?? "",
   }));
 
   return (
@@ -34,20 +31,20 @@ export default async function AdminInvitesPage() {
             管理后台
           </Link>
           <nav className="flex items-center gap-4 text-[var(--text-secondary)]">
-            <Link
-              href="/admin"
-              className="hover:text-[var(--text-primary)] transition-colors"
-            >
+            <Link href="/admin" className="hover:text-[var(--text-primary)] transition-colors">
               赛季列表
             </Link>
-            <span className="text-[var(--text-primary)]">邀请码</span>
+            <Link href="/admin/invites" className="hover:text-[var(--text-primary)] transition-colors">
+              邀请码
+            </Link>
+            <span className="text-[var(--text-primary)]">管理员</span>
           </nav>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <h1 className="text-2xl font-bold mb-6">邀请码管理</h1>
-        <InviteManager invites={invites} />
+        <h1 className="text-2xl font-bold mb-6">管理员列表</h1>
+        <AdminUserList users={users} currentAdminId={admin.adminId} />
       </div>
     </div>
   );

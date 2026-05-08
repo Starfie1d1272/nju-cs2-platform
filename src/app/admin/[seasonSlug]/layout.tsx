@@ -22,18 +22,9 @@ export default async function AdminSeasonLayout({
             管理后台
           </Link>
           <nav className="flex items-center gap-4 text-[var(--text-secondary)]">
-            <Link
-              href="/admin"
-              className="hover:text-[var(--text-primary)] transition-colors"
-            >
-              赛季列表
-            </Link>
-            <Link
-              href="/admin/invites"
-              className="hover:text-[var(--text-primary)] transition-colors"
-            >
-              邀请码
-            </Link>
+            <Link href="/admin" className="hover:text-[var(--text-primary)] transition-colors">赛季列表</Link>
+            <Link href="/admin/invites" className="hover:text-[var(--text-primary)] transition-colors">邀请码</Link>
+            <Link href="/admin/users" className="hover:text-[var(--text-primary)] transition-colors">管理员</Link>
           </nav>
         </div>
       </div>

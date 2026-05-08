@@ -24,12 +24,9 @@ export default async function AdminDashboardPage() {
             <span className="font-semibold">管理后台</span>
             <nav className="flex items-center gap-4 text-[var(--text-secondary)]">
               <span className="text-[var(--text-primary)]">赛季列表</span>
-              <Link
-                href="/admin/invites"
-                className="hover:text-[var(--text-primary)] transition-colors"
-              >
-                邀请码
-              </Link>
+              <Link href="/admin/invites" className="hover:text-[var(--text-primary)] transition-colors">邀请码</Link>
+              <Link href="/admin/users" className="hover:text-[var(--text-primary)] transition-colors">管理员</Link>
+              <Link href="/admin/settings" className="hover:text-[var(--text-primary)] transition-colors">修改密码</Link>
             </nav>
           </div>
           <span className="text-[var(--text-secondary)]">

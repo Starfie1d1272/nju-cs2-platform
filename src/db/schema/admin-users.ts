@@ -8,6 +8,7 @@ export const adminUsers = pgTable("admin_users", {
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: adminRoleEnum("role").notNull().default("admin"),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

@@ -8,8 +8,12 @@ erDiagram
     uuid id PK
     uuid auth_id UK "Supabase auth.users"
     text email UK
-    text steam64
+    text student_id "学号；毕业生填毕业年份+学院"
     text qq
+    text perfect_id "完美平台 ID"
+    text steam_name "Steam 昵称"
+    text steam64 "Steam 64-bit ID"
+    text steam_profile_url "Steam 个人资料链接"
     timestamp created_at
     timestamp updated_at
   }

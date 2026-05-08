@@ -22,24 +22,24 @@
 
 ## Phase 2 — 数据层
 
-- [ ] 创建 Supabase 项目（Postgres + Auth + Storage）
-- [ ] `pnpm db:push` 推送所有表（10 张）
-- [ ] RLS：默认拒绝所有，按表逐条开放最小权限
-- [ ] Storage bucket：`registration-screenshots`（私有，需 admin 可查）
-- [ ] 运行种子脚本：两个示例赛季占位行
-- [ ] 验证 Drizzle Studio 可查询
+- [x] 创建 Supabase 项目（Postgres + Auth + Storage）
+- [x] `pnpm db:push` / 直接 SQL 迁移推送所有表
+- [ ] RLS：默认拒绝所有，按表逐条开放最小权限（暂缓，Phase 12 前完成）
+- [ ] Storage bucket：`registration-screenshots`（暂缓；截图改用 NJUBox 分享链接）
+- [x] 运行种子脚本：示例赛季占位行
+- [x] 验证 Drizzle Studio 可查询
 
 ---
 
-## Phase 3 — 全局 UI
+## Phase 3 — 全局 UI ✅
 
-- [ ] shadcn 基础组件安装（Button / Card / Badge / Input / Select / Toast / Dialog）
-- [ ] Header：多赛季导航（Active 赛季 + draft 状态赛季显示"敬请期待"）
-- [ ] Footer：品牌信息、Github 链接
-- [ ] 首页：活跃赛季检测 + 跳转
-- [ ] `/seasons`：历史赛季归档
-- [ ] 赛季 layout：注入 `theme_color` CSS variable
-- [ ] Tailwind tokens 落地（见 `docs/ui-tokens.md`）
+- [x] shadcn 基础组件安装（Button / Card / Badge / Input / Select / Toast / Dialog）
+- [x] Header：多赛季导航（Active 赛季 + draft 状态赛季显示"敬请期待"）
+- [x] Footer：品牌信息、Github 链接
+- [x] 首页：活跃赛季检测 + 跳转
+- [x] `/seasons`：历史赛季归档
+- [x] 赛季 layout：注入 `theme_color` CSS variable
+- [x] Tailwind tokens 落地（见 `docs/ui-tokens.md`）
 
 ---
 
@@ -55,7 +55,7 @@
 
 ---
 
-## Phase 5 — 管理审核
+## Phase 5 — 管理审核 ✅
 
 - [x] iron-session 接入（`getAdminSession` / `requireAdmin` + session 含 adminId/username/role）
 - [x] `admin_users` + `admin_invites` 表（scrypt 密码哈希 + 邀请码追踪）

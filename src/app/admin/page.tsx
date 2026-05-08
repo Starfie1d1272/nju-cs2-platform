@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { checkAdminSession } from "@/lib/auth/session";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,25 +19,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="border-b border-[var(--border)] bg-[var(--surface)]/50">
-        <div className="container mx-auto px-4 h-12 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-6">
-            <span className="font-semibold">管理后台</span>
-            <nav className="flex items-center gap-4 text-[var(--text-secondary)]">
-              <span className="text-[var(--text-primary)]">赛季列表</span>
-              <Link href="/admin/invites" className="hover:text-[var(--text-primary)] transition-colors">邀请码</Link>
-              <Link href="/admin/users" className="hover:text-[var(--text-primary)] transition-colors">管理员</Link>
-              <Link href="/admin/settings" className="hover:text-[var(--text-primary)] transition-colors">修改密码</Link>
-            </nav>
-          </div>
-          <span className="text-[var(--text-secondary)]">
-            {admin.adminUsername}
-            {admin.adminRole === "super_admin" && (
-              <Badge variant="outline" className="ml-2 text-xs">超管</Badge>
-            )}
-          </span>
-        </div>
-      </div>
+      <AdminNav current="赛季列表" username={admin.adminUsername} />
 
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="flex items-center justify-between mb-6">

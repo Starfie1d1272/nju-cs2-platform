@@ -12,7 +12,7 @@ import { seed } from "../src/db/seed";
 
 // 确保 iron-session 密钥存在（用于管理员 cookie 加密）
 function ensureSessionSecret() {
-  const envPath = resolve(__dirname, "..", ".env.local");
+  const envPath = resolve(process.cwd(), ".env.local");
 
   let content = "";
   if (existsSync(envPath)) {

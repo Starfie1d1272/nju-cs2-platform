@@ -46,6 +46,8 @@ export interface UserSession {
   email: string;
   role: "user" | "season_admin" | "super_admin";
   adminSeasonIds: string[];
+  authSource: "user" | "root";
+  legacyAdminId?: string;
 }
 
 function userSessionOptions() {
@@ -71,7 +73,14 @@ export async function getUserSession(): Promise<UserSession | null> {
     userSessionOptions(),
   );
   if (!session.userId || !session.email || !session.role) return null;
-  return session as UserSession;
+  return {
+    userId: session.userId,
+    email: session.email,
+    role: session.role,
+    adminSeasonIds: session.adminSeasonIds ?? [],
+    authSource: session.authSource ?? "user",
+    legacyAdminId: session.legacyAdminId,
+  };
 }
 
 export async function createUserSession(user: UserSession): Promise<void> {
@@ -83,6 +92,8 @@ export async function createUserSession(user: UserSession): Promise<void> {
   session.email = user.email;
   session.role = user.role;
   session.adminSeasonIds = user.adminSeasonIds;
+  session.authSource = user.authSource;
+  session.legacyAdminId = user.legacyAdminId;
   await session.save();
 }
 
@@ -91,6 +102,11 @@ export async function destroyUserSession(): Promise<void> {
     await cookies(),
     userSessionOptions(),
   );
+  session.destroy();
+}
+
+export async function destroyAdminSession(): Promise<void> {
+  const session = await getAdminSession();
   session.destroy();
 }
 
@@ -103,9 +119,18 @@ function rootToUserSession(admin: AuthenticatedAdmin): UserSession {
   return {
     userId: admin.adminId,
     email: admin.adminUsername,
-    role: "super_admin",
+    role: admin.adminRole === "super_admin" ? "super_admin" : "season_admin",
     adminSeasonIds: [],
+    authSource: "root",
+    legacyAdminId: admin.adminId,
   };
+}
+
+export function auditActorId(session: UserSession): string {
+  if (session.authSource === "root") {
+    return `root:${session.legacyAdminId ?? session.userId}`;
+  }
+  return session.userId;
 }
 
 /** 任意已登录用户（含选手）。未登录则抛 UNAUTHORIZED */
@@ -130,7 +155,7 @@ export async function requireAdmin(): Promise<UserSession> {
     adminSession.isAdmin &&
     adminSession.adminId &&
     adminSession.adminUsername &&
-    adminSession.adminRole
+    adminSession.adminRole === "super_admin"
   ) {
     return rootToUserSession(adminSession as AuthenticatedAdmin);
   }
@@ -150,7 +175,7 @@ export async function requireSuperAdmin(): Promise<UserSession> {
     adminSession.isAdmin &&
     adminSession.adminId &&
     adminSession.adminUsername &&
-    adminSession.adminRole
+    adminSession.adminRole === "super_admin"
   ) {
     return rootToUserSession(adminSession as AuthenticatedAdmin);
   }
@@ -176,7 +201,7 @@ export async function requireSeasonAdmin(seasonId: string): Promise<UserSession>
     adminSession.isAdmin &&
     adminSession.adminId &&
     adminSession.adminUsername &&
-    adminSession.adminRole
+    adminSession.adminRole === "super_admin"
   ) {
     return rootToUserSession(adminSession as AuthenticatedAdmin);
   }

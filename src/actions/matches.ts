@@ -7,7 +7,7 @@ import { seasons, matches, teams, auditLogs } from "@/db/schema";
 import { ok, fail } from "@/types/action";
 import type { ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireSeasonAdmin } from "@/lib/auth/session";
 import { generateBracket, advanceMatch as bracketAdvance, seedPlayoff } from "@/lib/bracket";
 import { calculateStandings } from "@/lib/standings";
 import type { Database } from "brackets-manager";
@@ -61,7 +61,7 @@ export async function generateSchedule(
   seasonId: string
 ): Promise<ActionResult<{ matchCount: number }>> {
   try {
-    const session = await requireAdmin();
+    const session = await requireSeasonAdmin(seasonId);
     const season = await getSeasonOrThrow(seasonId);
 
     if (season.status !== "playing") {
@@ -163,7 +163,7 @@ export async function createMatch(
   format: "bo1" | "bo3" | "bo5"
 ): Promise<ActionResult<{ matchId: string }>> {
   try {
-    const session = await requireAdmin();
+    const session = await requireSeasonAdmin(seasonId);
 
     if (teamAId === teamBId) {
       throw new AppError(ErrorCode.VALIDATION_FAILED, "双方队伍不能相同");
@@ -217,8 +217,8 @@ export async function updateMatchStatus(
   nextStatus: "in_progress" | "cancelled"
 ): Promise<ActionResult<void>> {
   try {
-    const session = await requireAdmin();
     const match = await getMatchOrThrow(matchId);
+    const session = await requireSeasonAdmin(match.seasonId);
     assertMatchTransition(match.status as MatchStatus, nextStatus);
 
     await db
@@ -260,8 +260,6 @@ export async function recordMatchResult(
   scoreB: number
 ): Promise<ActionResult<void>> {
   try {
-    const session = await requireAdmin();
-
     if (!Number.isInteger(scoreA) || !Number.isInteger(scoreB) || scoreA < 0 || scoreB < 0) {
       throw new AppError(ErrorCode.MATCH_INVALID_SCORE, "比分必须为非负整数");
     }
@@ -270,6 +268,7 @@ export async function recordMatchResult(
     }
 
     const match = await getMatchOrThrow(matchId);
+    const session = await requireSeasonAdmin(match.seasonId);
     assertMatchTransition(match.status as MatchStatus, "finished");
 
     const season = await getSeasonOrThrow(match.seasonId);
@@ -362,7 +361,7 @@ export async function generatePlayoff(
   seasonId: string
 ): Promise<ActionResult<{ matchCount: number }>> {
   try {
-    const session = await requireAdmin();
+    const session = await requireSeasonAdmin(seasonId);
     const season = await getSeasonOrThrow(seasonId);
 
     if (season.status !== "playing") {

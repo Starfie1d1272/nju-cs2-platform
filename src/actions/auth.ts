@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, type SQL } from "drizzle-orm";
 import { createServiceClient } from "@/lib/auth/supabase";
 import { db } from "@/db/client";
 import { users } from "@/db/schema/users";
@@ -9,7 +9,12 @@ import { adminInvites } from "@/db/schema/admin-invites";
 import { ok, fail } from "@/types/action";
 import { ErrorCode } from "@/lib/errors";
 import type { ActionResult } from "@/types/action";
-import { requireAuth, createUserSession, destroyUserSession } from "@/lib/auth/session";
+import {
+  requireAuth,
+  createUserSession,
+  destroyAdminSession,
+  destroyUserSession,
+} from "@/lib/auth/session";
 
 export async function sendMagicLink(email: string): Promise<ActionResult<{ email: string }>> {
   if (!email || !email.includes("@")) {
@@ -21,13 +26,13 @@ export async function sendMagicLink(email: string): Promise<ActionResult<{ email
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: false, // 登录页只允许已有账号登录
+        shouldCreateUser: false,
         emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     });
 
     if (error) {
-      // Supabase 对不存在的邮箱也返回成功（防枚举），仅记录日志
+      // Supabase intentionally avoids account enumeration; keep UI response generic.
       console.warn("[sendMagicLink]", error.message);
     }
 
@@ -41,6 +46,7 @@ export async function sendMagicLink(email: string): Promise<ActionResult<{ email
 export async function logoutUser(): Promise<ActionResult<undefined>> {
   try {
     await destroyUserSession();
+    await destroyAdminSession();
     return ok(undefined);
   } catch (e) {
     console.error("[logoutUser]", e);
@@ -73,22 +79,26 @@ export async function claimInviteCode(code: string): Promise<ActionResult<{ role
       if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) {
         return fail({ code: ErrorCode.UNAUTHORIZED, message: "邀请码已过期" });
       }
+      if (invite.role === "admin" && !invite.seasonId) {
+        return fail({ code: ErrorCode.VALIDATION_FAILED, message: "赛季管理员邀请码缺少赛季范围" });
+      }
 
-      // "admin" 邀请码 → season_admin，"super_admin" → super_admin
       const newRole = invite.role === "super_admin" ? "super_admin" : "season_admin";
-
-      // 更新 users.role 和 adminSeasonIds
-      const newSeasonIds =
-        newRole === "season_admin" && invite.seasonId
-          ? sql`array_append(${users.adminSeasonIds}, ${invite.seasonId}::uuid)`
-          : undefined;
-
-      const updateSet: Record<string, unknown> = {
+      const updateSet: {
+        role: "user" | "season_admin" | "super_admin";
+        updatedAt: Date;
+        adminSeasonIds?: SQL<unknown>;
+      } = {
         role: newRole,
         updatedAt: new Date(),
       };
-      if (newSeasonIds) {
-        updateSet.adminSeasonIds = newSeasonIds;
+
+      if (newRole === "season_admin" && invite.seasonId) {
+        updateSet.adminSeasonIds = sql`(
+          SELECT ARRAY(
+            SELECT DISTINCT unnest(array_append(${users.adminSeasonIds}, ${invite.seasonId}::uuid))
+          )
+        )`;
       }
 
       const [updatedUser] = await tx
@@ -97,7 +107,6 @@ export async function claimInviteCode(code: string): Promise<ActionResult<{ role
         .where(eq(users.id, session.userId))
         .returning();
 
-      // 更新邀请码使用记录
       await tx
         .update(adminInvites)
         .set({
@@ -114,12 +123,12 @@ export async function claimInviteCode(code: string): Promise<ActionResult<{ role
 
     const { updatedUser, newRole } = result.data;
 
-    // 刷新 session（同步新 role 和 adminSeasonIds）
     await createUserSession({
       userId: updatedUser.id,
       email: updatedUser.email,
       role: updatedUser.role,
       adminSeasonIds: updatedUser.adminSeasonIds,
+      authSource: "user",
     });
 
     revalidatePath("/admin");

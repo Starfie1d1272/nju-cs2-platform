@@ -3,12 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import { db } from "@/db/client";
 import { users } from "@/db/schema/users";
 import { createUserSession } from "@/lib/auth/session";
-import { eq } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  const next = safeNextPath(searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -27,7 +26,6 @@ export async function GET(request: NextRequest) {
   const email = data.user.email;
   const authId = data.user.id;
 
-  // Upsert user 记录（按 email 查找，更新 authId；不存在则创建）
   const [user] = await db
     .insert(users)
     .values({ email, authId })
@@ -42,7 +40,13 @@ export async function GET(request: NextRequest) {
     email: user.email,
     role: user.role,
     adminSeasonIds: user.adminSeasonIds,
+    authSource: "user",
   });
 
   return NextResponse.redirect(new URL(next, request.url));
+}
+
+function safeNextPath(next: string | null): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
+  return next;
 }

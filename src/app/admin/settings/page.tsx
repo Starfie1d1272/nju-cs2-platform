@@ -39,7 +39,13 @@ export default async function AdminSettingsPage() {
         {/* 修改密码 */}
         <section className="space-y-4">
           <h2 className="text-base font-semibold text-[var(--text-primary)]">修改密码</h2>
-          <ChangePasswordForm />
+          {admin.authSource === "root" ? (
+            <ChangePasswordForm />
+          ) : (
+            <Card className="p-4 text-sm text-[var(--text-secondary)]">
+              Magic Link 登录用户无需在后台修改密码。
+            </Card>
+          )}
         </section>
 
         {/* 环境变量状态 */}

@@ -94,7 +94,7 @@ Next.js App Router (Vercel Edge / Node.js)
       → SELECT draftState WHERE seasonId FOR UPDATE  ← 行锁
       → 验证当前轮次是该队
       → 检查 clientRequestId 幂等（查 draft_picks）
-      → 检查同位置 ≤ 3 人约束
+      → 检查同位置 ≤ 2 人约束
       → INSERT draft_picks
       → UPDATE draftState (nextTeam / nextRound)
     → COMMIT

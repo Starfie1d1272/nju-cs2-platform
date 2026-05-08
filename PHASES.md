@@ -93,7 +93,7 @@
 ## Phase 8 — 选秀队长端 + 超时 Cron
 
 - [ ] `pickPlayer` Server Action（Postgres 事务 + SELECT FOR UPDATE + 幂等键）
-- [ ] 同位置 ≤ 3 人约束校验
+- [ ] 同位置 ≤ 2 人约束校验
 - [ ] `/[seasonSlug]/draft/captain` 队长选秀面板（仅当前轮队长可操作）
 - [ ] `/api/cron/draft-timeout` Cron route：超时按 peak_rating 降序自动 pick
 - [ ] `autoPick` Server Action

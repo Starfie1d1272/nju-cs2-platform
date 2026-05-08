@@ -318,6 +318,6 @@ erDiagram
 
 1. 每个主选位置上限 15 人（应用层 Server Action 校验，不用 DB 触发器）。
 2. 每位选手每届赛事只能投 3 票（应用层计数校验）。
-3. 每队同主选位置不超过 3 人（选秀 pick 时 Server Action 校验）。
+3. 每队同主选位置不超过 2 人（选秀 pick 时 Server Action 校验）。
 4. 选秀共 6 轮，每队选 6 人（队长本人 + 6 pick = 7 人）。
 5. 时间字段统一 UTC 存储，`Asia/Shanghai` 展示。

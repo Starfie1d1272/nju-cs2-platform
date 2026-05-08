@@ -38,7 +38,7 @@
 | **draft_picks** | | | |
 | 同选手不能选两次 | `UNIQUE(season_id, registration_id)` | — | **建议添加** |
 | 幂等键唯一 | `UNIQUE(client_request_id)` | — | |
-| 同位置 ≤ 3 人/队 | — | Server Action（事务内） | 见 `draft-flow.md` |
+| 同位置 ≤ 2 人/队 | — | Server Action（事务内） | 见 `draft-flow.md` |
 | 当前轮次校验 | — | Server Action（事务内 SELECT FOR UPDATE） | |
 | **matches** | | | |
 | 双方队伍不同 | — | Server Action / DB CHECK | 建议加 CHECK：`team_a_id != team_b_id` |

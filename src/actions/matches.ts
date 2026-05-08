@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq, and, count, asc } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons, matches, teams, auditLogs } from "@/db/schema";
+import { seasons, matches, teams, matchMaps, auditLogs } from "@/db/schema";
 import { ok, fail } from "@/types/action";
 import type { ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
@@ -167,6 +167,9 @@ export async function createMatch(
 
     if (teamAId === teamBId) {
       throw new AppError(ErrorCode.VALIDATION_FAILED, "双方队伍不能相同");
+    }
+    if (stage === "qualifier" && format !== "bo1") {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, "排位赛只能是 BO1");
     }
 
     const season = await getSeasonOrThrow(seasonId);
@@ -360,6 +363,151 @@ export async function recordMatchResult(
   } catch (e) {
     if (e instanceof AppError) return fail({ code: e.code, message: e.message });
     console.error("[recordMatchResult]", e);
+    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+  }
+}
+
+// ── 录入单图结果（BO3/BO5） ───────────────────────────────────────────────
+
+/**
+ * 录入一张地图的比赛结果。
+ * 系统根据已完成地图自动计算大比分，达到 maxWins 时自动结束系列赛并推进 bracket。
+ * 仅用于 BO3/BO5；BO1 继续走 recordMatchResult。
+ */
+export async function recordMapResult(
+  matchId: string,
+  mapOrder: number,
+  mapName: string,
+  scoreA: number,
+  scoreB: number,
+  pickedByTeamId: string | null,
+  teamAStartSide: "t" | "ct" | null
+): Promise<ActionResult<{ seriesFinished: boolean }>> {
+  try {
+    if (!Number.isInteger(scoreA) || !Number.isInteger(scoreB) || scoreA < 0 || scoreB < 0) {
+      throw new AppError(ErrorCode.MATCH_INVALID_SCORE, "比分必须为非负整数");
+    }
+    if (scoreA === scoreB) {
+      throw new AppError(ErrorCode.MATCH_INVALID_SCORE, "单图不能平局");
+    }
+
+    const match = await getMatchOrThrow(matchId);
+    const session = await requireSeasonAdmin(match.seasonId);
+
+    if (match.format === "bo1") {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, "BO1 请使用直接录入比分功能");
+    }
+    if (match.status !== "in_progress") {
+      throw new AppError(ErrorCode.MATCH_INVALID_TRANSITION, "比赛未在进行中");
+    }
+
+    const maxWins = match.format === "bo3" ? 2 : 3;
+    const maxMaps = match.format === "bo3" ? 3 : 5;
+
+    if (mapOrder < 1 || mapOrder > maxMaps) {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, `${match.format.toUpperCase()} 图序号须在 1-${maxMaps} 之间`);
+    }
+
+    // 检查同图名是否已存在（应用层约束）
+    const existingMaps = await db.query.matchMaps.findMany({
+      where: eq(matchMaps.matchId, matchId),
+    });
+    if (existingMaps.some((m) => m.mapName === mapName)) {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, `地图 ${mapName} 在本场比赛中已存在`);
+    }
+
+    // 统计加入本图后的地图胜场（纯计算，不写 DB）
+    const allMaps = [...existingMaps, { scoreA, scoreB }];
+    let mapWinsA = 0;
+    let mapWinsB = 0;
+    for (const m of allMaps) {
+      if (m.scoreA === null || m.scoreB === null) continue;
+      if (m.scoreA > m.scoreB) mapWinsA++;
+      else mapWinsB++;
+    }
+
+    const season = await getSeasonOrThrow(match.seasonId);
+    const seriesFinished = mapWinsA >= maxWins || mapWinsB >= maxWins;
+
+    // 如果系列赛结束且有 bracket，提前计算 bracket 推进结果（纯计算，不写 DB）
+    let updatedBracketData: Database | null = null;
+    let resolvedMatches: Array<{ teamAParticipantId: number; teamBParticipantId: number; bracketMatchId: number }> = [];
+    let seasonTeams: Awaited<ReturnType<typeof db.query.teams.findMany>> = [];
+
+    if (seriesFinished && season.bracketData && match.bracketNodeId) {
+      const { updatedData, newResolvedMatches } = await bracketAdvance(
+        match.bracketNodeId,
+        mapWinsA,
+        mapWinsB,
+        season.bracketData as Database
+      );
+      updatedBracketData = updatedData as Database;
+      resolvedMatches = newResolvedMatches;
+      seasonTeams = await db.query.teams.findMany({
+        where: eq(teams.seasonId, match.seasonId),
+        orderBy: [asc(teams.draftOrder)],
+      });
+    }
+
+    // 所有写操作放入同一事务，确保原子性
+    await db.transaction(async (tx) => {
+      await tx.insert(matchMaps).values({
+        matchId,
+        mapOrder,
+        mapName,
+        pickedByTeamId,
+        teamAStartSide,
+        scoreA,
+        scoreB,
+        completedAt: new Date(),
+      });
+
+      if (seriesFinished) {
+        await tx.update(matches).set({
+          scoreA: mapWinsA,
+          scoreB: mapWinsB,
+          status: "finished",
+          completedAt: new Date(),
+          updatedAt: new Date(),
+        }).where(eq(matches.id, matchId));
+
+        if (updatedBracketData) {
+          await tx.update(seasons).set({ bracketData: updatedBracketData, updatedAt: new Date() }).where(eq(seasons.id, match.seasonId));
+          for (const bm of resolvedMatches) {
+            const teamA = seasonTeams[bm.teamAParticipantId];
+            const teamB = seasonTeams[bm.teamBParticipantId];
+            if (!teamA || !teamB) continue;
+            await tx.insert(matches).values({
+              seasonId: match.seasonId,
+              teamAId: teamA.id,
+              teamBId: teamB.id,
+              stage: "playoff",
+              format: "bo3",
+              status: "scheduled",
+              bracketNodeId: bm.bracketMatchId.toString(),
+            });
+          }
+        }
+      }
+
+      await tx.insert(auditLogs).values({
+        seasonId: match.seasonId,
+        action: "match.record_map_result",
+        actorId: session.email,
+        targetId: matchId,
+        targetType: "match",
+        meta: { mapOrder, mapName, scoreA, scoreB, seriesFinished },
+      });
+    });
+
+    revalidatePath(`/admin/${season.slug}/matches`);
+    revalidatePath(`/${season.slug}/matches`);
+    revalidatePath(`/${season.slug}/matches/${matchId}`);
+
+    return ok({ seriesFinished });
+  } catch (e) {
+    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
+    console.error("[recordMapResult]", e);
     return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
   }
 }

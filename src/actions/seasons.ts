@@ -13,7 +13,6 @@ import {
   RIVALS_STAGE_PLAN,
   normalizeRegistrationConfig,
   type RegistrationConfig,
-  type SeasonStatus,
   type StagePlan,
 } from "@/types/season";
 
@@ -34,8 +33,8 @@ const registrationConfigSchema = z.object({
     currentMin: z.string().min(1).nullable(),
     peakMin: z.string().min(1).nullable(),
   }),
-  maxPerPosition: z.number().int().min(1).max(200),
-  screenshotCount: z.number().int().min(1).max(10),
+  maxPerPosition: z.number().int().min(1).max(50),
+  screenshotCount: z.number().int().min(1).max(5),
 });
 
 const seasonFormBaseSchema = z.object({
@@ -43,7 +42,7 @@ const seasonFormBaseSchema = z.object({
   name: z.string().min(1, "请填写赛季名称"),
   slug: z.string().min(1, "请填写 slug").regex(/^[a-z0-9][a-z0-9-]*$/, "slug 只能使用小写字母、数字和连字符"),
   kind: z.string().min(1, "请填写赛事类型"),
-  status: z.enum(["draft", "registration", "voting", "drafting", "playing", "finished", "archived"]),
+  status: z.enum(["draft", "registration", "voting", "drafting", "playing", "finished", "archived"]).optional(),
   themeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "主题色需为 #RRGGBB 格式").nullable(),
   startAt: z.string().nullable(),
   endAt: z.string().nullable(),
@@ -108,7 +107,7 @@ export async function createSeason(input: SeasonFormInput): Promise<ActionResult
       slug: data.slug,
       name: data.name,
       kind: data.kind,
-      status: data.status,
+      status: "draft",
       themeColor: data.themeColor,
       registrationMode: data.registrationMode,
       hasCaptainVoting: data.hasCaptainVoting,
@@ -163,10 +162,12 @@ export async function updateSeason(input: SeasonFormInput): Promise<ActionResult
       where: eq(seasons.id, data.id),
     });
     if (!existing) throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
+    if (existing.slug !== data.slug) {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, "编辑赛季时不能修改 slug");
+    }
 
     if (existing.status !== "draft") {
       const coreChanged =
-        existing.slug !== data.slug ||
         existing.registrationMode !== data.registrationMode ||
         existing.hasCaptainVoting !== data.hasCaptainVoting ||
         existing.hasDraft !== data.hasDraft ||
@@ -180,10 +181,8 @@ export async function updateSeason(input: SeasonFormInput): Promise<ActionResult
     }
 
     await db.update(seasons).set({
-      slug: data.slug,
       name: data.name,
       kind: data.kind,
-      status: data.status as SeasonStatus,
       themeColor: data.themeColor,
       registrationMode: data.registrationMode,
       hasCaptainVoting: data.hasCaptainVoting,
@@ -204,16 +203,52 @@ export async function updateSeason(input: SeasonFormInput): Promise<ActionResult
       actorId: auditActorId(admin),
       targetId: data.id,
       targetType: "season",
-      meta: { slug: data.slug },
+      meta: { slug: existing.slug },
     });
 
     revalidatePath("/admin");
     revalidatePath(`/admin/${existing.slug}/settings`);
-    revalidatePath(`/admin/${data.slug}/settings`);
-    return ok({ slug: data.slug });
+    return ok({ slug: existing.slug });
   } catch (e) {
     if (e instanceof AppError) return fail({ code: e.code, message: e.message });
     console.error("[updateSeason]", e);
+    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+  }
+}
+
+export async function publishSeason(seasonId: string): Promise<ActionResult<{ slug: string }>> {
+  try {
+    const admin = await requireSuperAdmin();
+    const season = await db.query.seasons.findFirst({
+      where: eq(seasons.id, seasonId),
+    });
+    if (!season) throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
+    if (season.status !== "draft") {
+      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "只有 draft 状态可发布");
+    }
+
+    await db.update(seasons).set({
+      status: "registration",
+      updatedAt: new Date(),
+    }).where(eq(seasons.id, seasonId));
+
+    await db.insert(auditLogs).values({
+      seasonId,
+      action: "season.publish",
+      actorId: auditActorId(admin),
+      targetId: seasonId,
+      targetType: "season",
+      meta: { slug: season.slug, from: "draft", to: "registration" },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath(`/admin/${season.slug}/settings`);
+    revalidatePath(`/${season.slug}`);
+    revalidatePath("/seasons");
+    return ok({ slug: season.slug });
+  } catch (e) {
+    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
+    console.error("[publishSeason]", e);
     return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
   }
 }
@@ -239,7 +274,7 @@ export async function deleteSeason(seasonId: string): Promise<ActionResult<void>
 
     await db.insert(auditLogs).values({
       seasonId: null,
-      action: "season.delete",
+      action: "season.deleted",
       actorId: auditActorId(admin),
       targetId: seasonId,
       targetType: "season",

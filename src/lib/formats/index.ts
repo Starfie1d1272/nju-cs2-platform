@@ -14,6 +14,9 @@ const EXECUTORS: Partial<Record<StageType, StageExecutor>> = {
 export function getExecutor(type: StageType): StageExecutor {
   const executor = EXECUTORS[type];
   if (!executor) {
+    if (type === "swiss") {
+      throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "Swiss 执行器将在 v2 接入");
+    }
     throw new AppError(ErrorCode.INTERNAL_ERROR, `未知赛制: ${type}`);
   }
   return executor;

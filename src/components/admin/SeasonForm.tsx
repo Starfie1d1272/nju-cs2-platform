@@ -3,17 +3,16 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createSeason, deleteSeason, updateSeason, type SeasonFormInput } from "@/actions/seasons";
+import { createSeason, deleteSeason, publishSeason, updateSeason, type SeasonFormInput } from "@/actions/seasons";
 import {
   PLAYER_TYPE_LABELS,
   RIVALS_REGISTRATION_CONFIG,
   RIVALS_STAGE_PLAN,
-  SEASON_STATUS_LABELS,
   type PlayerType,
   type RegistrationConfig,
-  type SeasonStatus,
   type StagePlan,
 } from "@/types/season";
+import { rankValues, RANK_LABELS } from "@/lib/validators/registration";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,15 +27,8 @@ import {
 } from "@/components/ui/select";
 
 const PLAYER_TYPES: PlayerType[] = ["enrolled", "graduated", "external"];
-const STATUSES: SeasonStatus[] = [
-  "draft",
-  "registration",
-  "voting",
-  "drafting",
-  "playing",
-  "finished",
-  "archived",
-];
+const NO_RANK = "__none__";
+type StagePlanMode = "rivals" | "custom";
 
 interface SeasonFormProps {
   mode: "create" | "edit";
@@ -61,7 +53,6 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
   const [name, setName] = useState(initial?.name ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [kind, setKind] = useState(initial?.kind ?? "选秀联赛");
-  const [status, setStatus] = useState<SeasonStatus>(initial?.status ?? "draft");
   const [themeColor, setThemeColor] = useState(initial?.themeColor ?? "#f97316");
   const [startAt, setStartAt] = useState(initial?.startAt ?? "");
   const [endAt, setEndAt] = useState(initial?.endAt ?? "");
@@ -73,12 +64,16 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
   const [teamSize, setTeamSize] = useState(initial?.teamSize ?? 7);
   const [starterCount, setStarterCount] = useState(initial?.starterCount ?? 5);
   const [positionsText, setPositionsText] = useState((initial?.positions ?? ["igl", "awper", "opener", "closer", "anchor"]).join(","));
-  const [stagePlanText, setStagePlanText] = useState(JSON.stringify(initial?.stagePlan ?? RIVALS_STAGE_PLAN, null, 2));
+  const initialStagePlan = initial?.stagePlan ?? RIVALS_STAGE_PLAN;
+  const initialStagePlanMode =
+    JSON.stringify(initialStagePlan) === JSON.stringify(RIVALS_STAGE_PLAN) ? "rivals" : "custom";
+  const [stagePlanMode, setStagePlanMode] = useState<StagePlanMode>(initialStagePlanMode);
+  const [stagePlanText, setStagePlanText] = useState(JSON.stringify(initialStagePlan, null, 2));
   const [allowedPlayerTypes, setAllowedPlayerTypes] = useState<PlayerType[]>(
     defaultConfig.allowedPlayerTypes,
   );
-  const [currentMin, setCurrentMin] = useState(defaultConfig.rankThreshold.currentMin ?? "");
-  const [peakMin, setPeakMin] = useState(defaultConfig.rankThreshold.peakMin ?? "");
+  const [currentMin, setCurrentMin] = useState(defaultConfig.rankThreshold.currentMin ?? NO_RANK);
+  const [peakMin, setPeakMin] = useState(defaultConfig.rankThreshold.peakMin ?? NO_RANK);
   const [maxPerPosition, setMaxPerPosition] = useState(defaultConfig.maxPerPosition);
   const [screenshotCount, setScreenshotCount] = useState(defaultConfig.screenshotCount);
 
@@ -99,13 +94,22 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
     });
   }
 
+  function handleStagePlanModeChange(value: string) {
+    const nextMode = value as StagePlanMode;
+    setStagePlanMode(nextMode);
+    if (nextMode === "rivals") {
+      setStagePlanText(JSON.stringify(RIVALS_STAGE_PLAN, null, 2));
+    }
+  }
+
   function buildPayload(): SeasonFormInput {
-    const stagePlan = parseJson<StagePlan>(stagePlanText, RIVALS_STAGE_PLAN);
+    const stagePlan =
+      stagePlanMode === "rivals" ? RIVALS_STAGE_PLAN : parseJson<StagePlan>(stagePlanText, RIVALS_STAGE_PLAN);
     const registrationConfig: RegistrationConfig = {
       allowedPlayerTypes,
       rankThreshold: {
-        currentMin: emptyToNull(currentMin),
-        peakMin: emptyToNull(peakMin),
+        currentMin: currentMin === NO_RANK ? null : currentMin,
+        peakMin: peakMin === NO_RANK ? null : peakMin,
       },
       maxPerPosition,
       screenshotCount,
@@ -116,7 +120,6 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
       name,
       slug,
       kind,
-      status,
       themeColor: emptyToNull(themeColor),
       startAt: emptyToNull(startAt),
       endAt: emptyToNull(endAt),
@@ -146,6 +149,20 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
         : await updateSeason(payload);
       if (result.success) {
         toast.success(mode === "create" ? "赛季已创建" : "赛季已更新");
+        router.push(`/admin/${result.data.slug}/settings` as never);
+        router.refresh();
+      } else {
+        toast.error(result.error.message);
+      }
+    });
+  }
+
+  function handlePublish() {
+    if (!initial?.id) return;
+    startTransition(async () => {
+      const result = await publishSeason(initial.id!);
+      if (result.success) {
+        toast.success("赛季已发布");
         router.push(`/admin/${result.data.slug}/settings` as never);
         router.refresh();
       } else {
@@ -185,22 +202,11 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
           </div>
           <div>
             <Label htmlFor="season-slug">Slug</Label>
-            <Input id="season-slug" value={slug} disabled={coreLocked} onChange={(e) => setSlug(e.target.value)} />
+            <Input id="season-slug" value={slug} disabled={mode === "edit"} onChange={(e) => setSlug(e.target.value)} />
           </div>
           <div>
             <Label htmlFor="season-kind">类型</Label>
             <Input id="season-kind" value={kind} onChange={(e) => setKind(e.target.value)} />
-          </div>
-          <div>
-            <Label>状态</Label>
-            <Select value={status} onValueChange={(value) => setStatus(value as SeasonStatus)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((item) => (
-                  <SelectItem key={item} value={item}>{SEASON_STATUS_LABELS[item]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div>
             <Label htmlFor="theme-color">主题色</Label>
@@ -271,29 +277,54 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="current-min">当前段位门槛</Label>
-            <Input id="current-min" value={currentMin} onChange={(e) => setCurrentMin(e.target.value)} placeholder="A，留空表示无门槛" />
+            <Label>当前段位门槛</Label>
+            <Select value={currentMin} onValueChange={setCurrentMin}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_RANK}>无门槛</SelectItem>
+                {rankValues.map((rank) => (
+                  <SelectItem key={rank} value={rank}>{RANK_LABELS[rank]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <Label htmlFor="peak-min">历史段位门槛</Label>
-            <Input id="peak-min" value={peakMin} onChange={(e) => setPeakMin(e.target.value)} placeholder="A+，留空表示无门槛" />
+            <Label>历史段位门槛</Label>
+            <Select value={peakMin} onValueChange={setPeakMin}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_RANK}>无门槛</SelectItem>
+                {rankValues.map((rank) => (
+                  <SelectItem key={rank} value={rank}>{RANK_LABELS[rank]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="max-position">每位置上限</Label>
-            <Input id="max-position" type="number" min={1} value={maxPerPosition} onChange={(e) => setMaxPerPosition(Number(e.target.value))} />
+            <Input id="max-position" type="number" min={1} max={50} value={maxPerPosition} onChange={(e) => setMaxPerPosition(Number(e.target.value))} />
           </div>
           <div>
             <Label htmlFor="screenshot-count">截图链接数量</Label>
-            <Input id="screenshot-count" type="number" min={1} value={screenshotCount} onChange={(e) => setScreenshotCount(Number(e.target.value))} />
+            <Input id="screenshot-count" type="number" min={1} max={5} value={screenshotCount} onChange={(e) => setScreenshotCount(Number(e.target.value))} />
           </div>
         </div>
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-semibold">Stage Plan JSON</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-semibold">赛制配置</h2>
+          <Select value={stagePlanMode} disabled={coreLocked} onValueChange={handleStagePlanModeChange}>
+            <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="rivals">Rivals 8队预设</SelectItem>
+              <SelectItem value="custom">自定义 JSON</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Textarea
           value={stagePlanText}
-          disabled={coreLocked}
+          disabled={coreLocked || stagePlanMode === "rivals"}
           onChange={(e) => setStagePlanText(e.target.value)}
           rows={12}
           className="font-mono text-xs"
@@ -308,9 +339,16 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
             </Button>
           )}
         </div>
-        <Button type="button" disabled={isPending} onClick={handleSubmit}>
-          {isPending ? "保存中…" : mode === "create" ? "创建赛季" : "保存设置"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {mode === "edit" && initial?.status === "draft" && (
+            <Button type="button" variant="outline" disabled={isPending} onClick={handlePublish}>
+              发布
+            </Button>
+          )}
+          <Button type="button" disabled={isPending} onClick={handleSubmit}>
+            {isPending ? "保存中…" : mode === "create" ? "创建赛季" : "保存设置"}
+          </Button>
+        </div>
       </div>
     </Card>
   );

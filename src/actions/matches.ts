@@ -8,15 +8,12 @@ import { ok, fail } from "@/types/action";
 import type { ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { requireSeasonAdmin } from "@/lib/auth/session";
-import { generateBracket, advanceMatch as bracketAdvance, seedPlayoff } from "@/lib/bracket";
-import { calculateStandings } from "@/lib/standings";
+import { advanceMatch as bracketAdvance } from "@/lib/bracket";
 import { getExecutor } from "@/lib/formats";
 import {
   getFirstStage,
-  getFirstStageOfType,
   getPreviousStage,
   normalizeStagePlan,
-  type StageConfig,
 } from "@/types/season";
 import type { Database } from "brackets-manager";
 
@@ -57,19 +54,6 @@ async function getMatchOrThrow(matchId: string) {
   });
   if (!match) throw new AppError(ErrorCode.MATCH_NOT_FOUND, ERROR_MESSAGES.MATCH_NOT_FOUND);
   return match;
-}
-
-function isEliminationStage(stage: StageConfig): boolean {
-  return stage.type === "double_elim" || stage.type === "single_elim";
-}
-
-function matchFormatForStage(stage: StageConfig): "bo1" | "bo3" {
-  return stage.type === "round_robin" || stage.type === "swiss" ? "bo1" : "bo3";
-}
-
-function getBracketStageId(data: Database, stageName: string): number | null {
-  const dbStages = data.stage as Array<{ id: number; name: string }>;
-  return dbStages.find((s) => s.name === stageName)?.id ?? null;
 }
 
 // ── 一键生成赛程 ──────────────────────────────────────────────────────────
@@ -117,48 +101,11 @@ export async function generateSchedule(
       throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "Swiss 执行器将在 v2 接入");
     }
 
-    const playoffStage = firstStage.type === "round_robin"
-      ? getFirstStageOfType(stagePlan, ["double_elim", "single_elim"])
-      : isEliminationStage(firstStage)
-        ? firstStage
-        : null;
-
-    const { data, resolvedMatches } = await generateBracket(seasonTeams, {
-      qualifierFormat: firstStage.type === "round_robin" ? "round_robin" : null,
-      playoffFormat: playoffStage
-        ? (playoffStage.type === "double_elim" ? "double_elim" : "single_elim")
-        : null,
-      qualifierName: firstStage.type === "round_robin" ? firstStage.name : undefined,
-      playoffName: playoffStage?.name,
-    });
-
-    const firstStageId = getBracketStageId(data as Database, firstStage.name);
-
-    // 批量创建 match 记录
-    let matchCount = 0;
-    for (const bm of resolvedMatches) {
-      if (firstStageId !== null && bm.stageId !== firstStageId) continue;
-      const teamA = seasonTeams[bm.teamAParticipantId];
-      const teamB = seasonTeams[bm.teamBParticipantId];
-      if (!teamA || !teamB) continue;
-
-      await db.insert(matches).values({
-        seasonId,
-        teamAId: teamA.id,
-        teamBId: teamB.id,
-        stage: firstStage.key,
-        format: matchFormatForStage(firstStage),
-        status: "scheduled",
-        bracketNodeId: bm.bracketMatchId.toString(),
-      });
-      matchCount++;
-    }
-
-    // 持久化 bracket JSON
-    await db
-      .update(seasons)
-      .set({ bracketData: data as Database, updatedAt: new Date() })
-      .where(eq(seasons.id, seasonId));
+    const { matchCount } = await getExecutor(firstStage.type).initialize(
+      seasonId,
+      firstStage,
+      seasonTeams,
+    );
 
     // Audit
     await db.insert(auditLogs).values({
@@ -611,22 +558,11 @@ export async function initializeStage(
     if (season.status !== "playing") {
       throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "只有在赛季进行中才能初始化阶段");
     }
-    if (!season.bracketData) {
-      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "请先一键生成赛程");
-    }
-
     const stagePlan = normalizeStagePlan(season.stagePlan);
     const stage = stagePlan.find((s) => s.key === stageKey);
     if (!stage) {
       throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "该赛季没有这个赛程阶段");
     }
-    if (!isEliminationStage(stage)) {
-      throw new AppError(
-        ErrorCode.SEASON_CAPABILITY_DISABLED,
-        "v1 仅支持从上一阶段结果初始化淘汰赛阶段",
-      );
-    }
-
     const previousStage = getPreviousStage(stagePlan, stage.key);
     if (!previousStage) {
       throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "首个阶段请使用一键生成赛程");
@@ -649,58 +585,12 @@ export async function initializeStage(
       throw new AppError(ErrorCode.SEASON_INVALID_STATUS, `${stage.name} 已生成，不可重复生成`);
     }
 
-    // 计算积分榜 → 得到种子顺序
     const seasonTeams = await db.query.teams.findMany({
       where: eq(teams.seasonId, seasonId),
       orderBy: [asc(teams.draftOrder)],
     });
 
-    const standings = await calculateStandings(seasonId, seasonTeams, previousStage.key);
-    // standings 已按种子排序（seed 1 在 index 0）
-    const seededNames = standings.slice(0, stage.teamCount).map((s) => s.teamName);
-
-    // 更新目标 bracket stage 种子
-    const { updatedData, resolvedMatches } = await seedPlayoff(
-      seededNames,
-      season.bracketData as Database,
-      stage.name,
-    );
-
-    // 持久化更新后的 bracket JSON
-    await db
-      .update(seasons)
-      .set({ bracketData: updatedData as Database, updatedAt: new Date() })
-      .where(eq(seasons.id, seasonId));
-
-    // 创建第一轮正赛 match 记录
-    // 注意：seedPlayoff 返回的 participantId 对应更新后 participant 表的 ID（按种子顺序）
-    // 需要从 participant 名称反查 teamId
-    const nameToTeam = new Map(seasonTeams.map((t) => [t.name, t]));
-    const participants = updatedData.participant as Array<{ id: number; name: string }>;
-    const participantIdToTeam = new Map(
-      participants.map((p) => [p.id, nameToTeam.get(p.name)])
-    );
-
-    let matchCount = 0;
-    const targetStageId = getBracketStageId(updatedData as Database, stage.name);
-
-    for (const bm of resolvedMatches) {
-      if (targetStageId === null || bm.stageId !== targetStageId) continue;
-      const teamA = participantIdToTeam.get(bm.teamAParticipantId);
-      const teamB = participantIdToTeam.get(bm.teamBParticipantId);
-      if (!teamA || !teamB) continue;
-
-      await db.insert(matches).values({
-        seasonId,
-        teamAId: teamA.id,
-        teamBId: teamB.id,
-        stage: stage.key,
-        format: matchFormatForStage(stage),
-        status: "scheduled",
-        bracketNodeId: bm.bracketMatchId.toString(),
-      });
-      matchCount++;
-    }
+    const { matchCount } = await getExecutor(stage.type).initialize(seasonId, stage, seasonTeams);
 
     await db.insert(auditLogs).values({
       seasonId,
@@ -708,7 +598,7 @@ export async function initializeStage(
       actorId: session.email,
       targetId: seasonId,
       targetType: "season",
-      meta: { matchCount, stageKey: stage.key, seeds: seededNames },
+      meta: { matchCount, stageKey: stage.key },
     });
 
     revalidatePath(`/admin/${season.slug}/matches`);

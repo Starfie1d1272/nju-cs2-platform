@@ -151,8 +151,13 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
       )}
 
       {/* 生成正赛（排位赛全部结束后） */}
-      {canGeneratePlayoff && standings.length > 0 && (
-        <GeneratePlayoffCard seasonId={season.id} standings={standings} />
+      {canGeneratePlayoff && standings.length > 0 && playoffStage && (
+        <GeneratePlayoffCard
+          seasonId={season.id}
+          stageKey={playoffStage.key}
+          stageName={playoffStage.name}
+          standings={standings}
+        />
       )}
 
       {/* Tab 面板 */}

@@ -1,12 +1,63 @@
 import { and, count, eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { matches } from "@/db/schema";
+import { matches, seasons } from "@/db/schema";
+import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
+import { generateBracket } from "@/lib/bracket";
+import { getFirstStageOfType, normalizeStagePlan } from "@/types/season";
 import type { StageExecutor } from "./types";
+import type { Database } from "brackets-manager";
 
 export const roundRobinExecutor: StageExecutor = {
-  async initialize() {
-    throw new Error("round_robin initialize is orchestrated by generateSchedule");
+  async initialize(seasonId, config, teams) {
+    const season = await db.query.seasons.findFirst({
+      where: eq(seasons.id, seasonId),
+    });
+    if (!season) {
+      throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
+    }
+
+    const playoffStage = getFirstStageOfType(
+      normalizeStagePlan(season.stagePlan),
+      ["double_elim", "single_elim"],
+    );
+    const { data, resolvedMatches } = await generateBracket(teams, {
+      qualifierFormat: "round_robin",
+      playoffFormat: playoffStage
+        ? (playoffStage.type === "double_elim" ? "double_elim" : "single_elim")
+        : null,
+      qualifierName: config.name,
+      playoffName: playoffStage?.name,
+    });
+
+    const bracketStages = data.stage as Array<{ id: number; name: string }>;
+    const stageId = bracketStages.find((stage) => stage.name === config.name)?.id ?? null;
+    let matchCount = 0;
+
+    for (const bm of resolvedMatches) {
+      if (stageId !== null && bm.stageId !== stageId) continue;
+      const teamA = teams[bm.teamAParticipantId];
+      const teamB = teams[bm.teamBParticipantId];
+      if (!teamA || !teamB) continue;
+
+      await db.insert(matches).values({
+        seasonId,
+        teamAId: teamA.id,
+        teamBId: teamB.id,
+        stage: config.key,
+        format: "bo1",
+        status: "scheduled",
+        bracketNodeId: bm.bracketMatchId.toString(),
+      });
+      matchCount++;
+    }
+
+    await db
+      .update(seasons)
+      .set({ bracketData: data as Database, updatedAt: new Date() })
+      .where(eq(seasons.id, seasonId));
+
+    return { matchCount };
   },
 
   async isComplete(seasonId, stageKey) {

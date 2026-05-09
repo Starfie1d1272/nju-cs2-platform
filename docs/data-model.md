@@ -30,11 +30,12 @@ erDiagram
     registration_mode registration_mode "solo | team"
     bool has_captain_voting
     bool has_draft
-    qualifier_format qualifier_format "round_robin | swiss | null"
-    playoff_format playoff_format "double_elim | single_elim | null"
+    json stage_plan "StageConfig[]"
+    json registration_config "RegistrationConfig"
     int team_size
     int starter_count
     text[] positions "该赛季可用位置列表"
+    json bracket_data "brackets-manager state"
     timestamp start_at
     timestamp end_at
     timestamp created_at
@@ -45,6 +46,7 @@ erDiagram
     uuid id PK
     uuid user_id FK
     uuid season_id FK
+    text player_type "enrolled | graduated | external"
     text primary_position
     text secondary_position
     text peak_rank
@@ -116,7 +118,8 @@ erDiagram
     uuid season_id FK
     uuid team_a_id FK
     uuid team_b_id FK
-    match_stage stage "qualifier | playoff"
+    text stage "StagePlan[n].key"
+    int round "Swiss round; null for round_robin / elim"
     match_format format "bo1 | bo3 | bo5"
     int score_a "系列赛比分（如 BO3 中 2:1）"
     int score_b
@@ -290,7 +293,9 @@ erDiagram
 | `finished` | 已结束 |
 | `cancelled` | 已取消 |
 
-### `match_stage`
+### `matches.stage`
+`matches.stage` 是文本字段，存 `StagePlan[n].key`，不存展示名。Rivals 默认继续使用：
+
 | 值 | 说明 |
 |---|---|
 | `qualifier` | 排位赛 |
@@ -303,21 +308,19 @@ erDiagram
 | `bo3` | 三局两胜，正赛大部分轮次 |
 | `bo5` | 五局三胜，仅总决赛 |
 
-### `qualifier_format`
-| 值 | 说明 |
-|---|---|
-| `round_robin` | 循环赛 |
-| `swiss` | 瑞士轮（保留扩展） |
-| `null` | 无排位赛阶段 |
+### `stagePlan`
+`seasons.stage_plan` 是 `StageConfig[]` JSON，按顺序描述赛事阶段：
 
-### `playoff_format`
-| 值 | 说明 |
+| 字段 | 说明 |
 |---|---|
-| `double_elim` | 双败淘汰 |
-| `single_elim` | 单败淘汰 |
-| `null` | 无正赛阶段 |
+| `key` | 稳定业务标识，写入 `matches.stage` |
+| `name` | 展示名，可改名 / i18n |
+| `type` | `round_robin` / `double_elim` / `single_elim` / `swiss` |
+| `teamCount` | 当前阶段队伍数 |
+| `advance` | 晋级队伍数 |
+| `seeds` | Swiss 预留种子配置 |
 
-> 排位赛与正赛各自的赛制独立配置；任一为 `null` 时跳过该阶段。业务代码读 `qualifierFormat` / `playoffFormat`，不读 `season.kind`。
+> 业务代码读 capability 字段和 `stagePlan`，不读 `season.kind` 做功能分支。
 
 ### `side`
 | 值 | 说明 |

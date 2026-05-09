@@ -15,13 +15,13 @@
 | `registrationMode` | `solo \| team` | `solo` | `team` | 个人报名 vs 队伍报名 |
 | `hasCaptainVoting` | `boolean` | `true` | `false` | 是否有队长投票环节 |
 | `hasDraft` | `boolean` | `true` | `false` | 是否有蛇形选秀 |
-| `qualifierFormat` | `round_robin \| swiss \| null` | `round_robin` | `round_robin` | 排位赛赛制 |
-| `playoffFormat` | `double_elim \| single_elim \| null` | `double_elim` | `double_elim` | 正赛赛制 |
+| `stagePlan` | `StagePlan` | `round_robin -> double_elim` | `round_robin -> double_elim` | 多阶段赛制计划，`matches.stage` 存阶段 `key` |
+| `registrationConfig` | `RegistrationConfig` | Rivals 默认报名规则 | Rivals 默认报名规则 | 身份类型、段位门槛、位置上限、截图数量 |
 | `teamSize` | `integer` | `7` | `5` | 每队人数 |
 | `starterCount` | `integer` | `5` | `5` | 首发人数 |
 | `positions` | `text[]` | `["igl","awper","opener","closer","anchor"]` | `["igl","awper","opener","closer","anchor"]` | 该赛季可用位置列表 |
 
-**为什么 qualifier 与 playoff 拆开**：有些赛事可能仅有排位赛或仅有正赛，必须能独立配置。
+**为什么使用 stagePlan**：有些赛事可能仅有排位赛、仅有正赛，或有多个 Swiss / Playoff 阶段。用 `stagePlan` 的阶段数组统一描述，业务代码读取稳定的 `stage.key`，展示使用可变的 `stage.name`。
 
 **这意味着**：新增娱乐赛、All-Star 赛、1v1 赛等，只需在数据库里配置一行不同的 capability，不需要修改任何业务代码。
 
@@ -78,8 +78,8 @@ if (season.hasDraft) { showDraftPage() }
 | 报名表单类型 | `registrationMode` | `solo`（个人） | `team`（队伍） |
 | 队长投票入口 | `hasCaptainVoting` | `true` | `false` |
 | 蛇形选秀入口 | `hasDraft` | `true` | `false` |
-| 排位赛展示 | `qualifierFormat !== null` | `round_robin` | `round_robin` |
-| Bracket 视图 | `playoffFormat !== null` | `double_elim` | `double_elim` |
+| 排位赛展示 | `showQualifier(season)` | `round_robin` | `round_robin` |
+| Bracket 视图 | `showPlayoffBracket(season)` | `double_elim` | `double_elim` |
 
 **代码中 capability 检查的位置**（统一用 `lib/utils/season.ts` 的工具函数）：
 - `[seasonSlug]/draft/page.tsx`：`if (!showDraft(season)) return <ComingSoon />`

@@ -8,8 +8,13 @@ import { ok, fail } from "@/types/action";
 import type { ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { requireSeasonAdmin } from "@/lib/auth/session";
-import { generateBracket, advanceMatch as bracketAdvance, seedPlayoff } from "@/lib/bracket";
-import { calculateStandings } from "@/lib/standings";
+import { advanceMatch as bracketAdvance } from "@/lib/bracket";
+import { getExecutor } from "@/lib/formats";
+import {
+  getFirstStage,
+  getPreviousStage,
+  normalizeStagePlan,
+} from "@/types/season";
 import type { Database } from "brackets-manager";
 
 // ── 状态机 ────────────────────────────────────────────────────────────────
@@ -87,47 +92,20 @@ export async function generateSchedule(
       throw new AppError(ErrorCode.VALIDATION_FAILED, "队伍数量不足，无法生成赛程");
     }
 
-    const { data, resolvedMatches } = await generateBracket(seasonTeams, {
-      qualifierFormat: season.qualifierFormat ?? null,
-      playoffFormat: season.playoffFormat ?? null,
-    });
-
-    // 确定 qualifier stage id（若存在）
-    const dbStages = data.stage as Array<{ id: number; name: string }>;
-    const qualifierStageId = season.qualifierFormat
-      ? (dbStages.find((s) => s.name === "排位赛")?.id ?? null)
-      : null;
-
-    // 批量创建 match 记录
-    let matchCount = 0;
-    for (const bm of resolvedMatches) {
-      const teamA = seasonTeams[bm.teamAParticipantId];
-      const teamB = seasonTeams[bm.teamBParticipantId];
-      if (!teamA || !teamB) continue;
-
-      const stage = qualifierStageId !== null && bm.stageId === qualifierStageId
-        ? "qualifier"
-        : "playoff";
-      // 排位赛默认 BO1，正赛第一轮 BO3
-      const format = stage === "qualifier" ? "bo1" : "bo3";
-
-      await db.insert(matches).values({
-        seasonId,
-        teamAId: teamA.id,
-        teamBId: teamB.id,
-        stage,
-        format,
-        status: "scheduled",
-        bracketNodeId: bm.bracketMatchId.toString(),
-      });
-      matchCount++;
+    const stagePlan = normalizeStagePlan(season.stagePlan);
+    const firstStage = getFirstStage(stagePlan);
+    if (!firstStage) {
+      throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "该赛季没有可生成的赛程阶段");
+    }
+    if (firstStage.type === "swiss") {
+      throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "Swiss 执行器将在 v2 接入");
     }
 
-    // 持久化 bracket JSON
-    await db
-      .update(seasons)
-      .set({ bracketData: data as Database, updatedAt: new Date() })
-      .where(eq(seasons.id, seasonId));
+    const { matchCount } = await getExecutor(firstStage.type).initialize(
+      seasonId,
+      firstStage,
+      seasonTeams,
+    );
 
     // Audit
     await db.insert(auditLogs).values({
@@ -136,7 +114,7 @@ export async function generateSchedule(
       actorId: session.email,
       targetId: seasonId,
       targetType: "season",
-      meta: { matchCount },
+      meta: { matchCount, stageKey: firstStage.key },
     });
 
     revalidatePath(`/admin/${season.slug}/matches`);
@@ -159,7 +137,7 @@ export async function createMatch(
   seasonId: string,
   teamAId: string,
   teamBId: string,
-  stage: "qualifier" | "playoff",
+  stage: string,
   format: "bo1" | "bo3" | "bo5"
 ): Promise<ActionResult<{ matchId: string }>> {
   try {
@@ -168,11 +146,14 @@ export async function createMatch(
     if (teamAId === teamBId) {
       throw new AppError(ErrorCode.VALIDATION_FAILED, "双方队伍不能相同");
     }
-    if (stage === "qualifier" && format !== "bo1") {
-      throw new AppError(ErrorCode.VALIDATION_FAILED, "排位赛只能是 BO1");
-    }
-
     const season = await getSeasonOrThrow(seasonId);
+    const stageConfig = normalizeStagePlan(season.stagePlan).find((s) => s.key === stage);
+    if (!stageConfig) {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, "未知赛程阶段");
+    }
+    if ((stageConfig.type === "round_robin" || stageConfig.type === "swiss") && format !== "bo1") {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, `${stageConfig.name} 只能是 BO1`);
+    }
 
     // 校验两支队伍属于本赛季
     const teamRows = await db.query.teams.findMany({
@@ -327,12 +308,10 @@ export async function recordMatchResult(
         const teamB = seasonTeams[bm.teamBParticipantId];
         if (!teamA || !teamB) continue;
 
-        // 正赛阶段的 stage 列表名为"正赛"
         const dbStages = updatedData.stage as Array<{ id: number; name: string }>;
-        const playoffStageId = dbStages.find((s) => s.name === "正赛")?.id;
-        const stage = playoffStageId !== undefined && bm.stageId === playoffStageId
-          ? "playoff"
-          : "qualifier";
+        const bmStageName = dbStages.find((s) => s.id === bm.stageId)?.name;
+        const stage = normalizeStagePlan(season.stagePlan).find((s) => s.name === bmStageName)?.key
+          ?? match.stage;
 
         await db.insert(matches).values({
           seasonId: match.seasonId,
@@ -431,7 +410,12 @@ export async function recordMapResult(
 
     // 如果系列赛结束且有 bracket，提前计算 bracket 推进结果（纯计算，不写 DB）
     let updatedBracketData: Database | null = null;
-    let resolvedMatches: Array<{ teamAParticipantId: number; teamBParticipantId: number; bracketMatchId: number }> = [];
+    let resolvedMatches: Array<{
+      teamAParticipantId: number;
+      teamBParticipantId: number;
+      bracketMatchId: number;
+      stageId: number;
+    }> = [];
     let seasonTeams: Awaited<ReturnType<typeof db.query.teams.findMany>> = [];
 
     if (seriesFinished && season.bracketData && match.bracketNodeId) {
@@ -477,11 +461,15 @@ export async function recordMapResult(
             const teamA = seasonTeams[bm.teamAParticipantId];
             const teamB = seasonTeams[bm.teamBParticipantId];
             if (!teamA || !teamB) continue;
+            const dbStages = updatedBracketData.stage as Array<{ id: number; name: string }>;
+            const bmStageName = dbStages.find((s) => s.id === bm.stageId)?.name;
+            const stage = normalizeStagePlan(season.stagePlan).find((s) => s.name === bmStageName)?.key
+              ?? match.stage;
             await tx.insert(matches).values({
               seasonId: match.seasonId,
               teamAId: teamA.id,
               teamBId: teamB.id,
-              stage: "playoff",
+              stage,
               format: "bo3",
               status: "scheduled",
               bracketNodeId: bm.bracketMatchId.toString(),
@@ -557,153 +545,60 @@ export async function updateMatchScheduledAt(
   }
 }
 
-// ── 生成正赛（基于积分榜种子） ────────────────────────────────────────────
+// ── 初始化后续 Stage（基于上一阶段结果种子）───────────────────────────────
 
-/**
- * 在所有排位赛结束后，根据积分榜种子更新正赛 bracket，并创建第一轮对阵。
- * 前置：season.qualifierFormat 非 null，所有 qualifier 场次均为 finished。
- */
-export async function generatePlayoff(
-  seasonId: string
+export async function initializeStage(
+  seasonId: string,
+  stageKey: string,
 ): Promise<ActionResult<{ matchCount: number }>> {
   try {
     const session = await requireSeasonAdmin(seasonId);
     const season = await getSeasonOrThrow(seasonId);
 
     if (season.status !== "playing") {
-      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "只有在赛季进行中才能生成正赛");
+      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "只有在赛季进行中才能初始化阶段");
     }
-    if (!season.qualifierFormat) {
-      throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "该赛季无排位赛阶段，无需单独生成正赛");
+    const stagePlan = normalizeStagePlan(season.stagePlan);
+    const stage = stagePlan.find((s) => s.key === stageKey);
+    if (!stage) {
+      throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "该赛季没有这个赛程阶段");
     }
-    if (!season.bracketData) {
-      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "请先一键生成赛程");
+    const previousStage = getPreviousStage(stagePlan, stage.key);
+    if (!previousStage) {
+      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "首个阶段请使用一键生成赛程");
     }
 
-    // 确认所有排位赛已结束
-    const [{ value: unfinished }] = await db
-      .select({ value: count() })
-      .from(matches)
-      .where(
-        and(
-          eq(matches.seasonId, seasonId),
-          eq(matches.stage, "qualifier"),
-        )
-      )
-      // 未结束的场次
-      .then(async () =>
-        db.select({ value: count() }).from(matches).where(
-          and(
-            eq(matches.seasonId, seasonId),
-            eq(matches.stage, "qualifier"),
-            // status NOT 'finished'：用 sql 表达
-          )
-        )
-      );
-
-    // 重新查询：unfinished qualifier 场次数
-    const unfinishedCount = await db
-      .select({ value: count() })
-      .from(matches)
-      .where(
-        and(
-          eq(matches.seasonId, seasonId),
-          eq(matches.stage, "qualifier"),
-        )
-      )
-      .then(async (rows) => {
-        // 查所有 qualifier 总数
-        const total = rows[0]?.value ?? 0;
-        const finished = await db
-          .select({ value: count() })
-          .from(matches)
-          .where(
-            and(
-              eq(matches.seasonId, seasonId),
-              eq(matches.stage, "qualifier"),
-              eq(matches.status, "finished"),
-            )
-          );
-        return total - (finished[0]?.value ?? 0);
-      });
-
-    if (unfinishedCount > 0) {
+    const previousComplete = await getExecutor(previousStage.type).isComplete(seasonId, previousStage.key);
+    if (!previousComplete) {
       throw new AppError(
         ErrorCode.SEASON_INVALID_STATUS,
-        `还有 ${unfinishedCount} 场排位赛未结束，无法生成正赛`
+        `${previousStage.name} 尚未全部结束，无法初始化 ${stage.name}`,
       );
     }
 
-    // 检查正赛是否已生成（幂等）
-    const [{ value: existingPlayoff }] = await db
+    const [{ value: existingStageMatches }] = await db
       .select({ value: count() })
       .from(matches)
-      .where(and(eq(matches.seasonId, seasonId), eq(matches.stage, "playoff")));
+      .where(and(eq(matches.seasonId, seasonId), eq(matches.stage, stage.key)));
 
-    if (existingPlayoff > 0) {
-      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "正赛已生成，不可重复生成");
+    if (existingStageMatches > 0) {
+      throw new AppError(ErrorCode.SEASON_INVALID_STATUS, `${stage.name} 已生成，不可重复生成`);
     }
 
-    // 计算积分榜 → 得到种子顺序
     const seasonTeams = await db.query.teams.findMany({
       where: eq(teams.seasonId, seasonId),
       orderBy: [asc(teams.draftOrder)],
     });
 
-    const standings = await calculateStandings(seasonId, seasonTeams);
-    // standings 已按种子排序（seed 1 在 index 0）
-    const seededNames = standings.map((s) => s.teamName);
-
-    // 更新正赛 bracket 种子
-    const { updatedData, resolvedMatches } = await seedPlayoff(
-      seededNames,
-      season.bracketData as Database
-    );
-
-    // 持久化更新后的 bracket JSON
-    await db
-      .update(seasons)
-      .set({ bracketData: updatedData as Database, updatedAt: new Date() })
-      .where(eq(seasons.id, seasonId));
-
-    // 创建第一轮正赛 match 记录
-    // 注意：seedPlayoff 返回的 participantId 对应更新后 participant 表的 ID（按种子顺序）
-    // 需要从 participant 名称反查 teamId
-    const nameToTeam = new Map(seasonTeams.map((t) => [t.name, t]));
-    const participants = updatedData.participant as Array<{ id: number; name: string }>;
-    const participantIdToTeam = new Map(
-      participants.map((p) => [p.id, nameToTeam.get(p.name)])
-    );
-
-    let matchCount = 0;
-    const dbStages = updatedData.stage as Array<{ id: number; name: string }>;
-    const playoffStageId = dbStages.find((s) => s.name === "正赛")?.id;
-
-    for (const bm of resolvedMatches) {
-      if (playoffStageId === undefined || bm.stageId !== playoffStageId) continue;
-      const teamA = participantIdToTeam.get(bm.teamAParticipantId);
-      const teamB = participantIdToTeam.get(bm.teamBParticipantId);
-      if (!teamA || !teamB) continue;
-
-      await db.insert(matches).values({
-        seasonId,
-        teamAId: teamA.id,
-        teamBId: teamB.id,
-        stage: "playoff",
-        format: "bo3",
-        status: "scheduled",
-        bracketNodeId: bm.bracketMatchId.toString(),
-      });
-      matchCount++;
-    }
+    const { matchCount } = await getExecutor(stage.type).initialize(seasonId, stage, seasonTeams);
 
     await db.insert(auditLogs).values({
       seasonId,
-      action: "match.generate_playoff",
+      action: "match.initialize_stage",
       actorId: session.email,
       targetId: seasonId,
       targetType: "season",
-      meta: { matchCount, seeds: seededNames },
+      meta: { matchCount, stageKey: stage.key },
     });
 
     revalidatePath(`/admin/${season.slug}/matches`);
@@ -712,7 +607,16 @@ export async function generatePlayoff(
     return ok({ matchCount });
   } catch (e) {
     if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[generatePlayoff]", e);
+    console.error("[initializeStage]", e);
     return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
   }
+}
+
+/**
+ * 向后兼容现有 UI：Rivals 的正赛 stage key 默认为 playoff。
+ */
+export async function generatePlayoff(
+  seasonId: string
+): Promise<ActionResult<{ matchCount: number }>> {
+  return initializeStage(seasonId, "playoff");
 }

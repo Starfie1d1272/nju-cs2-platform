@@ -27,6 +27,7 @@
 | BO3/BO5 逐图录入 | 按图录入回合数，大比分自动统计，达到 maxWins 自动结束系列赛并推进 bracket | ✅ Phase 10+ |
 | 比赛时间编辑 | 管理员设置 / 清除各场 `scheduledAt`，写 audit log | ✅ Phase 11 |
 | Bracket 视图 | `brackets-manager` 双败淘汰图，bracket 节点↔比赛详情双向跳转 | ✅ Phase 11 |
+| 平台配置化 | `stagePlan`/`registrationConfig` JSONB 驱动赛制+报名规则，StageExecutor 框架，Admin 赛季管理 UI | ✅ Phase 11 |
 | 玩家数据 OCR | 管理员上传完美平台记分板截图 → SiliconFlow Qwen-VL 识别 → 人工审核确认 → 写入数据库 | ✅ Phase 11.5 |
 | 部署上线 | Vercel + 自定义域名 + Cron + E2E 验证 | 🔄 Phase 12 |
 

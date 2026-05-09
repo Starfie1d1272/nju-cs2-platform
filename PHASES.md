@@ -59,7 +59,7 @@
 - [x] `/[seasonSlug]/register` 表单页
 - [x] 报名成功页 + Magic Link 邮件触发
 - [x] 报名已截止 / 位置已满的错误态 UI
-- [ ] **TODO**: 将 `src/lib/config/registration-defaults.ts` 迁移到 `seasons.registration_config JSONB`，实现赛事级可配置（Phase 7-8 后台管理）
+- [x] 报名配置化：`seasons.registration_config JSONB` 驱动段位门槛/身份类型/位置上限/截图数量（PR #38）
 
 ---
 
@@ -127,12 +127,26 @@
 
 ---
 
-## Phase 11 — Bracket 视图 + 自动生成赛程
+## Phase 11 — Bracket 视图 + 自动生成赛程 + 平台配置化
 
 **赛制支持**
 - [x] 单循环排位赛（Round Robin）：按 `draftOrder` 为种子，生成所有两两对阵的 `matches` 行
 - [x] 双败淘汰正赛（Double Elimination）：排位赛结束后按名次分配种子，`brackets-manager` 生成 bracket 结构，写入 `matches`
+- [x] 单败淘汰（Single Elimination）：委托 double-elim executor，通过 `config.type` 自动区分
 - [ ] 三败瑞士轮：用于 Major 预选，需自行实现配对算法 → 设计文档在 `docs/superpowers/specs/2026-05-08-swiss-tournament-design.md`，v2 分支实现
+
+**平台配置化（PR #38）**
+- [x] `seasons` 表：`qualifierFormat`/`playoffFormat` 枚举列 → `stagePlan`/`registrationConfig` JSONB（migration 0005 + backfill）
+- [x] `season_registrations` 表：新增 `player_type` 列（enrolled/graduated/external）
+- [x] `matches` 表：`stage` 改为 text（存 `StagePlan[n].key`），新增 `round` 列
+- [x] StageExecutor 框架：`src/lib/formats/`（types/round-robin/double-elim/single-elim/index）
+- [x] `generateSchedule` 重构为遍历 `stagePlan`，调用 executor
+- [x] `initializeStage` Server Action（基于上一阶段名次种子初始化后续阶段）
+- [x] Admin UI：`/admin/seasons/new`（创建赛季）、`/admin/[seasonSlug]/settings`（编辑赛季配置）
+- [x] `src/actions/seasons.ts`：createSeason / updateSeason / deleteSeason / publishSeason
+- [x] 报名配置化：段位门槛/身份类型/位置上限/截图数从 `registrationConfig` 读取
+- [x] `playerType` 加入报名表单 + Server Action 校验
+- [x] SeasonForm 组件：Rivals 预设 + 自定义 JSON 模式
 
 **自动生成流程**
 - [x] admin 页面「生成赛程」按钮：赛季状态为 `playing` 且尚无 matches 时可用

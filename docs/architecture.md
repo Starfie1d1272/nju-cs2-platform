@@ -54,7 +54,8 @@ Next.js App Router (Vercel Edge / Node.js)
 | `admin.ts` | Root 登录、审核报名、邀请码管理（createInviteCode + seasonId）、密码修改、管理员管理 |
 | `captains.ts` | 投 / 撤销队长票 |
 | `draft.ts` | pick 选手、autoPick 超时 |
-| `matches.ts` | 创建比赛、录入比分（含 match_maps）、取消比赛、设置 scheduledAt |
+| `matches.ts` | 生成赛程（generateSchedule）、初始化阶段（initializeStage）、创建比赛、录入比分（含 match_maps）、取消比赛、设置 scheduledAt |
+| `seasons.ts` | 赛季 CRUD（createSeason / updateSeason / deleteSeason / publishSeason） |
 | `player-stats.ts` | OCR 识别记分板截图（extractStatsFromScreenshot）、保存玩家数据（savePlayerStats）、查询地图数据（getPlayerStatsByMap） |
 
 ### DB 层（`src/db/`）
@@ -69,7 +70,8 @@ Next.js App Router (Vercel Edge / Node.js)
 - `auth/supabase.ts` — Supabase client（用户 magic link + Storage）
 - `ocr/scoreboard.ts` — SiliconFlow Qwen-VL 记分板识别（base64 → Zod 校验 → PlayerRowOCR[]），不写库，结果返回给 action 供 admin 确认
 - `realtime/subscribe.ts` — Supabase Realtime 订阅封装
-- `config/` — 报名默认配置（位置、段位、上限等，`REGISTRATION_DEFAULTS`）
+- `formats/` — StageExecutor 接口 + 赛制执行器（round-robin / double-elim / single-elim / swiss 预留）；注册表 `index.ts` 按 `StageType` 分发
+- `config/` — 报名默认配置（位置、段位、上限等，`REGISTRATION_DEFAULTS`），赛季级配置已迁移至 `seasons.registration_config`
 - `validators/` — Zod schema（中文错误消息）：`registration.ts`（含段位门槛跨字段校验）、`match.ts`（createMatch / recordMatchResult）
 - `utils/date.ts` — UTC ↔ Asia/Shanghai
 - `utils/season.ts` — capability 判断（`showDraft` / `showCaptainVoting` / `showQualifier` / `showPlayoffBracket` 等），是路由守卫与 UI 条件渲染的唯一入口

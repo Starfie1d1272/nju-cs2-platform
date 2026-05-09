@@ -4,7 +4,7 @@
 
 RivalHub 是开源电竞赛事管理平台，通过 capability 驱动的多赛事模型支持各类赛制（选秀联赛、公开赛、杯赛等）的全流程运营：报名 → 审核 → 队长投票 → 蛇形选秀 → 队伍展示 → 赛程 + Bracket 视图 → 部署。
 
-当前阶段：**Phase 1–6 + 9–10 已完成，Phase 7–8（选秀）待推进，auth-v2 统一身份系统已完成。**
+当前阶段：**Phase 1–6 + 9–11 + 11.5 已完成，Phase 7–8（选秀）待推进，auth-v2 统一身份系统已完成。Phase 11 平台配置化（stagePlan/registrationConfig JSON + StageExecutor 框架 + Admin 赛季管理 UI）已落地。**
 
 ## 版本路线图
 
@@ -180,13 +180,16 @@ src/
 │   ├── admin/        # 管理员后台（rivalhub-session / rivalhub-admin 保护）
 │   └── api/cron/     # Vercel Cron API Route
 ├── actions/          # Server Actions（所有业务逻辑入口）
+│   ├── seasons.ts    # 赛季 CRUD（create/update/delete/publish）
+│   ├── ...
 ├── db/
-│   ├── schema/       # Drizzle 表定义（12 张表）
+│   ├── schema/       # Drizzle 表定义（13 张表）
 │   ├── client.ts     # Drizzle client 单例（pg Pool，错误处理 + 超时配置）
 │   └── seed.ts       # 种子数据（赛季 + 根管理员 RivalHub_root）
 ├── lib/
 │   ├── auth/         # session.ts（双 Cookie iron-session）+ supabase.ts
 │   ├── bracket/      # brackets-manager 适配层（禁止绕过）
+│   ├── formats/       # StageExecutor 接口 + 赛制执行器（round-robin/double-elim/single-elim）
 │   ├── config/       # 报名默认配置（REGISTRATION_DEFAULTS）
 │   ├── realtime/     # Supabase Realtime 订阅辅助
 │   ├── validators/   # Zod schema（registration / vote / match）

@@ -1,17 +1,14 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { checkAdminSession } from "@/lib/auth/session";
-import { AdminNav } from "@/components/admin/AdminNav";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboardPage() {
-  const admin = await checkAdminSession();
-  if (!admin) redirect("/admin/login");
+  const admin = (await checkAdminSession())!;
 
   const allSeasons =
     admin.role === "super_admin"
@@ -25,10 +22,7 @@ export default async function AdminDashboardPage() {
         : [];
 
   return (
-    <div className="min-h-screen">
-      <AdminNav email={admin.email} />
-
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">赛季列表</h1>
           {admin.role === "super_admin" && (
@@ -59,7 +53,6 @@ export default async function AdminDashboardPage() {
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }

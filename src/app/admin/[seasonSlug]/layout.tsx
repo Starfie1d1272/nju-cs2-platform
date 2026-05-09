@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { requireSeasonAdmin } from "@/lib/auth/session";
-import { AdminNav } from "@/components/admin/AdminNav";
 
 export default async function AdminSeasonLayout({
   children,
@@ -27,10 +26,5 @@ export default async function AdminSeasonLayout({
     redirect("/admin/login");
   }
 
-  return (
-    <div className="min-h-screen">
-      <AdminNav email={admin.email} />
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

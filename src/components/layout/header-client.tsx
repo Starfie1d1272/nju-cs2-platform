@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Season } from "@/db/schema/seasons";
 import type { UserSession } from "@/lib/auth/session";
-import type { SeasonStatus } from "@/types/season";
 
 interface HeaderClientProps {
   seasons: Season[];
@@ -45,7 +44,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
   const navLinks = seasons.map((s) => ({
     href: `/${s.slug}`,
     label: s.name,
-    badge: SEASON_STATUS_LABELS[s.status as SeasonStatus] ?? s.status,
+    badge: SEASON_STATUS_LABELS[s.status] ?? s.status,
     active: pathname.startsWith(`/${s.slug}`),
   }));
 

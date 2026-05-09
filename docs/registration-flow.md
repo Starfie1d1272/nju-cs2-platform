@@ -96,7 +96,7 @@ GROUP BY primary_position;
 | `peakRating` | 历史最高完美平台 Rating | 0.01–3.00，两位小数（均值约 1.0） |
 | `currentSeasonPeakRank` | 当前赛季最高段位 | 合法段位值；**报名门槛见下** |
 | `currentRating` | 当前赛季 Rating | 0.01–3.00，两位小数 |
-| `screenshotUrl` | 天梯截图 NJUBox 分享链接 | HTTPS URL |
+| `screenshotUrls` | 天梯截图 NJUBox 分享链接数组 | 数量由 `registrationConfig.screenshotCount` 控制 |
 | `gameplayStyle` | 游戏风格自述 | ≤100 字 |
 | `antiCheatPledge` | 反作弊承诺勾选 | 必须为 true |
 

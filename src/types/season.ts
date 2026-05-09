@@ -160,15 +160,28 @@ export const STAGE_TYPE_LABELS: Record<StageType, string> = {
   swiss: "瑞士轮",
 };
 
+type PartialRegistrationConfig = Partial<Omit<RegistrationConfig, "rankThreshold">> & {
+  rankThreshold?: Partial<RegistrationConfig["rankThreshold"]>;
+};
+
 export function normalizeRegistrationConfig(
-  config: Partial<RegistrationConfig> | null | undefined,
+  config: PartialRegistrationConfig | null | undefined,
 ): RegistrationConfig {
+  const currentMin =
+    config?.rankThreshold?.currentMin === undefined
+      ? RIVALS_REGISTRATION_CONFIG.rankThreshold.currentMin
+      : config.rankThreshold.currentMin;
+  const peakMin =
+    config?.rankThreshold?.peakMin === undefined
+      ? RIVALS_REGISTRATION_CONFIG.rankThreshold.peakMin
+      : config.rankThreshold.peakMin;
+
   return {
     allowedPlayerTypes:
       config?.allowedPlayerTypes?.length ? config.allowedPlayerTypes : RIVALS_REGISTRATION_CONFIG.allowedPlayerTypes,
     rankThreshold: {
-      currentMin: config?.rankThreshold?.currentMin ?? RIVALS_REGISTRATION_CONFIG.rankThreshold.currentMin,
-      peakMin: config?.rankThreshold?.peakMin ?? RIVALS_REGISTRATION_CONFIG.rankThreshold.peakMin,
+      currentMin,
+      peakMin,
     },
     maxPerPosition: config?.maxPerPosition ?? RIVALS_REGISTRATION_CONFIG.maxPerPosition,
     screenshotCount: config?.screenshotCount ?? RIVALS_REGISTRATION_CONFIG.screenshotCount,

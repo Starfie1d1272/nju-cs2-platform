@@ -88,7 +88,7 @@ GSL Group A (8 队)              GSL Group B (8 队)
 
 ## 三、框架 Gap 总结
 
-基于已验证数据，只有 **3 个核心 gap**：
+基于已验证数据，核心 gap：
 
 | # | Gap | 影响赛事 | 影响范围 |
 |---|---|---|---|
@@ -115,8 +115,8 @@ GSL Group A (8 队)              GSL Group B (8 队)
      advance?: number;  // 简单晋级（向后兼容）
      // 新增：分层晋级（模式 1）
      advanceTiers?: Array<{
-       placement: "winner" | "runner_up" | "3rd";
-       targetRound: "semifinal" | "quarterfinal_high" | "quarterfinal_low";
+       placement: "1st" | "2nd" | "3rd";
+       targetRound: "semifinal" | "quarterfinal";
        count: number;
      }>;
      groupCount?: number;  // 新增：并行分组数

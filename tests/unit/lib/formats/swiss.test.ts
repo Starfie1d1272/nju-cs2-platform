@@ -2,16 +2,52 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock db before importing executor — use vi.hoisted so variables are
 // available in the hoisted vi.mock factory.
-const { mockInsert, mockSwissFindMany, mockMatchFindMany, mockTeamFindMany } = vi.hoisted(() => ({
-  mockInsert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
-  mockSwissFindMany: vi.fn(),
-  mockMatchFindMany: vi.fn(),
-  mockTeamFindMany: vi.fn(),
-}));
+const {
+  mockInsert,
+  mockSwissFindMany,
+  mockMatchFindMany,
+  mockTeamFindMany,
+  mockTransaction,
+  mockTxMatchFindMany,
+  mockTxSwissFindMany,
+} = vi.hoisted(() => {
+  const mockTxMatchFindMany = vi.fn();
+  const mockTxSwissFindMany = vi.fn();
+  const mockTxUpdate = vi.fn().mockImplementation(() => ({
+    set: vi.fn().mockImplementation(() => ({
+      where: vi.fn().mockResolvedValue(undefined),
+    })),
+  }));
+  const mockTxInsert = vi.fn().mockImplementation(() => ({
+    values: vi.fn().mockResolvedValue(undefined),
+  }));
+  const tx = {
+    query: {
+      matches: { findMany: mockTxMatchFindMany },
+      swissStandings: { findMany: mockTxSwissFindMany },
+    },
+    update: mockTxUpdate,
+    insert: mockTxInsert,
+  };
+  const mockTransaction = vi.fn().mockImplementation(
+    async (fn: (tx: typeof tx) => unknown) => fn(tx),
+  );
+
+  return {
+    mockInsert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
+    mockSwissFindMany: vi.fn(),
+    mockMatchFindMany: vi.fn(),
+    mockTeamFindMany: vi.fn(),
+    mockTransaction,
+    mockTxMatchFindMany,
+    mockTxSwissFindMany,
+  };
+});
 
 vi.mock("@/db/client", () => ({
   db: {
     insert: mockInsert,
+    transaction: mockTransaction,
     query: {
       swissStandings: { findMany: mockSwissFindMany },
       matches: { findMany: mockMatchFindMany },
@@ -31,6 +67,20 @@ function makeTeams(n: number): Team[] {
     seasonId: "season-1",
     draftOrder: i + 1,
   } as Team));
+}
+
+function makeStanding(teamId: string, wins = 0, losses = 0) {
+  return {
+    id: `standing-${teamId}`,
+    seasonId: "season-1",
+    stage: "swiss-stage",
+    teamId,
+    seed: 1,
+    wins,
+    losses,
+    buScore: 0,
+    status: "active" as const,
+  };
 }
 
 const mockConfig = {
@@ -75,7 +125,52 @@ describe("swissExecutor", () => {
     });
   });
 
-  // Case 4: isComplete
+  // Case 2: advanceRound
+  describe("advanceRound()", () => {
+    it("throws DRAFT_NOT_ACTIVE when no matches exist", async () => {
+      mockTxMatchFindMany.mockResolvedValue([]);
+      await expect(
+        swissExecutor.advanceRound!("season-1", "swiss-stage"),
+      ).rejects.toThrow(AppError);
+    });
+
+    it("throws SEASON_INVALID_STATUS when unfinished matches exist", async () => {
+      mockTxMatchFindMany.mockResolvedValue([
+        { id: "m-1", round: 1, status: "scheduled", teamAId: "team-0", teamBId: "team-1", scoreA: null, scoreB: null },
+      ]);
+      await expect(
+        swissExecutor.advanceRound!("season-1", "swiss-stage"),
+      ).rejects.toThrow(AppError);
+    });
+
+    it("throws VALIDATION_FAILED when score is null on finished match", async () => {
+      mockTxMatchFindMany.mockResolvedValue([
+        { id: "m-1", round: 1, status: "finished", teamAId: "team-0", teamBId: "team-1", scoreA: null, scoreB: null },
+      ]);
+      mockTxSwissFindMany.mockResolvedValue([
+        makeStanding("team-0"),
+        makeStanding("team-1"),
+      ]);
+      await expect(
+        swissExecutor.advanceRound!("season-1", "swiss-stage"),
+      ).rejects.toThrow(AppError);
+    });
+
+    it("throws VALIDATION_FAILED on draw", async () => {
+      mockTxMatchFindMany.mockResolvedValue([
+        { id: "m-1", round: 1, status: "finished", teamAId: "team-0", teamBId: "team-1", scoreA: 1, scoreB: 1 },
+      ]);
+      mockTxSwissFindMany.mockResolvedValue([
+        makeStanding("team-0"),
+        makeStanding("team-1"),
+      ]);
+      await expect(
+        swissExecutor.advanceRound!("season-1", "swiss-stage"),
+      ).rejects.toThrow(AppError);
+    });
+  });
+
+  // Case 3: isComplete
   describe("isComplete()", () => {
     it("returns true when all standings are advanced or eliminated", async () => {
       mockSwissFindMany.mockResolvedValue([
@@ -105,7 +200,7 @@ describe("swissExecutor", () => {
     });
   });
 
-  // Case 5: getQualifiers
+  // Case 4: getQualifiers
   describe("getQualifiers()", () => {
     it("returns advanced teams as QualifiedTeam[]", async () => {
       mockSwissFindMany.mockResolvedValue([

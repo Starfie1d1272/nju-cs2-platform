@@ -29,9 +29,8 @@ const {
     update: mockTxUpdate,
     insert: mockTxInsert,
   };
-  const mockTransaction = vi.fn().mockImplementation(
-    async (fn: (tx: typeof tx) => unknown) => fn(tx),
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockTransaction = vi.fn().mockImplementation(async (fn: (tx: any) => unknown) => fn(tx));
 
   return {
     mockInsert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),

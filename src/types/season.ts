@@ -149,21 +149,24 @@ export const OPEN_TOURNAMENT_PRESET: SeasonCapabilities = {
 };
 
 /**
- * 公开赛预设：24 队 Major 赛制。
- * Stage 1 — Swiss 16 队（种子 9-24）→ 8 队晋级
- * Stage 2 — Swiss 16 队（种子 1-8 直入 + 8 队晋级）→ 8 队晋级
- * Stage 3 — Single Elim 8 队 → 冠军
+ * Major 预设：32 队，3 轮 Swiss + 1 轮 Single Elim。
  * 最后阶段是单败淘汰，不是瑞士轮。
  */
 export const MAJOR_STAGE_PLAN: StagePlan = [
   {
-    key: "opening", name: "揭幕阶段", type: "swiss", teamCount: 16,
+    key: "stage1", name: "阶段一", type: "swiss", teamCount: 16,
     advanceTiers: [{ placement: "*", count: 8 }],
     matchFormat: "bo1",
-    seeds: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+    seeds: [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
   },
   {
-    key: "elimination", name: "淘汰阶段", type: "swiss", teamCount: 16,
+    key: "stage2", name: "阶段二", type: "swiss", teamCount: 16,
+    entrySeeds: 8,
+    advanceTiers: [{ placement: "*", count: 8 }],
+    matchFormat: "bo3",
+  },
+  {
+    key: "stage3", name: "阶段三", type: "swiss", teamCount: 16,
     entrySeeds: 8,
     advanceTiers: [{ placement: "*", count: 8 }],
     matchFormat: "bo3",

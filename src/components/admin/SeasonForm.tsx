@@ -327,7 +327,7 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
             <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="rivals">Rivals 8队预设</SelectItem>
-              <SelectItem value="major">Major 24队预设</SelectItem>
+              <SelectItem value="major">Major 32队预设</SelectItem>
               <SelectItem value="custom">自定义 JSON</SelectItem>
             </SelectContent>
           </Select>

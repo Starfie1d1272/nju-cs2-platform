@@ -97,10 +97,6 @@ export async function generateSchedule(
     if (!firstStage) {
       throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "该赛季没有可生成的赛程阶段");
     }
-    if (firstStage.type === "swiss") {
-      throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "Swiss 执行器将在 v2 接入");
-    }
-
     const { matchCount } = await getExecutor(firstStage.type).initialize(
       seasonId,
       firstStage,
@@ -590,7 +586,8 @@ export async function initializeStage(
       orderBy: [asc(teams.draftOrder)],
     });
 
-    const { matchCount } = await getExecutor(stage.type).initialize(seasonId, stage, seasonTeams);
+    const qualifiers = await getExecutor(previousStage.type).getQualifiers(seasonId, previousStage);
+    const { matchCount } = await getExecutor(stage.type).initialize(seasonId, stage, seasonTeams, qualifiers);
 
     await db.insert(auditLogs).values({
       seasonId,

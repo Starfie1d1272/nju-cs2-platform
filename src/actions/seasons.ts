@@ -19,7 +19,7 @@ import {
 const stageConfigSchema = z.object({
   key: z.string().min(1).regex(/^[a-z0-9][a-z0-9-]*$/),
   name: z.string().min(1),
-  type: z.enum(["round_robin", "double_elim", "single_elim", "swiss"]),
+  type: z.enum(["round_robin", "double_elim", "single_elim", "swiss", "gsl_group"]),
   teamCount: z.number().int().min(2).max(128),
   advanceTiers: z.array(z.object({
     placement: z.string().min(1),
@@ -28,8 +28,10 @@ const stageConfigSchema = z.object({
   })),
   groupCount: z.number().int().min(1).optional(),
   matchFormat: z.enum(["bo1", "bo3", "bo5"]).optional(),
+  finalFormat: z.enum(["bo3", "bo5"]).optional(),
   hasThirdPlaceMatch: z.boolean().optional(),
   seeds: z.array(z.number().int().positive()).optional(),
+  entrySeeds: z.number().int().min(0).optional(),
 });
 
 const stagePlanSchema = z.array(stageConfigSchema);

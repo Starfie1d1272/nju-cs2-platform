@@ -12,7 +12,7 @@ export type SeasonStatus =
   | "archived";
 
 export type RegistrationMode = "solo" | "team";
-export type StageType = "round_robin" | "double_elim" | "single_elim" | "swiss";
+export type StageType = "round_robin" | "double_elim" | "single_elim" | "swiss" | "gsl_group";
 export type PlayerType = "enrolled" | "graduated" | "external";
 
 export interface AdvanceTier {
@@ -32,8 +32,14 @@ export interface StageConfig {
   advanceTiers: AdvanceTier[];
   groupCount?: number;
   matchFormat?: "bo1" | "bo3" | "bo5";
+  /** 决赛 BO5 覆写（仅对淘汰赛阶段生效）。不设置则回退到 matchFormat。 */
+  finalFormat?: "bo3" | "bo5";
   hasThirdPlaceMatch?: boolean;
   seeds?: number[];
+  /** 直接进入本阶段的种子队数（非上一阶段晋级）。
+   *  取赛季中 draft_order 最靠前且未通过 qualifiers 晋级的队伍。
+   *  首阶段默认为 teamCount（全部队伍参赛），非首阶段默认为 0。 */
+  entrySeeds?: number;
 }
 
 export type StagePlan = StageConfig[];
@@ -144,15 +150,63 @@ export const OPEN_TOURNAMENT_PRESET: SeasonCapabilities = {
   positions: CS2_POSITIONS,
 };
 
+/**
+ * Major 预设：32 队，3 轮 Swiss + 1 轮 Single Elim。
+ * 最后阶段是单败淘汰，不是瑞士轮。
+ */
+export const MAJOR_STAGE_PLAN: StagePlan = [
+  {
+    key: "stage1", name: "阶段一", type: "swiss", teamCount: 16,
+    advanceTiers: [{ placement: "*", count: 8 }],
+    matchFormat: "bo1",
+    seeds: [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32],
+  },
+  {
+    key: "stage2", name: "阶段二", type: "swiss", teamCount: 16,
+    entrySeeds: 8,
+    advanceTiers: [{ placement: "*", count: 8 }],
+    matchFormat: "bo1",
+  },
+  {
+    key: "stage3", name: "阶段三", type: "swiss", teamCount: 16,
+    entrySeeds: 8,
+    advanceTiers: [{ placement: "*", count: 8 }],
+    matchFormat: "bo1",
+  },
+  {
+    key: "playoff", name: "淘汰赛", type: "single_elim", teamCount: 8,
+    advanceTiers: [{ placement: "1st", count: 1 }],
+    matchFormat: "bo3",
+    finalFormat: "bo5",
+  },
+];
+
+export const MAJOR_REGISTRATION_CONFIG: RegistrationConfig = {
+  allowedPlayerTypes: ["enrolled", "graduated"],
+  rankThreshold: { currentMin: null, peakMin: null },
+  maxPerPosition: 50,
+  screenshotCount: 1,
+};
+
 /** 所有预设的快捷索引 */
 export const CAPABILITY_PRESETS = {
   "draft-league": DRAFT_LEAGUE_PRESET,
   "open-tournament": OPEN_TOURNAMENT_PRESET,
+  major: {
+    registrationMode: "team",
+    hasCaptainVoting: false,
+    hasDraft: false,
+    stagePlan: MAJOR_STAGE_PLAN,
+    registrationConfig: MAJOR_REGISTRATION_CONFIG,
+    teamSize: 5,
+    starterCount: 5,
+    positions: CS2_POSITIONS,
+  },
 } as const;
 
 // 向后兼容别名
 export const RIVALS_DEFAULT_CAPABILITIES = DRAFT_LEAGUE_PRESET;
-export const MAJOR_DEFAULT_CAPABILITIES = OPEN_TOURNAMENT_PRESET;
+export const MAJOR_DEFAULT_CAPABILITIES = CAPABILITY_PRESETS.major;
 
 // ── 展示标签 ─────────────────────────────────────────────────────────────
 
@@ -187,6 +241,7 @@ export const STAGE_TYPE_LABELS: Record<StageType, string> = {
   double_elim: "双败淘汰",
   single_elim: "单败淘汰",
   swiss: "瑞士轮",
+  gsl_group: "GSL 小组",
 };
 
 type PartialRegistrationConfig = Partial<Omit<RegistrationConfig, "rankThreshold">> & {
@@ -218,18 +273,7 @@ export function normalizeRegistrationConfig(
 }
 
 export function normalizeStagePlan(stagePlan: StagePlan | null | undefined): StagePlan {
-  const plan = stagePlan ?? RIVALS_STAGE_PLAN;
-  return plan.map((stage) => {
-    // 兼容旧 advance 字段：自动转换为 advanceTiers
-    const raw = stage as StageConfig & { advance?: number };
-    if (raw.advance !== undefined && (!raw.advanceTiers || raw.advanceTiers.length === 0)) {
-      return {
-        ...stage,
-        advanceTiers: [{ placement: "*", count: raw.advance }],
-      };
-    }
-    return stage;
-  });
+  return stagePlan ?? RIVALS_STAGE_PLAN;
 }
 
 export function getStageByKey(stagePlan: StagePlan | null | undefined, key: string): StageConfig | null {

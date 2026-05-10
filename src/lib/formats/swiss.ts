@@ -1,7 +1,8 @@
 import { and, eq, asc, sql, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { matches, swissStandings } from "@/db/schema";
+import { matches, seasons, swissStandings } from "@/db/schema";
 import { AppError, ErrorCode } from "@/lib/errors";
+import { normalizeStagePlan } from "@/types/season";
 import type { StageExecutor } from "./types";
 import type { StageConfig, QualifiedTeam } from "@/types/season";
 import type { Team } from "@/db/schema/teams";
@@ -61,10 +62,11 @@ export const swissExecutor: StageExecutor = {
     );
 
     // R1: 上半区 vs 下半区
+    const r1Format: "bo1" | "bo3" = config.matchFormat === "bo5" ? "bo3" : (config.matchFormat ?? "bo1");
     const half = sorted.length / 2;
     const pairs: MatchPair[] = [];
     for (let i = 0; i < half; i++) {
-      pairs.push({ teamAId: sorted[i].id, teamBId: sorted[i + half].id, format: "bo1" });
+      pairs.push({ teamAId: sorted[i].id, teamBId: sorted[i + half].id, format: r1Format });
     }
 
     if (pairs.length > 0) {
@@ -85,6 +87,15 @@ export const swissExecutor: StageExecutor = {
   },
 
   async advanceRound(seasonId, stageKey) {
+    // 读取阶段配置以获取默认 matchFormat（事务外，配置不变）
+    const season = await db.query.seasons.findFirst({
+      where: eq(seasons.id, seasonId),
+    });
+    const stagePlan = normalizeStagePlan(season?.stagePlan ?? null);
+    const stageConfig = stagePlan.find((s) => s.key === stageKey);
+    const rawFormat = stageConfig?.matchFormat ?? "bo1";
+    const defaultFormat: "bo1" | "bo3" = rawFormat === "bo5" ? "bo3" : rawFormat;
+
     return db.transaction(async (tx) => {
       // 1. 一次读取全部 stage matches（含历史轮次），在内存中求当前轮
       const allStageMatches = await tx.query.matches.findMany({
@@ -224,7 +235,7 @@ export const swissExecutor: StageExecutor = {
             round: nextRound,
             format: (isWinAndIn(p, activeRows) || isLossAndOut(p, activeRows))
               ? ("bo3" as const)
-              : ("bo1" as const),
+              : defaultFormat,
             status: "scheduled" as const,
           })),
         );

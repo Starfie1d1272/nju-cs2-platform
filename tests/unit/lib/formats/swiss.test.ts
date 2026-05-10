@@ -7,6 +7,7 @@ const {
   mockSwissFindMany,
   mockMatchFindMany,
   mockTeamFindMany,
+  mockSeasonsFindFirst,
   mockTransaction,
   mockTxMatchFindMany,
   mockTxSwissFindMany,
@@ -37,6 +38,7 @@ const {
     mockSwissFindMany: vi.fn(),
     mockMatchFindMany: vi.fn(),
     mockTeamFindMany: vi.fn(),
+    mockSeasonsFindFirst: vi.fn(),
     mockTransaction,
     mockTxMatchFindMany,
     mockTxSwissFindMany,
@@ -51,6 +53,7 @@ vi.mock("@/db/client", () => ({
       swissStandings: { findMany: mockSwissFindMany },
       matches: { findMany: mockMatchFindMany },
       teams: { findMany: mockTeamFindMany },
+      seasons: { findFirst: mockSeasonsFindFirst },
     },
   },
 }));
@@ -126,6 +129,13 @@ describe("swissExecutor", () => {
 
   // Case 2: advanceRound
   describe("advanceRound()", () => {
+    beforeEach(() => {
+      mockSeasonsFindFirst.mockResolvedValue({
+        id: "season-1",
+        stagePlan: [{ key: "swiss-stage", name: "瑞士轮", type: "swiss", teamCount: 8, matchFormat: "bo1", advanceTiers: [{ placement: "*", count: 8 }] }],
+      });
+    });
+
     it("throws DRAFT_NOT_ACTIVE when no matches exist", async () => {
       mockTxMatchFindMany.mockResolvedValue([]);
       await expect(

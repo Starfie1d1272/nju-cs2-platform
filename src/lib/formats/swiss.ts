@@ -422,16 +422,10 @@ function slidePair(
         }
       }
       if (!found) {
-        const fallback = remaining[1];
-        if (opponents.get(top.teamId)?.has(fallback.teamId)) {
-          throw new AppError(
-            ErrorCode.VALIDATION_FAILED,
-            `无法为 ${top.teamId} 配对：所有同战绩候选均已交手`,
-          );
-        }
-        used.add(top.teamId);
-        used.add(fallback.teamId);
-        result.push({ teamAId: top.teamId, teamBId: fallback.teamId, format: "bo1" });
+        throw new AppError(
+          ErrorCode.VALIDATION_FAILED,
+          `无法为 ${top.teamId} 配对：所有同战绩候选均已交手`,
+        );
       }
     }
   }

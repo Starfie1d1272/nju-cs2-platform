@@ -97,10 +97,15 @@ export async function generateSchedule(
     if (!firstStage) {
       throw new AppError(ErrorCode.SEASON_CAPABILITY_DISABLED, "该赛季没有可生成的赛程阶段");
     }
+    // 首阶段参赛队伍：有 seeds 时按 seed 筛选，否则取 top teamCount（draft_order 即种子序）
+    const stageTeams = firstStage.seeds && firstStage.seeds.length > 0
+      ? seasonTeams.filter((_, i) => firstStage.seeds!.includes(i + 1))
+      : seasonTeams.slice(0, firstStage.teamCount);
+
     const { matchCount } = await getExecutor(firstStage.type).initialize(
       seasonId,
       firstStage,
-      seasonTeams,
+      stageTeams,
     );
 
     // Audit
@@ -587,7 +592,24 @@ export async function initializeStage(
     });
 
     const qualifiers = await getExecutor(previousStage.type).getQualifiers(seasonId, previousStage);
-    const { matchCount } = await getExecutor(stage.type).initialize(seasonId, stage, seasonTeams, qualifiers);
+
+    // 构建本阶段参赛队伍：entry seeds（直入） + 上一阶段晋级
+    const qualifierIds = new Set(qualifiers.map((q) => q.teamId));
+    const entryCount = stage.entrySeeds ?? 0;
+    const entryTeams = entryCount > 0
+      ? seasonTeams.filter((t) => !qualifierIds.has(t.id)).slice(0, entryCount)
+      : [];
+    const qualTeams = seasonTeams.filter((t) => qualifierIds.has(t.id));
+    const stageTeams = [...entryTeams, ...qualTeams];
+
+    if (stageTeams.length !== stage.teamCount) {
+      throw new AppError(
+        ErrorCode.VALIDATION_FAILED,
+        `${stage.name} 预期 ${stage.teamCount} 队，实际 ${stageTeams.length} 队（直入 ${entryTeams.length} + 晋级 ${qualTeams.length}），请检查 entrySeeds 与上一阶段晋级配置`,
+      );
+    }
+
+    const { matchCount } = await getExecutor(stage.type).initialize(seasonId, stage, stageTeams, qualifiers);
 
     await db.insert(auditLogs).values({
       seasonId,

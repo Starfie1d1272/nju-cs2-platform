@@ -34,6 +34,10 @@ export interface StageConfig {
   matchFormat?: "bo1" | "bo3" | "bo5";
   hasThirdPlaceMatch?: boolean;
   seeds?: number[];
+  /** 直接进入本阶段的种子队数（非上一阶段晋级）。
+   *  取赛季中 draft_order 最靠前且未通过 qualifiers 晋级的队伍。
+   *  首阶段默认为 teamCount（全部队伍参赛），非首阶段默认为 0。 */
+  entrySeeds?: number;
 }
 
 export type StagePlan = StageConfig[];
@@ -144,15 +148,59 @@ export const OPEN_TOURNAMENT_PRESET: SeasonCapabilities = {
   positions: CS2_POSITIONS,
 };
 
+/**
+ * 公开赛预设：24 队 Major 赛制。
+ * Stage 1 — Swiss 16 队（种子 9-24）→ 8 队晋级
+ * Stage 2 — Swiss 16 队（种子 1-8 直入 + 8 队晋级）→ 8 队晋级
+ * Stage 3 — Single Elim 8 队 → 冠军
+ * 最后阶段是单败淘汰，不是瑞士轮。
+ */
+export const MAJOR_STAGE_PLAN: StagePlan = [
+  {
+    key: "opening", name: "揭幕阶段", type: "swiss", teamCount: 16,
+    advanceTiers: [{ placement: "*", count: 8 }],
+    matchFormat: "bo1",
+    seeds: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+  },
+  {
+    key: "elimination", name: "淘汰阶段", type: "swiss", teamCount: 16,
+    entrySeeds: 8,
+    advanceTiers: [{ placement: "*", count: 8 }],
+    matchFormat: "bo3",
+  },
+  {
+    key: "playoff", name: "冠军赛", type: "single_elim", teamCount: 8,
+    advanceTiers: [{ placement: "1st", count: 1 }],
+    matchFormat: "bo3",
+  },
+];
+
+export const MAJOR_REGISTRATION_CONFIG: RegistrationConfig = {
+  allowedPlayerTypes: ["enrolled", "graduated"],
+  rankThreshold: { currentMin: null, peakMin: null },
+  maxPerPosition: 50,
+  screenshotCount: 1,
+};
+
 /** 所有预设的快捷索引 */
 export const CAPABILITY_PRESETS = {
   "draft-league": DRAFT_LEAGUE_PRESET,
   "open-tournament": OPEN_TOURNAMENT_PRESET,
+  major: {
+    registrationMode: "team",
+    hasCaptainVoting: false,
+    hasDraft: false,
+    stagePlan: MAJOR_STAGE_PLAN,
+    registrationConfig: MAJOR_REGISTRATION_CONFIG,
+    teamSize: 5,
+    starterCount: 5,
+    positions: CS2_POSITIONS,
+  },
 } as const;
 
 // 向后兼容别名
 export const RIVALS_DEFAULT_CAPABILITIES = DRAFT_LEAGUE_PRESET;
-export const MAJOR_DEFAULT_CAPABILITIES = OPEN_TOURNAMENT_PRESET;
+export const MAJOR_DEFAULT_CAPABILITIES = CAPABILITY_PRESETS.major;
 
 // ── 展示标签 ─────────────────────────────────────────────────────────────
 

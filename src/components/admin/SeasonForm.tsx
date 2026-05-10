@@ -8,6 +8,7 @@ import {
   PLAYER_TYPE_LABELS,
   RIVALS_REGISTRATION_CONFIG,
   RIVALS_STAGE_PLAN,
+  MAJOR_STAGE_PLAN,
   type PlayerType,
   type RegistrationConfig,
   type StagePlan,
@@ -28,7 +29,13 @@ import {
 
 const PLAYER_TYPES: PlayerType[] = ["enrolled", "graduated", "external"];
 const NO_RANK = "__none__";
-type StagePlanMode = "rivals" | "custom";
+type StagePlanMode = "rivals" | "major" | "custom";
+
+function detectStagePlanMode(plan: StagePlan): StagePlanMode {
+  if (JSON.stringify(plan) === JSON.stringify(RIVALS_STAGE_PLAN)) return "rivals";
+  if (JSON.stringify(plan) === JSON.stringify(MAJOR_STAGE_PLAN)) return "major";
+  return "custom";
+}
 
 interface SeasonFormProps {
   mode: "create" | "edit";
@@ -65,9 +72,7 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
   const [starterCount, setStarterCount] = useState(initial?.starterCount ?? 5);
   const [positionsText, setPositionsText] = useState((initial?.positions ?? ["igl", "awper", "opener", "closer", "anchor"]).join(","));
   const initialStagePlan = initial?.stagePlan ?? RIVALS_STAGE_PLAN;
-  const initialStagePlanMode =
-    JSON.stringify(initialStagePlan) === JSON.stringify(RIVALS_STAGE_PLAN) ? "rivals" : "custom";
-  const [stagePlanMode, setStagePlanMode] = useState<StagePlanMode>(initialStagePlanMode);
+  const [stagePlanMode, setStagePlanMode] = useState<StagePlanMode>(detectStagePlanMode(initialStagePlan));
   const [stagePlanText, setStagePlanText] = useState(JSON.stringify(initialStagePlan, null, 2));
   const [allowedPlayerTypes, setAllowedPlayerTypes] = useState<PlayerType[]>(
     defaultConfig.allowedPlayerTypes,
@@ -99,12 +104,16 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
     setStagePlanMode(nextMode);
     if (nextMode === "rivals") {
       setStagePlanText(JSON.stringify(RIVALS_STAGE_PLAN, null, 2));
+    } else if (nextMode === "major") {
+      setStagePlanText(JSON.stringify(MAJOR_STAGE_PLAN, null, 2));
     }
   }
 
   function buildPayload(): SeasonFormInput {
+    const presetPlan = stagePlanMode === "rivals" ? RIVALS_STAGE_PLAN
+      : stagePlanMode === "major" ? MAJOR_STAGE_PLAN : null;
     const stagePlan =
-      stagePlanMode === "rivals" ? RIVALS_STAGE_PLAN : parseJson<StagePlan>(stagePlanText, RIVALS_STAGE_PLAN);
+      presetPlan ?? parseJson<StagePlan>(stagePlanText, RIVALS_STAGE_PLAN);
     const registrationConfig: RegistrationConfig = {
       allowedPlayerTypes,
       rankThreshold: {
@@ -318,13 +327,14 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
             <SelectTrigger className="w-full sm:w-56"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="rivals">Rivals 8队预设</SelectItem>
+              <SelectItem value="major">Major 24队预设</SelectItem>
               <SelectItem value="custom">自定义 JSON</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Textarea
           value={stagePlanText}
-          disabled={coreLocked || stagePlanMode === "rivals"}
+          disabled={coreLocked || stagePlanMode !== "custom"}
           onChange={(e) => setStagePlanText(e.target.value)}
           rows={12}
           className="font-mono text-xs"

@@ -30,6 +30,7 @@ const stageConfigSchema = z.object({
   matchFormat: z.enum(["bo1", "bo3", "bo5"]).optional(),
   hasThirdPlaceMatch: z.boolean().optional(),
   seeds: z.array(z.number().int().positive()).optional(),
+  entrySeeds: z.number().int().min(0).optional(),
 });
 
 const stagePlanSchema = z.array(stageConfigSchema);

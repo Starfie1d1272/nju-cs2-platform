@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, seasons } from "@/db/schema";
@@ -126,7 +126,26 @@ export const doubleElimExecutor: StageExecutor = {
     return active === 0;
   },
 
-  async getQualifiers(_seasonId, _config) {
-    return [];
+  async getQualifiers(seasonId, config) {
+    // 找到该 stage 最高轮次的已结束比赛 → 胜者 = 冠军
+    const stageMatches = await db.query.matches.findMany({
+      where: and(
+        eq(matches.seasonId, seasonId),
+        eq(matches.stage, config.key),
+        eq(matches.status, "finished"),
+      ),
+      orderBy: (matches, { desc }) => [desc(matches.round)],
+    });
+
+    if (stageMatches.length === 0) return [];
+
+    // 最高 round 的 match 为决赛；如果有 bracket reset 则取最后一场
+    const finalMatch = stageMatches[0];
+
+    if (finalMatch.scoreA === null || finalMatch.scoreB === null) return [];
+    if (finalMatch.scoreA === finalMatch.scoreB) return [];
+
+    const winnerId = finalMatch.scoreA > finalMatch.scoreB ? finalMatch.teamAId : finalMatch.teamBId;
+    return [{ teamId: winnerId, placement: "1st" }];
   },
 };

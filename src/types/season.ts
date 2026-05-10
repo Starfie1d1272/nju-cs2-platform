@@ -12,7 +12,7 @@ export type SeasonStatus =
   | "archived";
 
 export type RegistrationMode = "solo" | "team";
-export type StageType = "round_robin" | "double_elim" | "single_elim" | "swiss";
+export type StageType = "round_robin" | "double_elim" | "single_elim" | "swiss" | "gsl_group";
 export type PlayerType = "enrolled" | "graduated" | "external";
 
 export interface AdvanceTier {
@@ -187,6 +187,7 @@ export const STAGE_TYPE_LABELS: Record<StageType, string> = {
   double_elim: "双败淘汰",
   single_elim: "单败淘汰",
   swiss: "瑞士轮",
+  gsl_group: "GSL 小组",
 };
 
 type PartialRegistrationConfig = Partial<Omit<RegistrationConfig, "rankThreshold">> & {

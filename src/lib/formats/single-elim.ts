@@ -1,4 +1,4 @@
-import { and, count, eq } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, seasons, teams } from "@/db/schema";
@@ -202,8 +202,34 @@ export const singleElimExecutor: StageExecutor = {
     return active === 0;
   },
 
-  async getQualifiers(_seasonId, _config) {
-    return [];
+  async getQualifiers(seasonId, config) {
+    const stageMatches = await db.query.matches.findMany({
+      where: and(
+        eq(matches.seasonId, seasonId),
+        eq(matches.stage, config.key),
+        eq(matches.status, "finished"),
+      ),
+      orderBy: (matches, { desc }) => [desc(matches.round)],
+    });
+
+    if (stageMatches.length === 0) return [];
+
+    const finalMatch = stageMatches[0];
+    if (finalMatch.scoreA === null || finalMatch.scoreB === null) return [];
+    if (finalMatch.scoreA === finalMatch.scoreB) return [];
+
+    const winnerId = finalMatch.scoreA > finalMatch.scoreB ? finalMatch.teamAId : finalMatch.teamBId;
+    const loserId = finalMatch.scoreA > finalMatch.scoreB ? finalMatch.teamBId : finalMatch.teamAId;
+
+    const result: QualifiedTeam[] = [{ teamId: winnerId, placement: "1st" }];
+
+    // 如果配置要求亚军晋级
+    const hasSecondPlace = config.advanceTiers.some((t) => t.placement === "2nd");
+    if (hasSecondPlace) {
+      result.push({ teamId: loserId, placement: "2nd" });
+    }
+
+    return result;
   },
 };
 

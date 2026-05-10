@@ -1,4 +1,4 @@
-import { and, eq, asc, sql } from "drizzle-orm";
+import { and, eq, asc, sql, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, swissStandings } from "@/db/schema";
 import { AppError, ErrorCode } from "@/lib/errors";
@@ -86,24 +86,17 @@ export const swissExecutor: StageExecutor = {
 
   async advanceRound(seasonId, stageKey) {
     return db.transaction(async (tx) => {
-      // 1. 查当前轮次
-      const matchRows = await tx
-        .select({ round: matches.round })
-        .from(matches)
-        .where(and(eq(matches.seasonId, seasonId), eq(matches.stage, stageKey)));
-      if (matchRows.length === 0) {
+      // 1. 一次读取全部 stage matches（含历史轮次），在内存中求当前轮
+      const allStageMatches = await tx.query.matches.findMany({
+        where: and(eq(matches.seasonId, seasonId), eq(matches.stage, stageKey)),
+      });
+      if (allStageMatches.length === 0) {
         throw new AppError(ErrorCode.DRAFT_NOT_ACTIVE, "瑞士轮尚未初始化");
       }
-      const currentRound = Math.max(...matchRows.map((r) => r.round ?? 0));
+      const currentRound = Math.max(...allStageMatches.map((m) => m.round ?? 0));
+      const roundMatches = allStageMatches.filter((m) => (m.round ?? 0) === currentRound);
 
       // 2. 检查当前轮是否全部结束
-      const roundMatches = await tx.query.matches.findMany({
-        where: and(
-          eq(matches.seasonId, seasonId),
-          eq(matches.stage, stageKey),
-          eq(matches.round, currentRound),
-        ),
-      });
       const unfinished = roundMatches.filter(
         (m) => m.status !== "finished" && m.status !== "cancelled",
       );
@@ -114,17 +107,17 @@ export const swissExecutor: StageExecutor = {
         );
       }
 
-      // 3. 读 standings
-      const standings = await tx.query.swissStandings.findMany({
+      // 3. 读 standings（只读一次），维护可变内存副本
+      const standingRows = (await tx.query.swissStandings.findMany({
         where: and(
           eq(swissStandings.seasonId, seasonId),
           eq(swissStandings.stage, stageKey),
         ),
         orderBy: [asc(swissStandings.seed)],
-      });
-      const standingMap = new Map(standings.map((s) => [s.teamId, s]));
+      })) as SwissRow[];
+      const standingMap = new Map(standingRows.map((s) => [s.teamId, { ...s }]));
 
-      // 4. 更新 wins/losses
+      // 4. 更新 wins/losses（DB 原子写 + 内存同步）
       for (const m of roundMatches) {
         if (m.status === "cancelled") continue;
         if (m.scoreA === null || m.scoreB === null) {
@@ -140,103 +133,69 @@ export const swissExecutor: StageExecutor = {
           );
         }
         const winA = m.scoreA > m.scoreB;
-        if (winA) {
-          await tx
-            .update(swissStandings)
-            .set({ wins: sql`wins + 1` })
-            .where(
-              and(
-                eq(swissStandings.seasonId, seasonId),
-                eq(swissStandings.stage, stageKey),
-                eq(swissStandings.teamId, m.teamAId),
-              ),
-            );
-          await tx
-            .update(swissStandings)
-            .set({ losses: sql`losses + 1` })
-            .where(
-              and(
-                eq(swissStandings.seasonId, seasonId),
-                eq(swissStandings.stage, stageKey),
-                eq(swissStandings.teamId, m.teamBId),
-              ),
-            );
-        } else {
-          await tx
-            .update(swissStandings)
-            .set({ wins: sql`wins + 1` })
-            .where(
-              and(
-                eq(swissStandings.seasonId, seasonId),
-                eq(swissStandings.stage, stageKey),
-                eq(swissStandings.teamId, m.teamBId),
-              ),
-            );
-          await tx
-            .update(swissStandings)
-            .set({ losses: sql`losses + 1` })
-            .where(
-              and(
-                eq(swissStandings.seasonId, seasonId),
-                eq(swissStandings.stage, stageKey),
-                eq(swissStandings.teamId, m.teamAId),
-              ),
-            );
-        }
+        const winnerId = winA ? m.teamAId : m.teamBId;
+        const loserId = winA ? m.teamBId : m.teamAId;
+        standingMap.get(winnerId)!.wins++;
+        standingMap.get(loserId)!.losses++;
+        await tx
+          .update(swissStandings)
+          .set({ wins: sql`wins + 1` })
+          .where(
+            and(
+              eq(swissStandings.seasonId, seasonId),
+              eq(swissStandings.stage, stageKey),
+              eq(swissStandings.teamId, winnerId),
+            ),
+          );
+        await tx
+          .update(swissStandings)
+          .set({ losses: sql`losses + 1` })
+          .where(
+            and(
+              eq(swissStandings.seasonId, seasonId),
+              eq(swissStandings.stage, stageKey),
+              eq(swissStandings.teamId, loserId),
+            ),
+          );
       }
 
-      // 5. 重读 standings
-      const updated = await tx.query.swissStandings.findMany({
-        where: and(
-          eq(swissStandings.seasonId, seasonId),
-          eq(swissStandings.stage, stageKey),
-        ),
-      }) as SwissRow[];
-
-      // 6. 标记 advanced / eliminated
-      for (const s of updated) {
+      // 5. 标记 advanced / eliminated（内存决策，批量写 DB）
+      const advancedIds: string[] = [];
+      const eliminatedIds: string[] = [];
+      for (const s of standingMap.values()) {
         if (s.status !== "active") continue;
         if (s.wins >= WIN_THRESHOLD) {
-          await tx
-            .update(swissStandings)
-            .set({ status: "advanced" })
-            .where(eq(swissStandings.id, s.id));
+          s.status = "advanced";
+          advancedIds.push(s.id);
         } else if (s.losses >= LOSS_THRESHOLD) {
-          await tx
-            .update(swissStandings)
-            .set({ status: "eliminated" })
-            .where(eq(swissStandings.id, s.id));
+          s.status = "eliminated";
+          eliminatedIds.push(s.id);
         }
       }
+      if (advancedIds.length > 0) {
+        await tx
+          .update(swissStandings)
+          .set({ status: "advanced" })
+          .where(inArray(swissStandings.id, advancedIds));
+      }
+      if (eliminatedIds.length > 0) {
+        await tx
+          .update(swissStandings)
+          .set({ status: "eliminated" })
+          .where(inArray(swissStandings.id, eliminatedIds));
+      }
 
-      // 7. BU 计算：对每个 active 队伍，汇总所有对手的 (wins - losses)
-      const finalStandings = await tx.query.swissStandings.findMany({
-        where: and(
-          eq(swissStandings.seasonId, seasonId),
-          eq(swissStandings.stage, stageKey),
-        ),
-      }) as SwissRow[];
+      // 6. BU 计算（内存 standingMap + allStageMatches，无需重读 standings 或 matches）
+      const finishedMatches = allStageMatches.filter((m) => m.status === "finished");
       const teamDiff = new Map<string, number>(
-        finalStandings.map((s) => [s.teamId, s.wins - s.losses]),
+        [...standingMap.values()].map((s) => [s.teamId, s.wins - s.losses]),
       );
-
-      const allMatches = await tx.query.matches.findMany({
-        where: and(
-          eq(matches.seasonId, seasonId),
-          eq(matches.stage, stageKey),
-          eq(matches.status, "finished"),
-        ),
-      });
-
-      for (const s of finalStandings) {
+      for (const s of standingMap.values()) {
         if (s.status !== "active") continue;
         let bu = 0;
-        for (const m of allMatches) {
-          if (m.teamAId === s.teamId) {
-            bu += teamDiff.get(m.teamBId) ?? 0;
-          } else if (m.teamBId === s.teamId) {
-            bu += teamDiff.get(m.teamAId) ?? 0;
-          }
+        for (const m of finishedMatches) {
+          if (m.teamAId === s.teamId) bu += teamDiff.get(m.teamBId) ?? 0;
+          else if (m.teamBId === s.teamId) bu += teamDiff.get(m.teamAId) ?? 0;
         }
         await tx
           .update(swissStandings)
@@ -244,38 +203,31 @@ export const swissExecutor: StageExecutor = {
           .where(eq(swissStandings.id, s.id));
       }
 
-      // 8. 配对
-      const activeRows = (await tx.query.swissStandings.findMany({
-        where: and(
-          eq(swissStandings.seasonId, seasonId),
-          eq(swissStandings.stage, stageKey),
-          eq(swissStandings.status, "active"),
-        ),
-        orderBy: [asc(swissStandings.seed)],
-      })) as SwissRow[];
+      // 7. 配对（从内存 Map 过滤 active，无需重读 standings）
+      const activeRows = [...standingMap.values()]
+        .filter((s) => s.status === "active")
+        .sort((a, b) => a.seed - b.seed);
       if (activeRows.length === 0) return { matchCount: 0 };
 
-      // 构建已交手记录
-      const opponents = buildOpponents(allMatches);
-
+      const opponents = buildOpponents(allStageMatches);
       const nextRound = currentRound + 1;
       const pairs = pairSwissRound(activeRows, nextRound, opponents);
 
-      // 9. 插入新 matches
-      for (const p of pairs) {
-        const isDecisive =
-          isWinAndIn(p, activeRows) || isLossAndOut(p, activeRows);
-        const format = isDecisive ? "bo3" : "bo1";
-
-        await tx.insert(matches).values({
-          seasonId,
-          teamAId: p.teamAId,
-          teamBId: p.teamBId,
-          stage: stageKey,
-          round: nextRound,
-          format,
-          status: "scheduled",
-        });
+      // 8. 批量插入新 matches
+      if (pairs.length > 0) {
+        await tx.insert(matches).values(
+          pairs.map((p) => ({
+            seasonId,
+            teamAId: p.teamAId,
+            teamBId: p.teamBId,
+            stage: stageKey,
+            round: nextRound,
+            format: (isWinAndIn(p, activeRows) || isLossAndOut(p, activeRows))
+              ? ("bo3" as const)
+              : ("bo1" as const),
+            status: "scheduled" as const,
+          })),
+        );
       }
 
       return { matchCount: pairs.length };

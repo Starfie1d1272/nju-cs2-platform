@@ -23,6 +23,7 @@ export const matches = pgTable("matches", {
   stage: text("stage").notNull(),                                        // StageConfig.key
   round: integer("round"),                                               // swiss round; null for round_robin / elim
   format: matchFormatEnum("format").notNull().default("bo1"),            // bo1 | bo3 | bo5
+  entryRound: text("entry_round"),                                       // bracket entry round; null for non-elimination stages
   // ──────────────────────────────────────────────────────────────────────
 
   // 整场系列赛比分（如 BO3 中 2:1）

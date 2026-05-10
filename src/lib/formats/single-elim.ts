@@ -193,12 +193,14 @@ export const singleElimExecutor: StageExecutor = {
         eq(matches.stage, config.key),
         eq(matches.status, "finished"),
       ),
-      orderBy: (matches, { desc }) => [desc(matches.round)],
     });
 
     if (stageMatches.length === 0) return [];
 
-    const finalMatch = stageMatches[0];
+    // entryRound === "final" 是 initialize 时由 mapRoundToEntryRound 写入的，
+    // 比 round 字段（淘汰赛为 null）更可靠。
+    const finalMatch = stageMatches.find((m) => m.entryRound === "final");
+    if (!finalMatch) return [];
     if (finalMatch.scoreA === null || finalMatch.scoreB === null) return [];
     if (finalMatch.scoreA === finalMatch.scoreB) return [];
 

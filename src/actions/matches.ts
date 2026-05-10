@@ -27,7 +27,11 @@ function resolveMatchFormat(
 ): "bo1" | "bo3" | "bo5" {
   const sc = stagePlan.find((s) => s.key === stageKey);
   if (!sc) return "bo3";
-  const totalRounds = Math.log2(sc.teamCount);
+  // 使用 2^n 对齐的实际 bracket 大小，而非配置的参赛队数，
+  // 确保非 2 的幂队数（如 6 队含 bye）时 finalFormat 也能正确生效。
+  let bracketSize = 1;
+  while (bracketSize < sc.teamCount) bracketSize <<= 1;
+  const totalRounds = Math.log2(bracketSize);
   if (roundNumber === totalRounds && sc.finalFormat) return sc.finalFormat;
   return sc.matchFormat ?? "bo3";
 }

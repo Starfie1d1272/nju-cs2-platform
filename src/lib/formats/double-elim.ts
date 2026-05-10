@@ -117,12 +117,12 @@ export const doubleElimExecutor: StageExecutor = {
         eq(matches.stage, config.key),
         eq(matches.status, "finished"),
       ),
-      orderBy: (matches, { desc }) => [desc(matches.round)],
+      orderBy: (matches, { desc }) => [desc(matches.createdAt)],
     });
 
     if (stageMatches.length === 0) return [];
 
-    // 最高 round 的 match 为决赛（含可能的 bracket reset）
+    // createdAt 倒序：双败淘汰的场次动态插入，最后插入的即大决赛（含 bracket reset）。
     const finalMatch = stageMatches[0];
 
     if (finalMatch.scoreA === null || finalMatch.scoreB === null) return [];

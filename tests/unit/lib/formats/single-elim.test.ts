@@ -17,6 +17,7 @@ const {
   mockUpdate,
   mockFindFirst,
   mockInsertValues,
+  mockMatchFindMany,
 } = vi.hoisted(() => {
   const setMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
   const mockInsertValues = vi.fn().mockResolvedValue(undefined);
@@ -26,6 +27,7 @@ const {
     mockUpdate: vi.fn().mockReturnValue({ set: setMock }),
     mockFindFirst: vi.fn(),
     mockInsertValues,
+    mockMatchFindMany: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -35,7 +37,7 @@ vi.mock("@/db/client", () => ({
     update: mockUpdate,
     query: {
       seasons: { findFirst: mockFindFirst },
-      matches: { findMany: vi.fn().mockResolvedValue([]) },
+      matches: { findMany: mockMatchFindMany },
       teams: { findMany: vi.fn().mockResolvedValue([]) },
     },
   },
@@ -288,9 +290,75 @@ describe("singleElimExecutor", () => {
   // ── getQualifiers ──────────────────────────────────────────────────────────
 
   describe("getQualifiers()", () => {
-    it("returns empty array (placeholder)", async () => {
+    const finishedMatch = (
+      teamAId: string,
+      teamBId: string,
+      scoreA: number,
+      scoreB: number,
+      entryRound: string | null = null,
+    ) => ({
+      id: `m-${teamAId}-${teamBId}`,
+      seasonId: "season-1",
+      stage: "playoff",
+      teamAId,
+      teamBId,
+      scoreA,
+      scoreB,
+      status: "finished" as const,
+      entryRound,
+      round: null,
+      format: "bo3" as const,
+      bracketNodeId: null,
+      scheduledAt: null,
+      completedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    beforeEach(() => {
+      mockMatchFindMany.mockResolvedValue([]);
+    });
+
+    it("returns empty array when no finished matches", async () => {
+      mockMatchFindMany.mockResolvedValue([]);
       const result = await singleElimExecutor.getQualifiers("season-1", mockConfig);
       expect(result).toEqual([]);
+    });
+
+    it("returns empty array when no match has entryRound=final", async () => {
+      mockMatchFindMany.mockResolvedValue([
+        finishedMatch("t1", "t2", 2, 0, "quarterfinal"),
+        finishedMatch("t3", "t4", 2, 1, "semifinal"),
+      ]);
+      const result = await singleElimExecutor.getQualifiers("season-1", mockConfig);
+      expect(result).toEqual([]);
+    });
+
+    it("returns only 1st place when advanceTiers has no 2nd", async () => {
+      mockMatchFindMany.mockResolvedValue([
+        finishedMatch("t1", "t2", 2, 0, "quarterfinal"),
+        finishedMatch("winner", "loser", 2, 1, "final"),
+      ]);
+      const result = await singleElimExecutor.getQualifiers("season-1", mockConfig);
+      expect(result).toEqual([{ teamId: "winner", placement: "1st" }]);
+    });
+
+    it("returns 1st and 2nd when advanceTiers includes 2nd", async () => {
+      mockMatchFindMany.mockResolvedValue([
+        finishedMatch("winner", "loser", 2, 0, "final"),
+      ]);
+      const configWith2nd = {
+        ...mockConfig,
+        advanceTiers: [
+          { placement: "1st", count: 1 },
+          { placement: "2nd", count: 1 },
+        ],
+      };
+      const result = await singleElimExecutor.getQualifiers("season-1", configWith2nd);
+      expect(result).toEqual([
+        { teamId: "winner", placement: "1st" },
+        { teamId: "loser", placement: "2nd" },
+      ]);
     });
   });
 });

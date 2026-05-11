@@ -59,7 +59,7 @@
 - [x] `/[seasonSlug]/register` 表单页
 - [x] 报名成功页 + Magic Link 邮件触发
 - [x] 报名已截止 / 位置已满的错误态 UI
-- [ ] **TODO**: 将 `src/lib/config/registration-defaults.ts` 迁移到 `seasons.registration_config JSONB`，实现赛事级可配置（Phase 7-8 后台管理）
+- [x] 报名配置化：`seasons.registration_config JSONB` 驱动段位门槛/身份类型/位置上限/截图数量（PR #38）
 
 ---
 
@@ -92,7 +92,7 @@
 
 ---
 
-## Phase 7 — 选秀直播间（围观）
+## Phase 7 — 选秀直播间（围观）✅
 
 - [x] `draftState` + `draftPicks` Realtime 订阅（`DraftLiveRoom` 订阅两张表，10 秒轮询兜底）
 - [x] `/[seasonSlug]/draft` 围观页：8 队网格 + 倒计时 + 剩余选手池（`DraftLiveRoom` / `TeamDraftGrid` / `PlayerPool` / `DraftCountdown`）
@@ -101,13 +101,13 @@
 
 ---
 
-## Phase 8 — 选秀队长端 + 超时 Cron
+## Phase 8 — 选秀队长端 + 超时 Cron ✅
 
-- [ ] `pickPlayer` Server Action（Postgres 事务 + SELECT FOR UPDATE + 幂等键）
-- [ ] 同位置 ≤ 2 人约束校验
-- [ ] `/[seasonSlug]/draft/captain` 队长选秀面板（仅当前轮队长可操作）
-- [ ] `/api/cron/draft-timeout` Cron route：超时按 peak_rating 降序自动 pick
-- [ ] `autoPick` Server Action
+- [x] `pickPlayer` Server Action（Postgres 事务 + SELECT FOR UPDATE + 幂等键）
+- [x] 同位置 ≤ 2 人约束校验
+- [x] `/[seasonSlug]/draft/captain` 队长选秀面板（仅当前轮队长可操作）
+- [x] `/api/cron/draft-timeout` Cron route：超时按 peak_rating 降序自动 pick
+- [x] `autoPick` Server Action
 
 ---
 
@@ -127,12 +127,30 @@
 
 ---
 
-## Phase 11 — Bracket 视图 + 自动生成赛程
+## Phase 11 — Bracket 视图 + 自动生成赛程 + 平台配置化
 
 **赛制支持**
 - [x] 单循环排位赛（Round Robin）：按 `draftOrder` 为种子，生成所有两两对阵的 `matches` 行
-- [x] 双败淘汰正赛（Double Elimination）：排位赛结束后按名次分配种子，`brackets-manager` 生成 bracket 结构，写入 `matches`
-- [ ] 三败瑞士轮：用于 Major 预选，需自行实现配对算法 → 设计文档在 `docs/superpowers/specs/2026-05-08-swiss-tournament-design.md`，v2 分支实现
+- [x] 双败淘汰正赛（Double Elimination）：排位赛后按名次分配种子，`brackets-manager` 生成 bracket 结构
+- [x] 单败淘汰（Single Elimination）：独立 executor，支持 bye（`entrySeeds` 种子轮空 + qualifiers 晋级合并）、季军赛占位、cross-group 交叉配对
+- [x] 三败瑞士轮（Swiss）：Buchholz 评分 + slide 配对 + 交手回避，advanceRound 逐轮推进，decider 自动 BO3（`isWinAndIn`/`isLossAndOut`）
+- [x] GSL 小组赛（GSL Group）：蛇形分配，确定性对阵（4/8 队组），4 轮推进，`getQualifiers` 按组内战绩产出 placement+group
+- [x] StageExecutor v2 接口：`initialize(seasonId, config, teams, qualifiers?)` + `getQualifiers(seasonId, config)` 打通阶段间晋级数据流
+- [x] `entrySeeds` 种子轮空机制：高位种子跳过前置阶段直入后续 Swiss（Major Stage 2/3）
+- [x] `finalFormat` 决赛 BO5 覆写：淘汰赛决赛自动使用 BO5，其余场次用 `matchFormat`
+
+**平台配置化（PR #38）**
+- [x] `seasons` 表：`qualifierFormat`/`playoffFormat` 枚举列 → `stagePlan`/`registrationConfig` JSONB（migration 0005 + backfill）
+- [x] `season_registrations` 表：新增 `player_type` 列（enrolled/graduated/external）
+- [x] `matches` 表：`stage` 改为 text（存 `StagePlan[n].key`），新增 `round` 列
+- [x] StageExecutor 框架：`src/lib/formats/`（types/round-robin/double-elim/single-elim/index）
+- [x] `generateSchedule` 重构为遍历 `stagePlan`，调用 executor
+- [x] `initializeStage` Server Action（基于上一阶段名次种子初始化后续阶段）
+- [x] Admin UI：`/admin/seasons/new`（创建赛季）、`/admin/[seasonSlug]/settings`（编辑赛季配置）
+- [x] `src/actions/seasons.ts`：createSeason / updateSeason / deleteSeason / publishSeason
+- [x] 报名配置化：段位门槛/身份类型/位置上限/截图数从 `registrationConfig` 读取
+- [x] `playerType` 加入报名表单 + Server Action 校验
+- [x] SeasonForm 组件：Rivals 预设 + 自定义 JSON 模式
 
 **自动生成流程**
 - [x] admin 页面「生成赛程」按钮：赛季状态为 `playing` 且尚无 matches 时可用
@@ -147,37 +165,37 @@
 
 ---
 
-## Phase 11.5 — 玩家数据展示（player-stats 录入已完成，展示待做）
+## Phase 11.5 — 玩家数据展示 ✅
 
-OCR 录入流程已完成（PR #28），数据保存在 `match_player_stats` 表。待补展示侧：
-
-- [ ] **比赛详情页数据表**：`/[seasonSlug]/matches/[matchId]` 每张地图下方加 K/D/A、ADR、RWS、Rating、WE 数据表格（Server Component，读 `getPlayerStatsByMap`）
-- [ ] **个人统计聚合**：用户主页展示跨地图赛事数据（场均 K/D/A、Rating 等，按赛季分组）
-- [ ] **赛季排行榜**：`/[seasonSlug]/stats` 页面，按 Rating/ADR/KD 等指标排名（类似 HLTV Stats 页）
-- [ ] **队伍聚合统计**：队伍场均数据（团队 ADR、胜率等）
-
-> 以上均为 v1 拓展功能，可按需推进，不阻塞 Phase 12 部署。
+- [x] **比赛详情页数据表**：`PlayerStatsTable` Server Component，每图 Team A / Team B 双栏 K/D/A/ADR/Rating
+- [x] **单场 MVP 投票**：`match_mvp_votes` 表 + `castMatchMvpVote` / `getMatchMvpResults` actions + `MatchMvpVote` Client Component
+- [x] **选手跨赛季数据聚合**：`/players/[userId]` 页新增「个人数据」section（加权平均 Rating/ADR/K-D/WE + 按赛季分组）
+- [x] **赛季排行榜**：`/[seasonSlug]/stats`，URL searchParams 驱动排序（Rating/ADR/K-D/WE/KPR/场次）+ 位置筛选（IGL/AWPer/Opener/Closer/Anchor）
+- [x] **队伍统计卡片**：`/[seasonSlug]/teams/[teamId]` 页新增「队伍数据」（场均 Rating/ADR/K-D/WE + 各位置最佳选手）
+- [x] `showStats` capability + SeasonNav 入口 + QuickLinks
+- [x] 组件单元测试（2 test files, 7 tests）
 
 ---
 
 ## Phase 12 — 部署上线
 
-- [ ] Vercel 环境变量配置
-- [ ] Vercel Cron 接入（`/api/cron/draft-timeout`）
+- [x] vercel.json 创建（Cron Job 配置）
+- [x] `/api/cron/draft-timeout` 接入 `runDraftTimeoutCron` + CRON_SECRET 鉴权
+- [ ] Vercel Dashboard 环境变量配置
+- [ ] Vercel 首次部署
 - [ ] 自定义域名绑定
 - [ ] Playwright E2E 跑关键路径（注册 → 投票 → 选秀 → 比赛）
 - [ ] 性能基准（LCP / FCP）验收
 
 ---
 
-## v2 计划（不在 v1 范围）
+## v2 计划（dev 已预实现赛制引擎，待 v2 分支 UI/集成）
 
-- 多游戏/多赛制支持（位置系统已泛化，需扩展 UI 适配）
+- **赛制引擎**（dev 已落地）：Swiss / GSL Group / Single Elim 独立 executor + entrySeeds 种子轮空 + finalFormat 决赛 BO5 + `getQualifiers()` 阶段间数据流
+- **MAJOR_STAGE_PLAN 预设**（dev 已落地）：32 队 3 轮 Swiss（stage1/2/3 BO1，decider BO3）+ Single Elim 淘汰赛（BO3，决赛 BO5）
+- 多游戏/多赛制位置系统 UI 适配
 - 自由组队模式赛事完整实现
 - 历史赛季归档多届展示
 - 用户账号设置页
 - i18n 多语言支持
-- **[ 待调研 ] 赛后玩家数据自动化**：每图打完后自动拉取 KDA / Rating / WE 等个人数据，无需 admin 手动录入。
-  - Valve 官匹有分享码方案（`CSGO-xxxxx`），但完美平台 / LAN 赛不适用，需另行调研
-  - 方向：完美平台赛后 API 逆向 / CS2 服务器 GOTV demo 解析 / 赛事组委提供数据导出
-  - 落地前需确认数据来源和维护成本
+- 赛后玩家数据自动化（待调研）

@@ -13,23 +13,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { generatePlayoff } from "@/actions/matches";
+import { initializeStage } from "@/actions/matches";
 import type { TeamStanding } from "@/lib/standings";
 
 interface GeneratePlayoffCardProps {
   seasonId: string;
+  stageKey: string;
+  stageName: string;
   standings: TeamStanding[];
 }
 
-export function GeneratePlayoffCard({ seasonId, standings }: GeneratePlayoffCardProps) {
+export function GeneratePlayoffCard({ seasonId, stageKey, stageName, standings }: GeneratePlayoffCardProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function handleGenerate() {
     startTransition(async () => {
-      const result = await generatePlayoff(seasonId);
+      const result = await initializeStage(seasonId, stageKey);
       if (result.success) {
-        toast.success(`正赛已生成，共 ${result.data.matchCount} 场第一轮对阵`);
+        toast.success(`${stageName}已生成，共 ${result.data.matchCount} 场第一轮对阵`);
         setOpen(false);
       } else {
         toast.error(result.error.message);
@@ -44,18 +46,18 @@ export function GeneratePlayoffCard({ seasonId, standings }: GeneratePlayoffCard
         <div className="space-y-1">
           <h2 className="text-lg font-bold text-[var(--text-primary)]">排位赛已全部结束</h2>
           <p className="text-sm text-[var(--text-secondary)]">
-            可根据积分榜生成正赛第一轮对阵
+            可根据积分榜生成{stageName}第一轮对阵
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="font-bold">生成正赛</Button>
+            <Button className="font-bold">生成{stageName}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>确认生成正赛？</DialogTitle>
+              <DialogTitle>确认生成{stageName}？</DialogTitle>
               <DialogDescription className="space-y-3 pt-2">
-                <span className="block">系统将按以下种子顺序生成正赛对阵：</span>
+                <span className="block">系统将按以下种子顺序生成{stageName}对阵：</span>
                 <div className="space-y-1">
                   {standings.map((s) => (
                     <div key={s.teamId} className="flex items-center justify-between text-sm">

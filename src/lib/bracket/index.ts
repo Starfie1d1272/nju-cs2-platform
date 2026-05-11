@@ -12,26 +12,52 @@ import { InMemoryDatabase } from "brackets-memory-db";
 import { Status } from "brackets-model";
 import type { Database } from "brackets-manager";
 import type { Match } from "@/types/match";
-import type { QualifierFormat, PlayoffFormat } from "@/types/season";
 import type { Team } from "@/db/schema/teams";
+
+type QualifierFormat = "round_robin" | "swiss";
+type PlayoffFormat = "double_elim" | "single_elim";
+
+/** brackets-manager stage 的轻量引用（仅 id + name） */
+export type BracketStageRef = { id: number; name: string };
+/** brackets-manager participant 的轻量引用 */
+export type BracketParticipantRef = { id: number; name: string };
+/** brackets-manager round 的轻量引用 */
+export type BracketRoundRef = { id: number; stage_id: number; number: number };
 
 export interface BracketStage {
   id: number;
+  tournament_id?: number;
   name: string;
+  number?: number;
   type: "double_elimination" | "single_elimination" | "round_robin";
+  settings?: Record<string, unknown>;
 }
 
 export interface BracketMatch {
   id: number;
-  stageId: number;
-  roundNumber: number;
+  stage_id: number;
+  group_id: number;
+  round_id: number;
+  number: number;
+  status: number;
   opponent1: { id: number | null; score: number | null; result?: "win" | "loss" } | null;
   opponent2: { id: number | null; score: number | null; result?: "win" | "loss" } | null;
+}
+
+export interface BracketMatchGame {
+  id: number;
+  parent_id: number;
+  stage_id?: number;
+  number?: number;
+  status?: number;
+  opponent1?: { id: number | null; score: number | null; result?: "win" | "loss" } | null;
+  opponent2?: { id: number | null; score: number | null; result?: "win" | "loss" } | null;
 }
 
 export interface BracketData {
   stage: BracketStage[];
   match: BracketMatch[];
+  match_game: BracketMatchGame[];
   participant: { id: number; name: string }[];
 }
 
@@ -63,6 +89,8 @@ export async function generateBracket(
   config: {
     qualifierFormat: QualifierFormat | null;
     playoffFormat: PlayoffFormat | null;
+    qualifierName?: string;
+    playoffName?: string;
   }
 ): Promise<{ data: Database; resolvedMatches: ResolvedBracketMatch[] }> {
   const db = new InMemoryDatabase();
@@ -74,7 +102,7 @@ export async function generateBracket(
     // 排位赛 stage（round_robin 或 swiss；swiss 暂不支持，统一用 round_robin）
     await manager.create.stage({
       tournamentId: 0,
-      name: "排位赛",
+      name: config.qualifierName ?? "排位赛",
       type: "round_robin",
       seeding,
       settings: {
@@ -89,7 +117,7 @@ export async function generateBracket(
       config.playoffFormat === "double_elim" ? "double_elimination" : "single_elimination";
     await manager.create.stage({
       tournamentId: 0,
-      name: "正赛",
+      name: config.playoffName ?? "正赛",
       type,
       seeding: config.qualifierFormat !== null
         // 排位赛结束后才确定晋级顺序；先全部 TBD
@@ -154,41 +182,51 @@ export function serializeBracket(
   teams: Team[]
 ): BracketData {
   if (!data) {
-    return { stage: [], match: [], participant: [] };
+    return { stage: [], match: [], match_game: [], participant: [] };
   }
 
   // participant 表只有 name；id 顺序对应 teams 按 draft_order 排列
-  const participant = (data.participant as Array<{ id: number; name: string }>).map((p) => ({
+  const participant = (data.participant as BracketParticipantRef[]).map((p) => ({
     id: p.id,
     name: p.name,
   }));
 
-  // round 表：按 stageId+number 查找 roundNumber
-  const roundMap = new Map<number, number>();
-  for (const r of data.round as Array<{ id: number; stage_id: number; number: number }>) {
-    roundMap.set(r.id, r.number);
-  }
-
   const stage: BracketStage[] = (
-    data.stage as Array<{ id: number; name: string; type: string }>
+    data.stage as Array<{
+      id: number;
+      tournament_id?: number;
+      name: string;
+      number?: number;
+      type: string;
+      settings?: Record<string, unknown>;
+    }>
   ).map((s) => ({
     id: s.id,
+    tournament_id: s.tournament_id,
     name: s.name,
+    number: s.number,
     type: s.type as BracketStage["type"],
+    settings: s.settings ?? {},
   }));
 
   const match: BracketMatch[] = (
     data.match as Array<{
       id: number;
       stage_id: number;
+      group_id: number;
       round_id: number;
+      number: number;
+      status: number;
       opponent1: { id: number | null; score: number | null; result?: string } | null;
       opponent2: { id: number | null; score: number | null; result?: string } | null;
     }>
   ).map((m) => ({
     id: m.id,
-    stageId: m.stage_id,
-    roundNumber: roundMap.get(m.round_id) ?? 0,
+    stage_id: m.stage_id,
+    group_id: m.group_id,
+    round_id: m.round_id,
+    number: m.number,
+    status: m.status,
     opponent1: m.opponent1
       ? {
           id: m.opponent1.id,
@@ -205,7 +243,12 @@ export function serializeBracket(
       : null,
   }));
 
-  return { stage, match, participant };
+  return {
+    stage,
+    match,
+    match_game: (data.match_game as unknown as BracketMatchGame[] | undefined) ?? [],
+    participant,
+  };
 }
 
 /**
@@ -217,13 +260,14 @@ export function serializeBracket(
  */
 export async function seedPlayoff(
   seededTeamNames: string[],
-  currentData: Database
+  currentData: Database,
+  stageName = "正赛",
 ): Promise<{ updatedData: Database; resolvedMatches: ResolvedBracketMatch[] }> {
   const { manager } = buildManager(currentData);
 
-  const stages = currentData.stage as Array<{ id: number; name: string }>;
-  const playoffStage = stages.find((s) => s.name === "正赛");
-  if (!playoffStage) throw new Error("正赛 stage 未找到，请先生成赛程");
+  const stages = currentData.stage as BracketStageRef[];
+  const playoffStage = stages.find((s) => s.name === stageName);
+  if (!playoffStage) throw new Error(`${stageName} stage 未找到，请先生成赛程`);
 
   // 用实际队伍名替换 TBD seed
   await manager.update.seeding(playoffStage.id, seededTeamNames);
@@ -242,7 +286,7 @@ export async function seedPlayoff(
  */
 function collectResolvedMatches(data: Database): ResolvedBracketMatch[] {
   const roundMap = new Map<number, { stageId: number; number: number }>();
-  for (const r of data.round as Array<{ id: number; stage_id: number; number: number }>) {
+  for (const r of data.round as BracketRoundRef[]) {
     roundMap.set(r.id, { stageId: r.stage_id, number: r.number });
   }
 

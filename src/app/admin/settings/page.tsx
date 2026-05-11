@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
 import { checkAdminSession } from "@/lib/auth/session";
-import { AdminNav } from "@/components/admin/AdminNav";
 import { ChangePasswordForm } from "@/components/admin/ChangePasswordForm";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,14 +19,10 @@ const ENV_VARS = [
 ] as const;
 
 export default async function AdminSettingsPage() {
-  const admin = await checkAdminSession();
-  if (!admin) redirect("/admin/login");
+  const admin = (await checkAdminSession())!;
 
   return (
-    <div className="min-h-screen">
-      <AdminNav email={admin.email} />
-
-      <div className="container mx-auto px-4 py-8 max-w-2xl space-y-10">
+    <div className="container mx-auto px-4 py-8 max-w-2xl space-y-10">
         <div>
           <h1 className="text-2xl font-bold mb-2">系统设置</h1>
           <p className="text-sm text-[var(--text-secondary)]">
@@ -88,7 +82,6 @@ export default async function AdminSettingsPage() {
             })}
           </Card>
         </section>
-      </div>
     </div>
   );
 }

@@ -52,7 +52,7 @@
     "runtime": "Node.js 20.0.0"
   },
   "build": {
-    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -3",
+    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -3 && pnpm test 2>&1 | tail -3",
     "testCommand": "rtk tsc --noEmit 2>&1 | tail -3 && pnpm test 2>&1 | tail -3",
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm dev",

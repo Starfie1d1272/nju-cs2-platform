@@ -35,7 +35,7 @@ async function insertResolvedBracketMatches(
   resolvedMatches: ResolvedBracketMatch[],
   stagePlan: ReturnType<typeof normalizeStagePlan>,
 ) {
-  const seasonTeams = await db.query.teams.findMany({
+  const seasonTeams = await tx.query.teams.findMany({
     where: eq(teams.seasonId, seasonId),
     orderBy: [asc(teams.draftOrder)],
   });

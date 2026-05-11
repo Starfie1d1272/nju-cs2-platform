@@ -2,10 +2,27 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
-const connectionString = process.env.DATABASE_URL;
+const rawUrl = process.env.DATABASE_URL;
 
-// Supabase direct connection requires SSL; local Docker/Postgres does not.
-// Production: use Supabase Transaction Pooler URL for connection pooling.
+/**
+ * Rewrite Supabase direct-connection URLs to Transaction Pooler (port 6543)
+ * via known IP, bypassing Geo-fenced DNS on Vercel.
+ */
+function toPoolerUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === "db.feontmsggbbligghjrhl.supabase.co") {
+      parsed.hostname = "198.18.8.125";
+      parsed.port = "6543";
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+const connectionString = rawUrl ? toPoolerUrl(rawUrl) : rawUrl;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pgConfig: any = {
   connectionString,

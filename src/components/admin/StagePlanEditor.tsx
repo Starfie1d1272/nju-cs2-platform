@@ -149,6 +149,8 @@ export function StagePlanEditor({ value, onChange }: StagePlanEditorProps) {
                 </SelectContent>
               </Select>
             </div>
+            {/* advanceTiers hidden for double_elim — qualifiers are bracket-determined */}
+            {stage.type !== "double_elim" && (
             <div>
               <Label>晋级规则</Label>
               <div className="flex items-center gap-2">
@@ -177,6 +179,7 @@ export function StagePlanEditor({ value, onChange }: StagePlanEditorProps) {
                 <span className="text-sm text-muted-foreground">名</span>
               </div>
             </div>
+            )}
           </div>
 
           {/* Dynamic fields by type */}

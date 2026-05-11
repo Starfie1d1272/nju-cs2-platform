@@ -43,12 +43,6 @@ function emptyToNull(value: string): string | null {
   return value.trim() === "" ? null : value;
 }
 
-function parseJson<T>(value: string, fallback: T): T {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return JSON.parse(trimmed) as T;
-}
-
 function slugFromName(name: string): string {
   if (!name) return "";
   return name
@@ -142,7 +136,6 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
       setPeakMin("A+");
       setMaxPerPosition(15);
       setScreenshotCount(1);
-      setTeamConfig(MAJOR_TEAM_CONFIG);
     }
   }
 
@@ -151,8 +144,7 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
     if (mode === "create" && !slug && name) {
       setSlug(slugFromName(name));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
+  }, [mode, name, slug]);
 
   function handleRegistrationModeChange(value: "solo" | "team") {
     setRegistrationMode(value);
@@ -358,7 +350,7 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
         <section className="space-y-4">
           <h2 className="font-semibold">报名配置</h2>
           <div className="flex flex-wrap gap-4 text-sm">
-            {(PLAYER_TYPES as PlayerType[]).map((type) => (
+            {PLAYER_TYPES.map((type) => (
               <label key={type} className="flex items-center gap-2">
                 <input
                   type="checkbox"

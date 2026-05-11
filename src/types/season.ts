@@ -63,6 +63,36 @@ export interface RegistrationConfig {
   screenshotCount: number;
 }
 
+export interface TeamRegistrationConfig {
+  allowExternal: boolean;
+  graduateCountsAsHome: boolean;
+  minHomeMembers: number;
+  minEnrolledMembers: number;
+  maxExternalMembers: number;
+  requirePositions: boolean;
+  maxPerPositionPerTeam: number;
+  captainCanKick: boolean;
+  captainCanTransfer: boolean;
+  lockAfterRegistration: boolean;
+  requireUniqueTeamName: boolean;
+  requireTeamLogo: boolean;
+}
+
+export const MAJOR_TEAM_CONFIG: TeamRegistrationConfig = {
+  allowExternal: false,
+  graduateCountsAsHome: true,
+  minHomeMembers: 5,
+  minEnrolledMembers: 0,
+  maxExternalMembers: 0,
+  requirePositions: false,
+  maxPerPositionPerTeam: 2,
+  captainCanKick: true,
+  captainCanTransfer: true,
+  lockAfterRegistration: true,
+  requireUniqueTeamName: true,
+  requireTeamLogo: false,
+};
+
 /**
  * Capability 字段——业务逻辑的唯一判断依据。
  * 禁止用 season.kind 做功能分支，统一读这组字段。
@@ -82,7 +112,9 @@ export interface SeasonCapabilities {
   stagePlan: StagePlan;
   /** 报名规则配置 */
   registrationConfig: RegistrationConfig;
-  teamSize: number;
+  teamRegistrationConfig: TeamRegistrationConfig;
+  maxTeamSize: number;
+  minTeamSize: number;
   starterCount: number;
   /** 该赛季可用的位置标识符列表 */
   positions: string[];
@@ -133,7 +165,9 @@ export const DRAFT_LEAGUE_PRESET: SeasonCapabilities = {
   hasDraft: true,
   stagePlan: RIVALS_STAGE_PLAN,
   registrationConfig: RIVALS_REGISTRATION_CONFIG,
-  teamSize: 7,
+  teamRegistrationConfig: {} as TeamRegistrationConfig,
+  maxTeamSize: 7,
+  minTeamSize: 7,
   starterCount: 5,
   positions: CS2_POSITIONS,
 };
@@ -145,7 +179,9 @@ export const OPEN_TOURNAMENT_PRESET: SeasonCapabilities = {
   hasDraft: false,
   stagePlan: RIVALS_STAGE_PLAN,
   registrationConfig: RIVALS_REGISTRATION_CONFIG,
-  teamSize: 5,
+  teamRegistrationConfig: MAJOR_TEAM_CONFIG,
+  maxTeamSize: 5,
+  minTeamSize: 5,
   starterCount: 5,
   positions: CS2_POSITIONS,
 };
@@ -193,12 +229,14 @@ export const CAPABILITY_PRESETS = {
   "draft-league": DRAFT_LEAGUE_PRESET,
   "open-tournament": OPEN_TOURNAMENT_PRESET,
   major: {
-    registrationMode: "team",
+    registrationMode: "team" as const,
     hasCaptainVoting: false,
     hasDraft: false,
     stagePlan: MAJOR_STAGE_PLAN,
     registrationConfig: MAJOR_REGISTRATION_CONFIG,
-    teamSize: 5,
+    teamRegistrationConfig: MAJOR_TEAM_CONFIG,
+    maxTeamSize: 9,
+    minTeamSize: 5,
     starterCount: 5,
     positions: CS2_POSITIONS,
   },
@@ -269,6 +307,27 @@ export function normalizeRegistrationConfig(
     },
     maxPerPosition: config?.maxPerPosition ?? RIVALS_REGISTRATION_CONFIG.maxPerPosition,
     screenshotCount: config?.screenshotCount ?? RIVALS_REGISTRATION_CONFIG.screenshotCount,
+  };
+}
+
+type PartialTeamConfig = Partial<TeamRegistrationConfig>;
+
+export function normalizeTeamRegistrationConfig(
+  config: PartialTeamConfig | null | undefined,
+): TeamRegistrationConfig {
+  return {
+    allowExternal: config?.allowExternal ?? false,
+    graduateCountsAsHome: config?.graduateCountsAsHome ?? true,
+    minHomeMembers: config?.minHomeMembers ?? 5,
+    minEnrolledMembers: config?.minEnrolledMembers ?? 0,
+    maxExternalMembers: config?.maxExternalMembers ?? 0,
+    requirePositions: config?.requirePositions ?? false,
+    maxPerPositionPerTeam: config?.maxPerPositionPerTeam ?? 2,
+    captainCanKick: config?.captainCanKick ?? true,
+    captainCanTransfer: config?.captainCanTransfer ?? true,
+    lockAfterRegistration: config?.lockAfterRegistration ?? true,
+    requireUniqueTeamName: config?.requireUniqueTeamName ?? true,
+    requireTeamLogo: config?.requireTeamLogo ?? false,
   };
 }
 

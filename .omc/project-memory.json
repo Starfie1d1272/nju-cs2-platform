@@ -52,8 +52,8 @@
     "runtime": "Node.js 20.0.0"
   },
   "build": {
-    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -20",
-    "testCommand": "rtk git add src/lib/standings.test.ts src/lib/draft/rules.test.ts src/lib/captains/rules.test.ts src/lib/validators/registration.test.ts src/lib/match-transitions.test.ts src/lib/formats/round-robin.test.ts vitest.config.ts && rtk git commit -m \"$(cat <<'EOF'\ntest: add core logic unit tests (standings, draft, captains, validators, transitions)\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\nEOF\n)\"",
+    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -5",
+    "testCommand": "pnpm test 2>&1 | tail -10",
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm dev",
     "scripts": {
@@ -213,15 +213,15 @@
       "type": "file"
     },
     {
-      "path": "src/actions/draft.ts",
-      "accessCount": 20,
-      "lastAccessed": 1778529050729,
+      "path": "src/app/[seasonSlug]/matches/[matchId]/page.tsx",
+      "accessCount": 25,
+      "lastAccessed": 1778532717873,
       "type": "file"
     },
     {
-      "path": "src/app/[seasonSlug]/matches/[matchId]/page.tsx",
-      "accessCount": 18,
-      "lastAccessed": 1778481723027,
+      "path": "src/actions/draft.ts",
+      "accessCount": 20,
+      "lastAccessed": 1778529050729,
       "type": "file"
     },
     {
@@ -237,9 +237,21 @@
       "type": "file"
     },
     {
+      "path": "src/db/schema/index.ts",
+      "accessCount": 13,
+      "lastAccessed": 1778532163705,
+      "type": "file"
+    },
+    {
       "path": "src/app/players/[userId]/page.tsx",
       "accessCount": 11,
       "lastAccessed": 1778480545536,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/errors.ts",
+      "accessCount": 10,
+      "lastAccessed": 1778531760296,
       "type": "file"
     },
     {
@@ -279,21 +291,21 @@
       "type": "file"
     },
     {
-      "path": "src/db/schema/index.ts",
-      "accessCount": 8,
-      "lastAccessed": 1778528734695,
-      "type": "file"
-    },
-    {
       "path": "src/lib/validators/registration.ts",
       "accessCount": 8,
       "lastAccessed": 1778530265340,
       "type": "file"
     },
     {
-      "path": "src/lib/errors.ts",
+      "path": "src/db/schema/teams.ts",
       "accessCount": 8,
-      "lastAccessed": 1778530286079,
+      "lastAccessed": 1778532159825,
+      "type": "file"
+    },
+    {
+      "path": "src/db/schema/registrations.ts",
+      "accessCount": 8,
+      "lastAccessed": 1778532172567,
       "type": "file"
     },
     {
@@ -327,15 +339,15 @@
       "type": "file"
     },
     {
-      "path": "src/db/schema/registrations.ts",
-      "accessCount": 5,
-      "lastAccessed": 1778527834228,
+      "path": "src/db/schema/matches.ts",
+      "accessCount": 6,
+      "lastAccessed": 1778531730379,
       "type": "file"
     },
     {
-      "path": "src/db/schema/teams.ts",
+      "path": "src/types/action.ts",
       "accessCount": 5,
-      "lastAccessed": 1778530310158,
+      "lastAccessed": 1778532249525,
       "type": "file"
     },
     {
@@ -345,9 +357,15 @@
       "type": "file"
     },
     {
-      "path": "src/db/schema/matches.ts",
+      "path": "src/lib/auth/session.ts",
       "accessCount": 4,
-      "lastAccessed": 1778530312102,
+      "lastAccessed": 1778532161741,
+      "type": "file"
+    },
+    {
+      "path": "src/db/schema/users.ts",
+      "accessCount": 4,
+      "lastAccessed": 1778532242580,
       "type": "file"
     },
     {
@@ -381,6 +399,12 @@
       "type": "file"
     },
     {
+      "path": "src/components/matches/MatchMvpVote.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1778532176874,
+      "type": "file"
+    },
+    {
       "path": "tests/unit/lib/formats/double-elim.test.ts",
       "accessCount": 2,
       "lastAccessed": 1778470648147,
@@ -399,12 +423,6 @@
       "type": "file"
     },
     {
-      "path": "src/components/matches/MatchMvpVote.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1778480130702,
-      "type": "file"
-    },
-    {
       "path": "src/lib/validators/draft.ts",
       "accessCount": 2,
       "lastAccessed": 1778480479825,
@@ -417,12 +435,6 @@
       "type": "file"
     },
     {
-      "path": "src/types/action.ts",
-      "accessCount": 2,
-      "lastAccessed": 1778527795938,
-      "type": "file"
-    },
-    {
       "path": "src/lib/draft/rules.ts",
       "accessCount": 2,
       "lastAccessed": 1778530260773,
@@ -432,6 +444,12 @@
       "path": "src/lib/match-transitions.ts",
       "accessCount": 2,
       "lastAccessed": 1778530267486,
+      "type": "file"
+    },
+    {
+      "path": "src/components/matches/MatchDetail.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1778532170435,
       "type": "file"
     },
     {
@@ -477,33 +495,15 @@
       "type": "file"
     },
     {
-      "path": "src/db/schema/users.ts",
-      "accessCount": 1,
-      "lastAccessed": 1778478540256,
-      "type": "file"
-    },
-    {
       "path": "drizzle/migrations/0009_outstanding_satana.sql",
       "accessCount": 1,
       "lastAccessed": 1778479015966,
       "type": "file"
     },
     {
-      "path": "src/lib/auth/session.ts",
-      "accessCount": 1,
-      "lastAccessed": 1778479362717,
-      "type": "file"
-    },
-    {
       "path": "src/components/matches/StandingsTable.tsx",
       "accessCount": 1,
       "lastAccessed": 1778479652842,
-      "type": "file"
-    },
-    {
-      "path": "src/components/matches/MatchDetail.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1778481669094,
       "type": "file"
     }
   ],

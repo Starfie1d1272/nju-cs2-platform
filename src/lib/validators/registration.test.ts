@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { buildRegistrationSchema } from "@/lib/validators/registration";
+import type { PlayerType } from "@/types/season";
 
 // CS2 positions for Rivals
 const positions = ["igl", "awper", "opener", "closer", "anchor"];
 
 function buildSchema(overrides?: Record<string, any>) {
   const config = {
-    allowedPlayerTypes: ["enrolled", "graduated"],
+    allowedPlayerTypes: ["enrolled", "graduated"] as PlayerType[],
     rankThreshold: {
       currentMin: overrides?.currentMin ?? undefined,
       peakMin: overrides?.peakMin ?? undefined,

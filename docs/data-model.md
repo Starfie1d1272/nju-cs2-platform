@@ -363,6 +363,38 @@ erDiagram
 - `captain_votes(candidate_registration_id)` — 票数聚合
 - `draft_picks(season_id, round, pick_number)` — 选秀顺序查询
 - `matches(season_id, status)` — 赛程过滤
+- `match_time_proposals(match_id, status)` — 时间协商查询
+- `match_rosters(match_id)` — 名单查询
+- `match_roster_players(roster_id)` — 名单成员查询
+
+---
+
+## Phase 2 新增表（Sub-project 2）
+
+### `match_time_proposals` — 比赛时间协商
+| 列 | 类型 | 说明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `match_id` | uuid FK → matches.id | 关联比赛 |
+| `proposed_by` | uuid FK → users.id | 提议队长 |
+| `force_assigned_by` | uuid FK → users.id | 管理员强制指定（nullable） |
+| `status` | text | pending / accepted / rejected / expired |
+| `proposed_time` | timestamptz | 提议的比赛时间 |
+| `response_at` | timestamptz | 回应时间 |
+| `reject_reason` | text | 拒绝原因（≤200 字） |
+
+### `match_rosters` + `match_roster_players` — 赛前名单提交
+| 表 | 列 | 类型 | 说明 |
+|---|---|---|---|
+| `match_rosters` | `id` | uuid PK | |
+| | `match_id` | uuid FK → matches.id UNIQUE | 每场比赛一条记录 |
+| | `submitted_by` | uuid FK → users.id | 提交队长 |
+| | `status` | text | submitted / unlocked |
+| | `locked_at` | timestamptz | 提交锁定时间 |
+| `match_roster_players` | `roster_id` | uuid FK → match_rosters.id CASCADE | |
+| | `team_member_id` | uuid FK → team_members.id | |
+| | `is_starter` | boolean | true = 首发（5人），false = 替补（≤2人） |
+| | PK | unique(roster_id, team_member_id) | |
 
 ---
 

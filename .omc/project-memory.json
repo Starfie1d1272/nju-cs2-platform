@@ -52,8 +52,8 @@
     "runtime": "Node.js 20.0.0"
   },
   "build": {
-    "buildCommand": "rtk tsc --noEmit 2>&1 | head -10",
-    "testCommand": "rtk tsc --noEmit 2>&1 | tail -3 && pnpm test 2>&1 | tail -5 && rtk git add -A && rtk git commit -m \"fix: simplify — use CS2_POSITIONS constant, structuredClone, remove dead code and useMemo\" && rtk git push",
+    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -2 && pnpm test 2>&1 | tail -3 && rtk git add -A && rtk git commit --amend --no-edit && rtk git push --force-with-lease",
+    "testCommand": "rtk tsc --noEmit 2>&1 | tail -2 && pnpm test 2>&1 | tail -3 && rtk git add -A && rtk git commit --amend --no-edit && rtk git push --force-with-lease",
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm dev",
     "scripts": {

@@ -52,8 +52,8 @@
     "runtime": "Node.js 20.0.0"
   },
   "build": {
-    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -5",
-    "testCommand": "pnpm test 2>&1 | tail -5",
+    "buildCommand": "rtk tsc --noEmit 2>&1 | tail -20",
+    "testCommand": "rtk git add src/lib/standings.test.ts src/lib/draft/rules.test.ts src/lib/captains/rules.test.ts src/lib/validators/registration.test.ts src/lib/match-transitions.test.ts src/lib/formats/round-robin.test.ts vitest.config.ts && rtk git commit -m \"$(cat <<'EOF'\ntest: add core logic unit tests (standings, draft, captains, validators, transitions)\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\nEOF\n)\"",
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm dev",
     "scripts": {
@@ -207,6 +207,18 @@
   },
   "hotPaths": [
     {
+      "path": "src/actions/matches.ts",
+      "accessCount": 26,
+      "lastAccessed": 1778529686557,
+      "type": "file"
+    },
+    {
+      "path": "src/actions/draft.ts",
+      "accessCount": 20,
+      "lastAccessed": 1778529050729,
+      "type": "file"
+    },
+    {
       "path": "src/app/[seasonSlug]/matches/[matchId]/page.tsx",
       "accessCount": 18,
       "lastAccessed": 1778481723027,
@@ -219,9 +231,9 @@
       "type": "file"
     },
     {
-      "path": "src/actions/matches.ts",
-      "accessCount": 13,
-      "lastAccessed": 1778492637715,
+      "path": "src/actions/player-stats.ts",
+      "accessCount": 14,
+      "lastAccessed": 1778528476778,
       "type": "file"
     },
     {
@@ -231,21 +243,15 @@
       "type": "file"
     },
     {
-      "path": "src/actions/player-stats.ts",
-      "accessCount": 11,
-      "lastAccessed": 1778481726273,
-      "type": "file"
-    },
-    {
-      "path": "src/actions/draft.ts",
-      "accessCount": 10,
-      "lastAccessed": 1778485843329,
-      "type": "file"
-    },
-    {
       "path": "src/app/[seasonSlug]/page.tsx",
       "accessCount": 9,
       "lastAccessed": 1778480796190,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/cron/draft-timeout/route.ts",
+      "accessCount": 9,
+      "lastAccessed": 1778529232751,
       "type": "file"
     },
     {
@@ -267,15 +273,27 @@
       "type": "file"
     },
     {
-      "path": "src/app/api/cron/draft-timeout/route.ts",
-      "accessCount": 8,
-      "lastAccessed": 1778485879216,
-      "type": "file"
-    },
-    {
       "path": "src/lib/utils/season.ts",
       "accessCount": 8,
       "lastAccessed": 1778520143540,
+      "type": "file"
+    },
+    {
+      "path": "src/db/schema/index.ts",
+      "accessCount": 8,
+      "lastAccessed": 1778528734695,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/validators/registration.ts",
+      "accessCount": 8,
+      "lastAccessed": 1778530265340,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/errors.ts",
+      "accessCount": 8,
+      "lastAccessed": 1778530286079,
       "type": "file"
     },
     {
@@ -285,9 +303,9 @@
       "type": "file"
     },
     {
-      "path": "src/lib/validators/registration.ts",
+      "path": "src/actions/admin.ts",
       "accessCount": 7,
-      "lastAccessed": 1778527442494,
+      "lastAccessed": 1778528284481,
       "type": "file"
     },
     {
@@ -303,33 +321,21 @@
       "type": "file"
     },
     {
-      "path": "src/db/schema/index.ts",
-      "accessCount": 6,
-      "lastAccessed": 1778481012699,
-      "type": "file"
-    },
-    {
-      "path": "src/lib/errors.ts",
-      "accessCount": 6,
-      "lastAccessed": 1778527393836,
-      "type": "file"
-    },
-    {
       "path": "src/lib/config/registration-defaults.ts",
-      "accessCount": 5,
-      "lastAccessed": 1778527557360,
-      "type": "file"
-    },
-    {
-      "path": "src/actions/admin.ts",
-      "accessCount": 4,
-      "lastAccessed": 1778471686630,
+      "accessCount": 6,
+      "lastAccessed": 1778530288221,
       "type": "file"
     },
     {
       "path": "src/db/schema/registrations.ts",
-      "accessCount": 4,
-      "lastAccessed": 1778482696757,
+      "accessCount": 5,
+      "lastAccessed": 1778527834228,
+      "type": "file"
+    },
+    {
+      "path": "src/db/schema/teams.ts",
+      "accessCount": 5,
+      "lastAccessed": 1778530310158,
       "type": "file"
     },
     {
@@ -339,15 +345,15 @@
       "type": "file"
     },
     {
-      "path": "src/db/schema/mvp-votes.ts",
-      "accessCount": 3,
-      "lastAccessed": 1778480128864,
+      "path": "src/db/schema/matches.ts",
+      "accessCount": 4,
+      "lastAccessed": 1778530312102,
       "type": "file"
     },
     {
-      "path": "src/db/schema/teams.ts",
+      "path": "src/db/schema/mvp-votes.ts",
       "accessCount": 3,
-      "lastAccessed": 1778481781266,
+      "lastAccessed": 1778480128864,
       "type": "file"
     },
     {
@@ -369,6 +375,12 @@
       "type": "file"
     },
     {
+      "path": "src/app/[seasonSlug]/matches/page.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1778528868686,
+      "type": "file"
+    },
+    {
       "path": "tests/unit/lib/formats/double-elim.test.ts",
       "accessCount": 2,
       "lastAccessed": 1778470648147,
@@ -384,12 +396,6 @@
       "path": "docs/superpowers/plans/2026-05-11-player-stats-display-plan.md",
       "accessCount": 2,
       "lastAccessed": 1778478421785,
-      "type": "file"
-    },
-    {
-      "path": "src/db/schema/matches.ts",
-      "accessCount": 2,
-      "lastAccessed": 1778479582811,
       "type": "file"
     },
     {
@@ -411,15 +417,27 @@
       "type": "file"
     },
     {
-      "path": "src/lib/registration-transitions.ts",
-      "accessCount": 1,
-      "lastAccessed": 1778471048710,
+      "path": "src/types/action.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778527795938,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/draft/rules.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778530260773,
       "type": "file"
     },
     {
       "path": "src/lib/match-transitions.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778530267486,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/registration-transitions.ts",
       "accessCount": 1,
-      "lastAccessed": 1778471059292,
+      "lastAccessed": 1778471048710,
       "type": "file"
     },
     {
@@ -471,12 +489,6 @@
       "type": "file"
     },
     {
-      "path": "src/types/action.ts",
-      "accessCount": 1,
-      "lastAccessed": 1778479332014,
-      "type": "file"
-    },
-    {
       "path": "src/lib/auth/session.ts",
       "accessCount": 1,
       "lastAccessed": 1778479362717,
@@ -486,18 +498,6 @@
       "path": "src/components/matches/StandingsTable.tsx",
       "accessCount": 1,
       "lastAccessed": 1778479652842,
-      "type": "file"
-    },
-    {
-      "path": "src/lib/draft/rules.ts",
-      "accessCount": 1,
-      "lastAccessed": 1778480094974,
-      "type": "file"
-    },
-    {
-      "path": "src/app/[seasonSlug]/matches/page.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1778481047031,
       "type": "file"
     },
     {

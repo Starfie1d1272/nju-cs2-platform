@@ -31,7 +31,7 @@ erDiagram
     bool has_captain_voting
     bool has_draft
     json stage_plan "StageConfig[]"
-    json registration_config "RegistrationConfig"
+    json registration_config "RegistrationConfig (含 maxTotal)"
     int min_team_size
     int max_team_size
     json team_registration_config "TeamRegistrationConfig"
@@ -369,7 +369,8 @@ erDiagram
 ## 强制约束（来自规则书）
 
 1. 每个主选位置上限 15 人（应用层 Server Action 校验，不用 DB 触发器）。
-2. 每位选手每届赛事只能投 3 票（应用层计数校验）。
-3. 每队同主选位置不超过 2 人（选秀 pick 时 Server Action 校验）。
-4. 选秀共 6 轮，每队选 6 人（队长本人 + 6 pick = 7 人）。
-5. 时间字段统一 UTC 存储，`Asia/Shanghai` 展示。
+2. 总报名人数上限 56 人（`registrationConfig.maxTotal`，应用层校验）。
+3. 每位选手每届赛事只能投 3 票（应用层计数校验）。
+4. 每队同主选位置不超过 2 人（选秀 pick 时 Server Action 校验）。
+5. 选秀共 6 轮，每队选 6 人（队长本人 + 6 pick = 7 人）。
+6. 时间字段统一 UTC 存储，`Asia/Shanghai` 展示。

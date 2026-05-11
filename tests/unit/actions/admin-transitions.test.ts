@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   TRANSITION_RULES,
   validateTransition,
-} from "@/actions/admin";
+} from "@/lib/registration-transitions";
 import { AppError, ErrorCode } from "@/lib/errors";
 
 describe("TRANSITION_RULES", () => {

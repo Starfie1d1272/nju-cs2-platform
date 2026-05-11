@@ -3,7 +3,7 @@ import {
   MATCH_TRANSITIONS,
   assertMatchTransition,
   resolveMatchFormat,
-} from "@/actions/matches";
+} from "@/lib/match-transitions";
 import { AppError, ErrorCode } from "@/lib/errors";
 import type { StagePlan } from "@/types/season";
 

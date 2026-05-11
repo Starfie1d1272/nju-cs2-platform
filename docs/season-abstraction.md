@@ -16,10 +16,13 @@
 | `hasCaptainVoting` | `boolean` | `true` | `false` | 是否有队长投票环节 |
 | `hasDraft` | `boolean` | `true` | `false` | 是否有蛇形选秀 |
 | `stagePlan` | `StagePlan` | `round_robin -> double_elim` | `round_robin -> double_elim` | 多阶段赛制计划，`matches.stage` 存阶段 `key` |
-| `registrationConfig` | `RegistrationConfig` | Rivals 默认报名规则 | Rivals 默认报名规则 | 身份类型、段位门槛、位置上限、截图数量 |
-| `teamSize` | `integer` | `7` | `5` | 每队人数 |
+| `registrationConfig` | `RegistrationConfig` | Rivals 默认（含 maxTotal: 56） | Rivals 默认 | 身份类型、段位门槛、位置上限、截图数量、总人数上限 |
+
+| `minTeamSize` | `integer` | `7` | `5` | 每队最少人数 |
+| `maxTeamSize` | `integer` | `7` | `9` | 每队最多人数 |
 | `starterCount` | `integer` | `5` | `5` | 首发人数 |
-| `positions` | `text[]` | `["igl","awper","opener","closer","anchor"]` | `["igl","awper","opener","closer","anchor"]` | 该赛季可用位置列表 |
+| `teamRegistrationConfig` | `TeamRegistrationConfig` | `{}` | MAJOR_TEAM_CONFIG | 队伍报名配置（身份/学校约束、位置分配、队伍管理权限） |
+| `positions` | `text[]` | `["igl","awper","opener","closer","anchor"]` | `["igl","awper","opener","closer","anchor"]` | 该赛季可用位置列表（Team 模式下可选填） |
 
 **为什么使用 stagePlan**：有些赛事可能仅有排位赛、仅有正赛，或有多个 Swiss / Playoff 阶段。用 `stagePlan` 的阶段数组统一描述，业务代码读取稳定的 `stage.key`，展示使用可变的 `stage.name`。
 
@@ -122,14 +125,19 @@ return (
 
 ---
 
+## 配置源
+
+`src/types/season.ts` 是配置定义的 source of truth。所有 `RegistrationConfig`（含 `maxTotal`）、`StagePlan`、`TeamRegistrationConfig` 均在此定义并导出。`RIVALS_REGISTRATION_CONFIG`（默认 `maxTotal: 56`）和 `MAJOR_REGISTRATION_CONFIG`（默认 `maxTotal: 256`）为两个内置预设。
+
 ## Capability 预设
 
-`src/types/season.ts` 提供两个内置预设，通过 `CAPABILITY_PRESETS` 索引访问：
+`src/types/season.ts` 提供三个内置预设，通过 `CAPABILITY_PRESETS` 索引访问：
 
 | 预设名 | 说明 |
 |---|---|
 | `draft-league` | 选秀联赛（个人报名 → 投票 → 选秀 → 循环赛 + 双败） |
 | `open-tournament` | 公开赛（队伍报名 → 循环赛 + 双败） |
+| `major` | Major 公开赛（32 队 3 轮 Swiss + 单败淘汰） |
 
 部署者可以基于预设创建赛季，也可以完全自定义每个 capability 字段。
 

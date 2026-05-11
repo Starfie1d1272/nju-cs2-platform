@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"rtk curl -s -o /dev/null -w \\\"HTTP %{http_code}\\\" https://match.starfie1d.top/\",\"description\":\"Test homepage after sync hostname fix\"}",
-  "error": "Exit code 35\nFAILED: curl HTTP 000",
-  "timestamp": "2026-05-11T11:24:06.712Z",
-  "retry_count": 1
-}

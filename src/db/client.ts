@@ -4,46 +4,20 @@ import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL;
 
-/**
- * Rewrite Supabase direct-connection hostnames to their known IPs.
- * Some Supabase project hostnames fail DNS on Vercel's US East infra
- * but the underlying IPs are reachable. This is a sync bypass — no
- * async DNS calls needed.
- */
-function rewriteSupabaseHost(dbUrl: string): string {
-  try {
-    const parsed = new URL(dbUrl);
-    const hostname = parsed.hostname;
-
-    // Known mappings: Supabase project ref → IPv4
-    const SUPABASE_IPS: Record<string, string> = {
-      "db.feontmsggbbligghjrhl.supabase.co": "198.18.8.125",
-    };
-
-    const ip = SUPABASE_IPS[hostname];
-    if (ip) {
-      parsed.hostname = ip;
-      return parsed.toString();
-    }
-    return dbUrl;
-  } catch {
-    return dbUrl;
-  }
-}
-
-const finalUrl = connectionString ? rewriteSupabaseHost(connectionString) : connectionString;
-
+// Supabase direct connection requires SSL; local Docker/Postgres does not.
+// Production: use Supabase Transaction Pooler URL for connection pooling.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pgConfig: any = {
-  connectionString: finalUrl,
-  ssl: shouldUseSsl(finalUrl) ? { rejectUnauthorized: false } : undefined,
-  family: 4,
+  connectionString,
+  ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
+  family: 4, // force IPv4 to avoid DNS resolution issues with Supabase
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
 };
 const pool = new Pool(pgConfig);
 
+// Prevent pool-level errors from crashing the Next.js process
 pool.on("error", (err) => {
   console.error("[db] pool error:", err.message);
 });

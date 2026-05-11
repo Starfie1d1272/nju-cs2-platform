@@ -208,8 +208,8 @@
   "hotPaths": [
     {
       "path": "src/app/[seasonSlug]/matches/[matchId]/page.tsx",
-      "accessCount": 38,
-      "lastAccessed": 1778533915141,
+      "accessCount": 45,
+      "lastAccessed": 1778534354461,
       "type": "file"
     },
     {

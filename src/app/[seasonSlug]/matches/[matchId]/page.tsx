@@ -52,9 +52,10 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
   const isFinished = match.status === "finished";
 
   // ── 时间协商、名单、session（并行）────────────────────────────
-  const [timeProposals, roster, userSession] = await Promise.all([
+  const [timeProposals, rosterA, rosterB, userSession] = await Promise.all([
     getTimeProposals(match.id),
-    getMatchRoster(match.id),
+    getMatchRoster(match.id, match.teamAId),
+    getMatchRoster(match.id, match.teamBId),
     getUserSession(),
   ]);
 
@@ -155,30 +156,29 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
     primaryPosition: string;
     isStarter: boolean;
   }
-  let teamARoster: RosterPlayer[] | null = null;
-  let teamBRoster: RosterPlayer[] | null = null;
 
-  if (roster) {
-    const rosterPlayerMap = new Map(
-      roster.players.map((p) => [p.teamMemberId, p.isStarter]),
-    );
-    const rosterPlayerIds = new Set(roster.players.map((p) => p.teamMemberId));
-
-    const toRoster = (
-      members: typeof allTeamMembers,
-      teamId: string,
-    ): RosterPlayer[] =>
-      members
-        .filter((m) => m.teamId === teamId && rosterPlayerIds.has(m.id))
-        .map((m) => ({
-          steamName: m.steamName ?? "未知",
-          primaryPosition: m.primaryPosition,
-          isStarter: rosterPlayerMap.get(m.id) ?? false,
-        }));
-
-    teamARoster = toRoster(allTeamMembers, match.teamAId);
-    teamBRoster = toRoster(allTeamMembers, match.teamBId);
+  function buildRoster(
+    roster: NonNullable<Awaited<ReturnType<typeof getMatchRoster>>>,
+    members: typeof allTeamMembers,
+    teamId: string,
+  ): RosterPlayer[] {
+    const playerMap = new Map(roster.players.map((p) => [p.teamMemberId, p.isStarter]));
+    const playerIds = new Set(roster.players.map((p) => p.teamMemberId));
+    return members
+      .filter((m) => m.teamId === teamId && playerIds.has(m.id))
+      .map((m) => ({
+        steamName: m.steamName ?? "未知",
+        primaryPosition: m.primaryPosition,
+        isStarter: playerMap.get(m.id) ?? false,
+      }));
   }
+
+  const teamARoster: RosterPlayer[] | null = rosterA
+    ? buildRoster(rosterA, allTeamMembers, match.teamAId)
+    : null;
+  const teamBRoster: RosterPlayer[] | null = rosterB
+    ? buildRoster(rosterB, allTeamMembers, match.teamBId)
+    : null;
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-3xl space-y-8">
@@ -302,7 +302,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               <MatchRosterForm
                 matchId={match.id}
                 teamMembers={captainTeamMembers}
-                hasExistingRoster={roster?.status === "submitted"}
+                hasExistingRoster={(isCaptainA ? rosterA : rosterB)?.status === "submitted"}
               />
             </Card>
           )}

@@ -1,7 +1,7 @@
 import { ocrResponseSchema, type ScoreboardOCRResult, type OCRProvider } from "./types";
 
 const DEFAULT_API_URL = "https://api.siliconflow.cn/v1/chat/completions";
-const DEFAULT_MODEL = "Qwen/Qwen3-VL-8B-Instruct";
+const DEFAULT_MODEL = "PaddlePaddle/PaddleOCR-VL-1.5";
 
 const SYSTEM_PROMPT = `你是一个电竞赛事数据录入助手。用户会发送一张完美平台（Perfect World）CS2 赛后记分板截图。
 请精确识别截图中所有玩家的统计数据，以 JSON 格式返回，不要添加任何解释文字。

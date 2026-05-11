@@ -99,7 +99,10 @@ export async function submitMatchRoster(
 
     const rosterId = await db.transaction(async (tx) => {
       const existing = await tx.query.matchRosters.findFirst({
-        where: eq(matchRosters.matchId, matchId),
+        where: and(
+          eq(matchRosters.matchId, matchId),
+          eq(matchRosters.teamId, teamId),
+        ),
       });
       if (existing && existing.status === "submitted") {
         throw new AppError(ErrorCode.VALIDATION_FAILED, "名单已锁定，联系管理员解锁");
@@ -107,7 +110,6 @@ export async function submitMatchRoster(
 
       let rosterId: string;
       if (existing) {
-        // 管理员已 unlock，覆盖旧的 draft 记录
         rosterId = existing.id;
         await tx
           .update(matchRosters)
@@ -119,7 +121,7 @@ export async function submitMatchRoster(
       } else {
         const [row] = await tx
           .insert(matchRosters)
-          .values({ matchId, submittedBy: session.userId })
+          .values({ matchId, teamId, submittedBy: session.userId })
           .returning({ id: matchRosters.id });
         rosterId = row.id;
       }
@@ -180,9 +182,12 @@ export async function unlockMatchRoster(
 /**
  * 查询某场比赛的名单（含首发/替补队员）。
  */
-export async function getMatchRoster(matchId: string) {
+export async function getMatchRoster(matchId: string, teamId: string) {
   const roster = await db.query.matchRosters.findFirst({
-    where: eq(matchRosters.matchId, matchId),
+    where: and(
+      eq(matchRosters.matchId, matchId),
+      eq(matchRosters.teamId, teamId),
+    ),
   });
   if (!roster) return null;
 

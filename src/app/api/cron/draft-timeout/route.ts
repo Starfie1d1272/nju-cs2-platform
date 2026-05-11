@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const summary = await runDraftTimeoutCron(cronSecret);
+    const summary = await runDraftTimeoutCron();
     return NextResponse.json({ ok: true, ...summary });
   } catch (e) {
     console.error("[draft-timeout-cron]", e);

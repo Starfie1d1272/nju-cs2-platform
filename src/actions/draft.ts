@@ -21,11 +21,13 @@ import {
   resumeDraftSchema,
   pickPlayerSchema,
   autoPickSchema,
+  skipDraftTurnSchema,
   type StartDraftInput,
   type PauseDraftInput,
   type ResumeDraftInput,
   type PickPlayerInput,
   type AutoPickInput,
+  type SkipDraftTurnInput,
 } from "@/lib/validators/draft";
 import { DRAFT_ROUND_TIMEOUT_SECONDS, DRAFT_TEAMS, DRAFT_TOTAL_ROUNDS } from "@/types/draft";
 import { canPickPosition, getNextTeamId, getSnakeOrder, isStarterRound } from "@/lib/draft/rules";
@@ -46,6 +48,8 @@ interface DraftPickCoreInput {
   deadlinePolicy: "before-deadline" | "after-deadline";
   captainUserId?: string;
   now?: Date;
+  prefetchedSeason?: typeof seasons.$inferSelect;
+  prefetchedDs?: typeof draftState.$inferSelect;
 }
 
 interface DraftPickCoreResult {
@@ -241,13 +245,116 @@ export async function autoPick(
   }
 }
 
-export async function runDraftTimeoutCron(
-  cronSecret: string,
-): Promise<DraftTimeoutCronSummary> {
-  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
-    throw new AppError(ErrorCode.UNAUTHORIZED, ERROR_MESSAGES.UNAUTHORIZED);
-  }
+// ── 管理员强制跳过当前轮次（用于无可选选手时解除卡死）───────────────────────────────────────
 
+export async function skipDraftTurn(
+  input: SkipDraftTurnInput,
+): Promise<ActionResult<{ skipped: boolean; completed: boolean }>> {
+  const parsed = skipDraftTurnSchema.safeParse(input);
+  if (!parsed.success) {
+    return failValidation("跳过轮次参数无效");
+  }
+  const admin = await requireSeasonAdmin(parsed.data.seasonId);
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      const season = await tx.query.seasons.findFirst({
+        where: eq(seasons.id, parsed.data.seasonId),
+      });
+      if (!season) {
+        throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
+      }
+      if (season.status !== "drafting") {
+        throw new AppError(ErrorCode.SEASON_INVALID_STATUS, "只有 drafting 状态的赛季可以跳过轮次");
+      }
+
+      const [ds] = await tx
+        .select()
+        .from(draftState)
+        .where(eq(draftState.seasonId, parsed.data.seasonId))
+        .for("update");
+
+      if (!ds?.isActive || !ds.currentTeamId) {
+        throw new AppError(ErrorCode.DRAFT_NOT_ACTIVE, ERROR_MESSAGES.DRAFT_NOT_ACTIVE);
+      }
+
+      const seasonTeams = await tx
+        .select({ id: teams.id, draftOrder: teams.draftOrder })
+        .from(teams)
+        .where(eq(teams.seasonId, parsed.data.seasonId))
+        .orderBy(asc(teams.draftOrder));
+
+      const skippedTeamId = ds.currentTeamId;
+      const skippedRound = ds.currentRound;
+      const next = getNextTeamId(seasonTeams, ds.currentTeamId, ds.currentRound);
+      const now = new Date();
+
+      if (!next) {
+        await tx
+          .update(draftState)
+          .set({
+            currentRound: DRAFT_TOTAL_ROUNDS + 1,
+            currentTeamId: null,
+            roundDeadline: null,
+            isActive: false,
+            updatedAt: now,
+          })
+          .where(eq(draftState.id, ds.id));
+        await tx
+          .update(seasons)
+          .set({ status: "playing", updatedAt: now })
+          .where(eq(seasons.id, parsed.data.seasonId));
+
+        await tx.insert(auditLogs).values({
+          seasonId: parsed.data.seasonId,
+          action: "draft.skip_turn",
+          actorId: auditActorId(admin),
+          targetId: ds.id,
+          targetType: "draft_state",
+          meta: { skippedTeamId, round: skippedRound, draftCompleted: true, actorEmail: admin.email },
+        });
+
+        return { slug: season.slug, completed: true };
+      }
+
+      const deadline = new Date(now.getTime() + DRAFT_ROUND_TIMEOUT_SECONDS * 1000);
+      await tx
+        .update(draftState)
+        .set({
+          currentRound: next.nextRound,
+          currentTeamId: next.teamId,
+          roundDeadline: deadline,
+          isActive: true,
+          updatedAt: now,
+        })
+        .where(eq(draftState.id, ds.id));
+
+      await tx.insert(auditLogs).values({
+        seasonId: parsed.data.seasonId,
+        action: "draft.skip_turn",
+        actorId: auditActorId(admin),
+        targetId: ds.id,
+        targetType: "draft_state",
+        meta: {
+          skippedTeamId,
+          round: skippedRound,
+          nextTeamId: next.teamId,
+          nextRound: next.nextRound,
+          actorEmail: admin.email,
+        },
+      });
+
+      return { slug: season.slug, completed: false };
+    });
+
+    revalidateDraftPaths(result.slug);
+    return ok({ skipped: true, completed: result.completed });
+  } catch (e) {
+    return actionError("skipDraftTurn", e);
+  }
+}
+
+export async function runDraftTimeoutCron(): Promise<DraftTimeoutCronSummary> {
   const now = new Date();
   const timedOutStates = await db
     .select({ seasonId: draftState.seasonId })
@@ -263,6 +370,11 @@ export async function runDraftTimeoutCron(
       revalidateDraftPaths(result.slug);
     } else {
       skipped += 1;
+      if (result.reason === "no_eligible_player") {
+        console.warn(
+          `[draft-timeout-cron] season ${state.seasonId}: no eligible player, manual skip required (admin → draft.skip_turn)`,
+        );
+      }
     }
   }
 
@@ -423,6 +535,8 @@ async function runAutoPickForSeason(
       autoPicked: true,
       deadlinePolicy: "after-deadline",
       now,
+      prefetchedSeason: season,
+      prefetchedDs: ds,
     });
 
     return {
@@ -440,9 +554,10 @@ async function executeDraftPick(
   input: DraftPickCoreInput,
 ): Promise<DraftPickCoreResult> {
   const now = input.now ?? new Date();
-  const season = await tx.query.seasons.findFirst({
-    where: eq(seasons.id, input.seasonId),
-  });
+
+  const season =
+    input.prefetchedSeason ??
+    (await tx.query.seasons.findFirst({ where: eq(seasons.id, input.seasonId) }));
   if (!season) {
     throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
   }
@@ -459,11 +574,10 @@ async function executeDraftPick(
     );
   }
 
-  const [ds] = await tx
-    .select()
-    .from(draftState)
-    .where(eq(draftState.seasonId, input.seasonId))
-    .for("update");
+  // 如果调用方已持有 FOR UPDATE 锁（同一事务内），直接复用，避免重复 round trip
+  const ds =
+    input.prefetchedDs ??
+    (await tx.select().from(draftState).where(eq(draftState.seasonId, input.seasonId)).for("update"))[0];
   if (!ds) {
     throw new AppError(ErrorCode.DRAFT_NOT_ACTIVE, ERROR_MESSAGES.DRAFT_NOT_ACTIVE);
   }
@@ -590,6 +704,21 @@ async function executeDraftPick(
     teamId: input.teamId,
     registrationId: input.registrationId,
     isStarter: isStarterRound(ds.currentRound),
+  });
+
+  await tx.insert(auditLogs).values({
+    seasonId: input.seasonId,
+    action: "draft.pick",
+    actorId: input.captainUserId ?? "system:auto-pick",
+    targetId: pick.id,
+    targetType: "draft_pick",
+    meta: {
+      teamId: input.teamId,
+      registrationId: input.registrationId,
+      round: ds.currentRound,
+      pickNumber,
+      autoPicked: input.autoPicked,
+    },
   });
 
   const seasonTeams = await tx

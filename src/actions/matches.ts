@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq, and, count, asc } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, matches, teams, matchMaps, auditLogs } from "@/db/schema";
@@ -22,6 +21,8 @@ import {
   assertMatchTransition,
   resolveMatchFormat,
 } from "@/lib/match-transitions";
+import { failValidation, actionError, getSeasonOrThrow, getMatchOrThrow } from "@/lib/action-utils";
+import { revalidateSeasonPaths, revalidateMatchPaths } from "@/lib/revalidation";
 
 /**
  * 将 bracket 推进后解析出的新对阵批量写入 matches 表。
@@ -56,24 +57,6 @@ async function insertResolvedBracketMatches(
       bracketNodeId: bm.bracketMatchId.toString(),
     });
   }
-}
-
-// ── 查询工具 ──────────────────────────────────────────────────────────────
-
-async function getSeasonOrThrow(seasonId: string) {
-  const season = await db.query.seasons.findFirst({
-    where: eq(seasons.id, seasonId),
-  });
-  if (!season) throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
-  return season;
-}
-
-async function getMatchOrThrow(matchId: string) {
-  const match = await db.query.matches.findFirst({
-    where: eq(matches.id, matchId),
-  });
-  if (!match) throw new AppError(ErrorCode.MATCH_NOT_FOUND, ERROR_MESSAGES.MATCH_NOT_FOUND);
-  return match;
 }
 
 // ── 一键生成赛程 ──────────────────────────────────────────────────────────
@@ -138,14 +121,11 @@ export async function generateSchedule(
       meta: { matchCount, stageKey: firstStage.key },
     });
 
-    revalidatePath(`/admin/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches`);
+    revalidateSeasonPaths(season.slug, ["matches", "adminMatches"]);
 
     return ok({ matchCount });
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[generateSchedule]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("generateSchedule", e);
   }
 }
 
@@ -205,14 +185,11 @@ export async function createMatch(
       return [row];
     });
 
-    revalidatePath(`/admin/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches`);
+    revalidateSeasonPaths(season.slug, ["matches", "adminMatches"]);
 
     return ok({ matchId: newMatch.id });
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[createMatch]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("createMatch", e);
   }
 }
 
@@ -247,15 +224,11 @@ export async function updateMatchStatus(
       });
     });
 
-    revalidatePath(`/admin/${seasonForStatus.slug}/matches`);
-    revalidatePath(`/${seasonForStatus.slug}/matches`);
-    revalidatePath(`/${seasonForStatus.slug}/matches/${matchId}`);
+    revalidateMatchPaths(seasonForStatus.slug, matchId);
 
     return ok(undefined);
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[updateMatchStatus]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("updateMatchStatus", e);
   }
 }
 
@@ -341,15 +314,11 @@ export async function recordMatchResult(
     });
     }); // end db.transaction
 
-    revalidatePath(`/admin/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches/${matchId}`);
+    revalidateMatchPaths(season.slug, matchId);
 
     return ok(undefined);
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[recordMatchResult]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("recordMatchResult", e);
   }
 }
 
@@ -472,15 +441,11 @@ export async function recordMapResult(
       });
     });
 
-    revalidatePath(`/admin/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches/${matchId}`);
+    revalidateMatchPaths(season.slug, matchId);
 
     return ok({ seriesFinished });
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[recordMapResult]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("recordMapResult", e);
   }
 }
 
@@ -519,15 +484,11 @@ export async function updateMatchScheduledAt(
       });
     });
 
-    revalidatePath(`/admin/${seasonForSch.slug}/matches`);
-    revalidatePath(`/${seasonForSch.slug}/matches`);
-    revalidatePath(`/${seasonForSch.slug}/matches/${matchId}`);
+    revalidateMatchPaths(seasonForSch.slug, matchId);
 
     return ok(undefined);
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[updateMatchScheduledAt]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("updateMatchScheduledAt", e);
   }
 }
 
@@ -605,14 +566,11 @@ export async function initializeStage(
       meta: { matchCount, stageKey: stage.key },
     });
 
-    revalidatePath(`/admin/${season.slug}/matches`);
-    revalidatePath(`/${season.slug}/matches`);
+    revalidateSeasonPaths(season.slug, ["matches", "adminMatches"]);
 
     return ok({ matchCount });
   } catch (e) {
-    if (e instanceof AppError) return fail({ code: e.code, message: e.message });
-    console.error("[initializeStage]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("initializeStage", e);
   }
 }
 

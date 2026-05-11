@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { and, asc, count, eq, lt } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
@@ -12,9 +11,11 @@ import {
   seasonRegistrations,
   auditLogs,
 } from "@/db/schema";
-import { ok, fail, type ActionResult } from "@/types/action";
+import { ok, type ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { auditActorId, requireAuth, requireSeasonAdmin } from "@/lib/auth/session";
+import { failValidation, actionError } from "@/lib/action-utils";
+import { revalidateSeasonPaths } from "@/lib/revalidation";
 import {
   startDraftSchema,
   pauseDraftSchema,
@@ -170,8 +171,7 @@ export async function startDraft(
       return { draftStateId: draft.id, slug: season.slug };
     });
 
-    revalidatePath(`/${result.slug}/draft`);
-    revalidatePath(`/admin/${result.slug}/draft`);
+    revalidateSeasonPaths(result.slug, ["draft", "adminDraft"]);
     return ok({ draftStateId: result.draftStateId });
   } catch (e) {
     return actionError("startDraft", e);
@@ -204,10 +204,7 @@ export async function pickPlayer(
       });
     });
 
-    revalidatePath(`/${result.slug}/draft`);
-    revalidatePath(`/${result.slug}/draft/captain`);
-    revalidatePath(`/${result.slug}/teams`);
-    revalidatePath(`/admin/${result.slug}/draft`);
+    revalidateSeasonPaths(result.slug, ["draft", "draftCaptain", "teams", "adminDraft"]);
     return ok({
       pickId: result.pickId,
       idempotent: result.idempotent,
@@ -424,8 +421,7 @@ export async function pauseDraft(
       return { slug: season?.slug ?? "" };
     });
 
-    revalidatePath(`/${result.slug}/draft`);
-    revalidatePath(`/admin/${result.slug}/draft`);
+    revalidateSeasonPaths(result.slug, ["draft", "adminDraft"]);
     return ok({ paused: true });
   } catch (e) {
     return actionError("pauseDraft", e);
@@ -480,8 +476,7 @@ export async function resumeDraft(
       return { slug: season?.slug ?? "" };
     });
 
-    revalidatePath(`/${result.slug}/draft`);
-    revalidatePath(`/admin/${result.slug}/draft`);
+    revalidateSeasonPaths(result.slug, ["draft", "adminDraft"]);
     return ok({ resumed: true });
   } catch (e) {
     return actionError("resumeDraft", e);
@@ -843,14 +838,7 @@ async function getAutoPickCandidates(
 }
 
 function revalidateDraftPaths(slug: string) {
-  revalidatePath(`/${slug}/draft`);
-  revalidatePath(`/${slug}/draft/captain`);
-  revalidatePath(`/${slug}/teams`);
-  revalidatePath(`/admin/${slug}/draft`);
-}
-
-function failValidation(message: string): ActionResult<never> {
-  return fail({ code: ErrorCode.VALIDATION_FAILED, message });
+  revalidateSeasonPaths(slug, ["draft", "draftCaptain", "teams", "adminDraft"]);
 }
 
 function hasSequentialDraftOrder(teamRows: { draftOrder: number }[]): boolean {
@@ -862,10 +850,3 @@ function hasSequentialDraftOrder(teamRows: { draftOrder: number }[]): boolean {
   return true;
 }
 
-function actionError(scope: string, e: unknown): ActionResult<never> {
-  if (e instanceof AppError) {
-    return fail({ code: e.code, message: e.message });
-  }
-  console.error(`[${scope}]`, e);
-  return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
-}

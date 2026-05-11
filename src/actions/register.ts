@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import { users, seasons, seasonRegistrations } from "@/db/schema";
 import { ok, fail } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
+import { actionError } from "@/lib/action-utils";
 import { buildRegistrationSchema, registrationSeedSchema, type RegistrationFormData } from "@/lib/validators/registration";
 import { normalizeRegistrationConfig } from "@/types/season";
 
@@ -153,11 +154,7 @@ export async function submitRegistration(input: RegistrationFormData) {
     revalidatePath(`/${season.slug}/register`);
     return ok({ registrationId: registration.id, email: data.email });
   } catch (e) {
-    if (e instanceof AppError) {
-      return fail({ code: e.code, message: e.message });
-    }
-    console.error("[submitRegistration]", e);
-    return fail({ code: ErrorCode.INTERNAL_ERROR, message: ERROR_MESSAGES.INTERNAL_ERROR });
+    return actionError("submitRegistration", e);
   }
 }
 

@@ -7,6 +7,7 @@ const rawUrl = process.env.DATABASE_URL;
 /**
  * Rewrite Supabase direct-connection URLs to Transaction Pooler (port 6543)
  * via known IP, bypassing Geo-fenced DNS on Vercel.
+ * SSL is disabled on the pooler — it's terminated at the PgBouncer level.
  */
 function toPoolerUrl(url: string): string {
   try {
@@ -27,7 +28,7 @@ const connectionString = rawUrl ? toPoolerUrl(rawUrl) : rawUrl;
 const pgConfig: any = {
   connectionString,
   ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
-  family: 4, // force IPv4 to avoid DNS resolution issues with Supabase
+  family: 4,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
@@ -49,6 +50,8 @@ function shouldUseSsl(databaseUrl?: string): boolean {
   try {
     const url = new URL(databaseUrl);
     if (url.searchParams.get("sslmode") === "disable") return false;
+    // Pooler terminates SSL at its level
+    if (url.port === "6543") return false;
     return !["localhost", "127.0.0.1", "::1"].includes(url.hostname);
   } catch {
     console.error("[db] malformed DATABASE_URL, defaulting to SSL enabled");

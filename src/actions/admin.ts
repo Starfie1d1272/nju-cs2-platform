@@ -43,7 +43,7 @@ interface TransitionRule {
   allowedSeasonStatuses: string[];
 }
 
-const TRANSITION_RULES: Partial<Record<TransitionKey, TransitionRule>> = {
+export const TRANSITION_RULES: Partial<Record<TransitionKey, TransitionRule>> = {
   "pending→approved":    { allowedSeasonStatuses: ["registration", "voting"] },
   "pending→rejected":    { allowedSeasonStatuses: [] },
   "pending→waitlisted":  { allowedSeasonStatuses: ["registration"] },
@@ -53,7 +53,7 @@ const TRANSITION_RULES: Partial<Record<TransitionKey, TransitionRule>> = {
   "rejected→approved":   { allowedSeasonStatuses: ["registration"] },
 };
 
-function validateTransition(
+export function validateTransition(
   current: RegistrationStatus,
   target: RegistrationStatus,
   seasonStatus: string,

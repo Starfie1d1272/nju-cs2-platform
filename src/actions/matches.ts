@@ -20,7 +20,7 @@ import type { Database } from "brackets-manager";
 // ── 工具 ────────────────────────────────────────────────────────────────
 
 /** 根据阶段配置和轮次决定比赛格式（淘汰赛决赛可用 finalFormat 覆写为 BO5） */
-function resolveMatchFormat(
+export function resolveMatchFormat(
   stagePlan: ReturnType<typeof normalizeStagePlan>,
   stageKey: string,
   roundNumber: number,
@@ -40,14 +40,14 @@ function resolveMatchFormat(
 
 type MatchStatus = "scheduled" | "in_progress" | "finished" | "cancelled";
 
-const MATCH_TRANSITIONS: Partial<Record<`${MatchStatus}→${MatchStatus}`, true>> = {
+export const MATCH_TRANSITIONS: Partial<Record<`${MatchStatus}→${MatchStatus}`, true>> = {
   "scheduled→in_progress": true,
   "scheduled→cancelled": true,
   "in_progress→finished": true,
   "in_progress→cancelled": true,
 };
 
-function assertMatchTransition(current: MatchStatus, next: MatchStatus): void {
+export function assertMatchTransition(current: MatchStatus, next: MatchStatus): void {
   const key = `${current}→${next}` as `${MatchStatus}→${MatchStatus}`;
   if (!MATCH_TRANSITIONS[key]) {
     throw new AppError(

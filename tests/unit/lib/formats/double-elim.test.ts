@@ -107,6 +107,7 @@ describe("doubleElimExecutor", () => {
         name: "淘汰赛",
         type: "double_elim" as const,
         teamCount: 8,
+        advanceTiers: [],
       });
       expect(result).toEqual([]);
     });

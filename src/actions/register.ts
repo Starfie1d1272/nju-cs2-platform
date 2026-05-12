@@ -11,22 +11,14 @@ import { actionError } from "@/lib/action-utils";
 import { buildRegistrationSchema, registrationSeedSchema, type RegistrationFormData } from "@/lib/validators/registration";
 import { normalizeRegistrationConfig } from "@/types/season";
 import { getRegistrationWindowState } from "@/lib/registration/window";
+import { normalizeEmail } from "@/lib/utils/email";
+import { compactUndefined } from "@/lib/utils/object";
 
 const draftSchema = z.object({
   seasonId: z.string().uuid("赛季 ID 格式不正确"),
   email: z.string().email("请先填写有效邮箱"),
   payload: z.record(z.unknown()).default({}),
 });
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-function sanitizeDraftPayload(payload: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(payload).filter(([, value]) => value !== undefined),
-  );
-}
 
 export async function saveRegistrationDraft(input: unknown) {
   const parsed = draftSchema.safeParse(input);
@@ -55,7 +47,7 @@ export async function saveRegistrationDraft(input: unknown) {
 
     const email = normalizeEmail(parsed.data.email);
     const payload = {
-      ...sanitizeDraftPayload(parsed.data.payload),
+      ...(compactUndefined(parsed.data.payload) as Record<string, unknown>),
       seasonId: parsed.data.seasonId,
       email,
     };
@@ -89,6 +81,18 @@ export async function loadRegistrationDraft(seasonId: string, email: string) {
   }
 
   try {
+    const season = await db.query.seasons.findFirst({
+      where: eq(seasons.id, parsed.data.seasonId),
+    });
+    if (!season) {
+      throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
+    }
+
+    const windowState = getRegistrationWindowState(season);
+    if (!windowState.canSaveDraft && !windowState.canSubmit) {
+      throw new AppError(ErrorCode.REGISTRATION_CLOSED, windowState.message);
+    }
+
     const draft = await db.query.registrationDrafts.findFirst({
       where: and(
         eq(registrationDrafts.seasonId, parsed.data.seasonId),
@@ -135,9 +139,6 @@ export async function submitRegistration(input: RegistrationFormData) {
     });
     if (!season) {
       throw new AppError(ErrorCode.SEASON_NOT_FOUND, ERROR_MESSAGES.SEASON_NOT_FOUND);
-    }
-    if (season.status !== "registration") {
-      throw new AppError(ErrorCode.REGISTRATION_CLOSED, ERROR_MESSAGES.REGISTRATION_CLOSED);
     }
     const windowState = getRegistrationWindowState(season);
     if (!windowState.canSubmit) {

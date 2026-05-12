@@ -8,7 +8,7 @@ import { RegistrationForm } from "@/components/register/RegistrationForm";
 import { normalizeRegistrationConfig } from "@/types/season";
 import { Panel, StatusBanner, PosChip } from "@/components/rivalhub";
 import { POSITION_LABELS } from "@/lib/validators/registration";
-import { getRegistrationWindowState } from "@/lib/registration/window";
+import { getRegistrationWindowState, getWindowTone } from "@/lib/registration/window";
 import { formatCST } from "@/lib/utils/date";
 
 export const dynamic = "force-dynamic";
@@ -80,7 +80,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
       {/* 位置实时容量 */}
       <div className="mb-6">
         <StatusBanner
-          tone={registrationWindow.canSubmit ? "success" : registrationWindow.phase === "closed" ? "warn" : "info"}
+          tone={getWindowTone(registrationWindow.phase, registrationWindow.canSubmit)}
           title={registrationWindow.message}
           sub={[
             season.startAt ? `报名开始：${formatCST(season.startAt)}` : "报名开始：发布后立即开放",
@@ -132,10 +132,8 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
           seasonName={season.name}
           positionCounts={positionCounts}
           positions={season.positions}
-          registrationConfig={normalizeRegistrationConfig(season.registrationConfig)}
-          canSaveDraft={registrationWindow.canSaveDraft}
-          canSubmit={registrationWindow.canSubmit}
-          submitDisabledReason={registrationWindow.canSubmit ? null : registrationWindow.message}
+          registrationConfig={regConfig}
+          windowState={registrationWindow}
         />
       </Panel>
 

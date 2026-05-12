@@ -50,4 +50,38 @@ describe("getRegistrationWindowState", () => {
     expect(state.phase).toBe("hidden");
     expect(state.canViewForm).toBe(false);
   });
+
+  it("opens immediately when startAt is null", () => {
+    const state = getRegistrationWindowState({
+      status: "registration",
+      startAt: null,
+      registrationDeadline: "2026-05-14T12:00:00.000Z",
+    }, now);
+
+    expect(state.phase).toBe("open");
+    expect(state.canSubmit).toBe(true);
+  });
+
+  it("never closes when registrationDeadline is null", () => {
+    const state = getRegistrationWindowState({
+      status: "registration",
+      startAt: "2026-05-11T12:00:00.000Z",
+      registrationDeadline: null,
+    }, now);
+
+    expect(state.phase).toBe("open");
+    expect(state.canSubmit).toBe(true);
+  });
+
+  it("opens immediately and never closes when both null", () => {
+    const state = getRegistrationWindowState({
+      status: "registration",
+      startAt: null,
+      registrationDeadline: null,
+    }, now);
+
+    expect(state.phase).toBe("open");
+    expect(state.canSaveDraft).toBe(true);
+    expect(state.canSubmit).toBe(true);
+  });
 });

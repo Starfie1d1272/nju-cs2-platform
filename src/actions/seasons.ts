@@ -86,17 +86,31 @@ const seasonFormBaseSchema = z.object({
   }).optional(),
 });
 
-const seasonFormSchema = seasonFormBaseSchema
-  .refine((data) => data.starterCount <= data.maxTeamSize, {
-    path: ["starterCount"],
-    message: "首发人数不能超过队伍上限",
-  })
-  .refine((data) => data.minTeamSize <= data.maxTeamSize, {
-    path: ["minTeamSize"],
-    message: "最小人数不能超过最大人数",
-  });
+const seasonFormSchema = withSeasonRefinements(seasonFormBaseSchema);
 
 export type SeasonFormInput = z.input<typeof seasonFormSchema>;
+
+function withSeasonRefinements<T extends z.ZodTypeAny>(schema: T) {
+  return schema
+    .refine((data) => data.starterCount <= data.maxTeamSize, {
+      path: ["starterCount"],
+      message: "首发人数不能超过队伍上限",
+    })
+    .refine((data) => data.minTeamSize <= data.maxTeamSize, {
+      path: ["minTeamSize"],
+      message: "最小人数不能超过最大人数",
+    })
+    .refine(
+      (data) => {
+        if (!data.startAt || !data.registrationDeadline) return true;
+        return new Date(data.registrationDeadline) > new Date(data.startAt);
+      },
+      {
+        path: ["registrationDeadline"],
+        message: "报名截止时间必须晚于报名开始时间",
+      },
+    );
+}
 
 function toDate(value: string | null): Date | null {
   if (!value) return null;
@@ -180,15 +194,9 @@ export async function createSeason(input: SeasonFormInput): Promise<ActionResult
 export async function updateSeason(input: SeasonFormInput): Promise<ActionResult<{ slug: string }>> {
   try {
     const admin = await requireSuperAdmin();
-    const updateSchema = seasonFormBaseSchema.extend({ id: z.string().uuid() })
-      .refine(
-        (data) => data.starterCount <= data.maxTeamSize,
-        { path: ["starterCount"], message: "首发人数不能超过队伍上限" },
-      )
-      .refine(
-        (data) => data.minTeamSize <= data.maxTeamSize,
-        { path: ["minTeamSize"], message: "最小人数不能超过最大人数" },
-      );
+    const updateSchema = withSeasonRefinements(
+      seasonFormBaseSchema.extend({ id: z.string().uuid() }),
+    );
     const parsed = updateSchema.safeParse(input);
     if (!parsed.success) {
       return fail({

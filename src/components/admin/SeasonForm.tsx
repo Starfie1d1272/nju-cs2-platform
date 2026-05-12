@@ -186,7 +186,7 @@ export function SeasonForm({ mode, initial }: SeasonFormProps) {
       minTeamSize,
       maxTeamSize,
       starterCount,
-      positions: positionsText.split(",").map((item) => item.trim()).filter(Boolean),
+      positions: positionsText.split(",").map((item: string) => item.trim()).filter(Boolean),
       stagePlan,
       registrationConfig,
       teamRegistrationConfig: teamConfig,

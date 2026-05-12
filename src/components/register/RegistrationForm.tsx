@@ -18,6 +18,9 @@ import {
 import { normalizeRegistrationConfig, type RegistrationConfig, type PlayerType } from "@/types/season";
 
 import { loadRegistrationDraft, saveRegistrationDraft, submitRegistration } from "@/actions/register";
+import type { RegistrationWindowState } from "@/lib/registration/window";
+import { normalizeEmail } from "@/lib/utils/email";
+import { compactUndefined } from "@/lib/utils/object";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,9 +39,7 @@ interface RegistrationFormProps {
   positionCounts: Record<string, number>;
   positions: string[];
   registrationConfig: RegistrationConfig;
-  canSaveDraft: boolean;
-  canSubmit: boolean;
-  submitDisabledReason: string | null;
+  windowState: RegistrationWindowState;
 }
 
 export function RegistrationForm({
@@ -47,14 +48,14 @@ export function RegistrationForm({
   positionCounts,
   positions,
   registrationConfig: inputRegistrationConfig,
-  canSaveDraft,
-  canSubmit,
-  submitDisabledReason,
+  windowState,
 }: RegistrationFormProps) {
+  const { canSaveDraft, canSubmit, message: windowMessage } = windowState;
   const [submitted, setSubmitted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [loadingDraftEmail, setLoadingDraftEmail] = useState<string | null>(null);
+  const [lastBlurredEmail, setLastBlurredEmail] = useState<string | null>(null);
   const [loadedDraftEmail, setLoadedDraftEmail] = useState<string | null>(null);
   const registrationConfig = useMemo(
     () => normalizeRegistrationConfig(inputRegistrationConfig),
@@ -86,7 +87,7 @@ export function RegistrationForm({
 
   const onSubmit = async (data: RegistrationFormData) => {
     if (!canSubmit) {
-      toast.error(submitDisabledReason ?? "报名提交暂未开放");
+      toast.error(windowMessage ?? "报名提交暂未开放");
       return;
     }
 
@@ -103,20 +104,6 @@ export function RegistrationForm({
     }
   };
 
-  const compactDraftValue = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(compactDraftValue);
-    if (value && typeof value === "object") {
-      return Object.fromEntries(
-        Object.entries(value as Record<string, unknown>)
-          .filter(([, item]) => item !== undefined)
-          .map(([key, item]) => [key, compactDraftValue(item)]),
-      );
-    }
-    return value;
-  };
-
-  const normalizeEmail = (email: string) => email.trim().toLowerCase();
-
   const handleSaveDraft = async () => {
     const values = getValues();
     const email = typeof values.email === "string" ? normalizeEmail(values.email) : "";
@@ -125,7 +112,7 @@ export function RegistrationForm({
       return;
     }
     if (!canSaveDraft) {
-      toast.error(submitDisabledReason ?? "草稿保存已关闭");
+      toast.error(windowMessage ?? "草稿保存已关闭");
       return;
     }
 
@@ -134,7 +121,7 @@ export function RegistrationForm({
       const result = await saveRegistrationDraft({
         seasonId,
         email,
-        payload: compactDraftValue({ ...values, seasonId, email }) as Record<string, unknown>,
+        payload: compactUndefined({ ...values, seasonId, email }) as Record<string, unknown>,
       });
       if (result.success) {
         toast.success("草稿已保存");
@@ -150,7 +137,8 @@ export function RegistrationForm({
   const emailField = register("email", {
     onBlur: async (event) => {
       const email = normalizeEmail(event.target.value);
-      if (!email || email === loadedDraftEmail) return;
+      if (!email || email === lastBlurredEmail) return;
+      setLastBlurredEmail(email);
       setLoadingDraftEmail(email);
       try {
         const result = await loadRegistrationDraft(seasonId, email);
@@ -748,7 +736,7 @@ export function RegistrationForm({
               提交中…
             </>
           ) : (
-            canSubmit ? "提交报名" : submitDisabledReason ?? "报名提交暂未开放"
+            canSubmit ? "提交报名" : windowMessage ?? "报名提交暂未开放"
           )}
         </Button>
       </div>

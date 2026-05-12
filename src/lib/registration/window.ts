@@ -27,6 +27,12 @@ function toTime(value: Date | string | null): number | null {
   return Number.isNaN(time) ? null : time;
 }
 
+export function getWindowTone(phase: RegistrationWindowPhase, canSubmit: boolean): "success" | "warn" | "info" {
+  if (canSubmit) return "success";
+  if (phase === "closed") return "warn";
+  return "info";
+}
+
 export function getRegistrationWindowState(
   season: RegistrationWindowSeason,
   now: Date = new Date(),

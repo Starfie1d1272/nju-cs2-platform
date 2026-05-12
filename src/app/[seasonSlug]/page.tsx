@@ -14,11 +14,6 @@ const STATUS_IDX: Record<SeasonStatus, number> = {
   playing: 4, finished: 5, archived: 6,
 };
 
-const STAGE_DISPLAY: Record<string, string> = {
-  qualifier: "QUALIFIER",
-  playoff: "PLAYOFFS",
-};
-
 interface SeasonPageProps {
   params: Promise<{ seasonSlug: string }>;
 }
@@ -91,7 +86,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       const stage = stagePlan[i];
       phases.push({
         key: stage.key,
-        label: STAGE_DISPLAY[stage.key] || stage.key.toUpperCase(),
+        label: stage.key.toUpperCase(),
         done: i < currentMatchIdx,
       });
     }

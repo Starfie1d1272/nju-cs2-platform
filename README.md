@@ -2,23 +2,22 @@
 
 RivalHub 是一个面向高校电竞赛事的开源赛事管理平台，覆盖报名、审核、队长投票、蛇形选秀、队伍展示、赛程管理、Bracket、比分录入、数据统计与上线部署。
 
-当前 `1.0.0` 版本服务于 **2026 NJU Rivals 春季赛**：8 支队伍、队长投票、蛇形选秀、排位赛 + 双败淘汰，生产站点部署在 [match.starfie1d.top](https://match.starfie1d.top)。
+当前 `1.1.1` 版本服务于 **2026 NJU Rivals 春季赛**：8 支队伍、队长投票、蛇形选秀、排位赛 + 双败淘汰，生产站点部署在 [match.starfie1d.top](https://match.starfie1d.top)。
 
 ## 功能状态
 
-| 模块 | 1.0.0 能力 |
-|---|---|
-| 赛季管理 | capability 驱动的多赛事模型，所有公开页面使用 `/[seasonSlug]` 路由 |
-| 报名 | 邮箱密码账号、报名草稿、Zod 校验、位置/人数上限、NJUBox 截图链接 |
-| 审核 | 管理员审核、等待名单、邀请码提权、操作审计 |
+| 模块 | 1.1.1 能力 |
+|---|----|
+| 赛季管理 | capability 驱动的多赛事模型，`/[seasonSlug]` 路由，动态 PhaseTracker 阶段追踪 |
+| 报名 | 邮箱密码账号、自动草稿恢复、Zod 校验、位置/人数上限（仅统计 approved）、NJUBox 截图链接 |
+| 审核 | 管理员审核、等待名单、邀请码提权、审批通过自动推进赛季状态、操作审计 |
 | 队长投票 | 每人最多 3 票，Realtime 刷新票数 |
 | 选秀 | 队长面板、围观直播间、倒计时、事务行锁、幂等 pick、超时自动递补 |
 | 队伍 | 阵容展示、首发/替补、队长标识 |
-| 比赛 | 赛程、Bracket、地图结果、比分录入、比赛状态流转 |
-| 协商 | 管理员设置最晚完成时间，队长协商截止自动为前 24 小时 |
-| 名单 | 每场比赛提交 5 名首发 + 最多 2 名替补 |
+| 比赛 | 赛程、Bracket（Tactical Grid 暗色主题）、地图结果、比分录入 |
+| 协商 | 比赛时间提议/接受/拒绝、管理员强制设定、协商截止自动为截止前 24h、阵容提交 |
 | 数据 | 完美平台截图 OCR、比赛数据表、MVP 投票、选手/队伍统计 |
-| 部署 | Vercel + Supabase + GitHub Actions Cron |
+| 部署 | Vercel + Supabase + GitHub Actions Cron（选秀超时 + 报名截止自动推进） |
 
 ## 技术栈
 
@@ -82,11 +81,10 @@ password: RivalHub_password
 5. 在 GitHub Actions Secrets 配置 `CRON_SECRET`。
 6. 合并到 `main` 后由 Vercel 部署生产站点。
 
-当前选秀超时自动递补由 `.github/workflows/cron.yml` 每分钟请求：
+当前 GitHub Actions Cron 每分钟触发两个端点（见 `.github/workflows/cron.yml`）：
 
-```text
-https://match.starfie1d.top/api/cron/draft-timeout
-```
+- `https://match.starfie1d.top/api/cron/draft-timeout` — 选秀超时自动递补
+- `https://match.starfie1d.top/api/cron/check-registration-deadline` — 报名截止/满员自动推进赛季
 
 更多细节见 [docs/deployment.md](./docs/deployment.md)。
 
@@ -154,4 +152,9 @@ pnpm build
 
 ## License
 
-[MIT](./LICENSE)
+[GNU AGPLv3](./LICENSE)
+
+RivalHub is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.

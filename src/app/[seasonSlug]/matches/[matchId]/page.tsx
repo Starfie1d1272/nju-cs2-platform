@@ -7,8 +7,7 @@ import { matchPlayerStats } from "@/db/schema/player-stats";
 import { matchMvpVotes } from "@/db/schema/mvp-votes";
 import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
 import { MatchMvpVote } from "@/components/matches/MatchMvpVote";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Panel, PosChip } from "@/components/rivalhub";
 import { PlayerStatsTable } from "@/components/matches/PlayerStatsTable";
 import { TimeProposalHistory } from "@/components/matches/TimeProposalHistory";
 import { MatchTimeNegotiation } from "@/components/matches/MatchTimeNegotiation";
@@ -202,14 +201,10 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       </div>
 
       {/* 头部：比赛信息 */}
-      <Card className="p-6 space-y-4">
+      <Panel pad={24}>
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-[var(--color-fg-mid)]">
-            {STAGE_LABELS[match.stage as keyof typeof STAGE_LABELS]}
-          </Badge>
-          <Badge variant="outline" className="text-[var(--color-fg-mid)]">
-            {FORMAT_LABELS[match.format as keyof typeof FORMAT_LABELS]}
-          </Badge>
+          <PosChip pos={STAGE_LABELS[match.stage as keyof typeof STAGE_LABELS]} />
+          <PosChip pos={FORMAT_LABELS[match.format as keyof typeof FORMAT_LABELS]} />
           <MatchStatusBadge status={match.status as "scheduled" | "in_progress" | "finished" | "cancelled"} />
         </div>
 
@@ -219,7 +214,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
           </span>
           <div className="text-center">
             {isFinished ? (
-              <span className="text-4xl font-mono font-bold text-[var(--primary)]">
+              <span className="text-4xl font-mono font-bold text-[var(--color-accent)]">
                 {match.scoreA ?? 0}&nbsp;:&nbsp;{match.scoreB ?? 0}
               </span>
             ) : (
@@ -230,7 +225,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             {teamB?.name ?? "未知队伍"}
           </span>
         </div>
-      </Card>
+      </Panel>
 
       {/* 单图结果 */}
       {maps.length > 0 && (
@@ -238,7 +233,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
           <h2 className="text-lg font-semibold text-[var(--color-fg)]">地图结果</h2>
           <div className="space-y-2">
             {maps.map((map) => (
-              <Card key={map.id} className="p-4">
+              <Panel key={map.id} pad={16}>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-[var(--color-fg-mid)] w-5">
@@ -246,19 +241,13 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                     </span>
                     <span className="font-medium text-[var(--color-fg)]">{map.mapName}</span>
                     {map.pickedByTeamId === match.teamAId && (
-                      <Badge variant="outline" className="text-xs">
-                        {teamA?.name} Pick
-                      </Badge>
+                      <PosChip pos={`${teamA?.name} Pick`} />
                     )}
                     {map.pickedByTeamId === match.teamBId && (
-                      <Badge variant="outline" className="text-xs">
-                        {teamB?.name} Pick
-                      </Badge>
+                      <PosChip pos={`${teamB?.name} Pick`} />
                     )}
                     {map.pickedByTeamId === null && (
-                      <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
-                        决胜图
-                      </Badge>
+                      <PosChip pos="决胜图" />
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-sm">
@@ -277,7 +266,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                 {isFinished && (
                   <PlayerStatsTable matchId={match.id} mapId={map.id} />
                 )}
-              </Card>
+              </Panel>
             ))}
           </div>
         </section>
@@ -289,23 +278,23 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
           <h2 className="text-lg font-semibold text-[var(--color-fg)]">
             赛前名单
           </h2>
-          <Card className="p-4">
+          <Panel pad={16}>
             <MatchRosterView
               teamAName={teamA?.name ?? "队伍 A"}
               teamARoster={teamARoster}
               teamBName={teamB?.name ?? "队伍 B"}
               teamBRoster={teamBRoster}
             />
-          </Card>
+          </Panel>
           {(isCaptainA || isCaptainB) && (
-            <Card className="p-4 space-y-3">
+            <Panel pad={16}>
               <h3 className="text-sm font-medium">提交名单</h3>
               <MatchRosterForm
                 matchId={match.id}
                 teamMembers={captainTeamMembers}
                 hasExistingRoster={captainRoster?.status === "submitted"}
               />
-            </Card>
+            </Panel>
           )}
         </section>
       )}
@@ -316,7 +305,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
           <h2 className="text-lg font-semibold text-[var(--color-fg)]">
             比赛时间协商
           </h2>
-          <Card className="p-4 space-y-4">
+          <Panel pad={16}>
             <MatchTimeNegotiation
               matchId={match.id}
               isCaptainA={isCaptainA}
@@ -325,11 +314,11 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               currentScheduledAt={match.scheduledAt}
               initialProposals={timeProposals}
             />
-          </Card>
-          <Card className="p-4">
+          </Panel>
+          <Panel pad={16}>
             <h3 className="text-sm font-medium mb-2">协商历史</h3>
             <TimeProposalHistory proposals={timeProposals} />
-          </Card>
+          </Panel>
         </section>
       )}
 

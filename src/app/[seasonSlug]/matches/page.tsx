@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { seasons, matches, teams } from "@/db/schema";
 import { serializeBracket } from "@/lib/bracket";
 import { calculateStandings } from "@/lib/standings";
+import { Panel, Marker } from "@/components/rivalhub";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BracketView } from "@/components/matches/BracketView";
 import { MatchCard } from "@/components/matches/MatchCard";
@@ -110,8 +111,9 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
-      <h1 className="text-3xl font-bold text-[var(--color-fg)]">赛程总览</h1>
+      <Marker sub={season.name}>赛程总览</Marker>
 
+      <Panel pad={24}>
       <Tabs defaultValue={hasQualifier ? qualifierKey : playoffKey} className="w-full">
         <TabsList className="mb-6">
           {qualifierStage && <TabsTrigger value={qualifierKey}>{qualifierStage.name}</TabsTrigger>}
@@ -230,6 +232,7 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
           </TabsContent>
         )}
       </Tabs>
+      </Panel>
     </div>
   );
 }

@@ -5,8 +5,18 @@ import { UserPlus, Vote, Users, Swords, Shuffle, BarChart3 } from "lucide-react"
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { normalizeStagePlan } from "@/types/season";
+import type { SeasonStatus } from "@/types/season";
 import { showStats } from "@/lib/utils/season";
 import { StatusPill, Panel, Marker } from "@/components/rivalhub";
+
+const PHASES: { key: string; label: string; after: SeasonStatus }[] = [
+  { key: "register", label: "REGISTER", after: "draft" },
+  { key: "vote", label: "VOTE", after: "registration" },
+  { key: "draft", label: "DRAFT", after: "voting" },
+  { key: "qualifiers", label: "REGULAR", after: "drafting" },
+  { key: "playoffs", label: "PLAYOFFS", after: "playing" },
+  { key: "finals", label: "FINALS", after: "finished" },
+];
 
 interface SeasonPageProps {
   params: Promise<{ seasonSlug: string }>;
@@ -77,6 +87,52 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
           {season.name}
         </h1>
       </div>
+
+      {/* Phase tracker */}
+      <Panel pad={0}>
+        <div className="grid" style={{ gridTemplateColumns: "repeat(6, 1fr)" }}>
+          {(() => {
+            const statusOrder: SeasonStatus[] = ["draft", "registration", "voting", "drafting", "playing", "finished", "archived"];
+            const currentIdx = statusOrder.indexOf(season.status);
+            return PHASES.map((phase, i) => {
+              const phaseDone = currentIdx >= statusOrder.indexOf(phase.after);
+              const isCurrent = !phaseDone && (i === 0 || currentIdx >= statusOrder.indexOf(PHASES[i - 1].after));
+              return (
+                <div key={phase.key}
+                  className="relative"
+                  style={{
+                    padding: "18px 16px",
+                    borderRight: i < PHASES.length - 1 ? "1px solid var(--color-border)" : "none",
+                    background: isCurrent ? "var(--color-panel-hi)" : "transparent",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="grid place-items-center font-bold rounded-sm" style={{
+                      width: 16, height: 16,
+                      border: `1px solid ${phaseDone ? "var(--color-ok)" : isCurrent ? "var(--color-accent)" : "var(--color-border)"}`,
+                      background: phaseDone ? "var(--color-ok)22" : isCurrent ? "var(--color-accent)22" : "transparent",
+                      fontFamily: "var(--font-mono)", fontSize: 10,
+                      color: phaseDone ? "var(--color-ok)" : isCurrent ? "var(--color-accent)" : "var(--color-fg-dim)",
+                    }}>
+                      {phaseDone ? "✓" : i + 1}
+                    </div>
+                    <div className="uppercase" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                      STEP {i + 1}
+                    </div>
+                  </div>
+                  <div className="font-semibold" style={{
+                    fontFamily: "var(--font-display)", fontSize: 14,
+                    color: phaseDone ? "var(--color-fg)" : isCurrent ? "var(--color-accent)" : "var(--color-fg-mid)",
+                    letterSpacing: "0.04em",
+                  }}>
+                    {phase.label}
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+      </Panel>
 
       <Marker sub="快速访问各功能模块">赛季导航</Marker>
 

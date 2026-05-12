@@ -14,6 +14,11 @@ const STATUS_IDX: Record<SeasonStatus, number> = {
   playing: 4, finished: 5, archived: 6,
 };
 
+const STAGE_DISPLAY: Record<string, string> = {
+  qualifier: "QUALIFIER",
+  playoff: "PLAYOFFS",
+};
+
 interface SeasonPageProps {
   params: Promise<{ seasonSlug: string }>;
 }
@@ -35,12 +40,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
     .where(eq(matches.seasonId, season.id));
   const initializedStages = new Set(matchStageRows.map((r) => r.stage));
 
-  const STAGE_DISPLAY: Record<string, string> = {
-  qualifier: "QUALIFIER",
-  playoff: "PLAYOFFS",
-};
-
-// ── 动态阶段列表 ──────────────────────────────────────────
+  // ── 动态阶段列表 ──────────────────────────────────────────
   interface Phase {
     key: string;
     label: string;

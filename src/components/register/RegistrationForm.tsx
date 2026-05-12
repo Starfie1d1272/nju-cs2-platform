@@ -125,7 +125,6 @@ export function RegistrationForm({
       });
       if (result.success) {
         toast.success("草稿已保存");
-        setLoadedDraftEmail(email);
       } else {
         toast.error(result.error.message);
       }

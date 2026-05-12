@@ -28,9 +28,6 @@ export default async function AdminDashboardPage() {
               <Btn small asChild>
                 <Link href="/admin/seasons/new">新建赛季</Link>
               </Btn>
-              <Btn small asChild>
-                <Link href="/admin/invites">管理邀请码</Link>
-              </Btn>
             </div>
           )}
         </div>

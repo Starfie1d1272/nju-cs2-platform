@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils/cn";
 import type { InputHTMLAttributes } from "react";
 
 interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "className" | "value" | "type"> {
@@ -41,7 +42,7 @@ export function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={mono ? "font-[family-name:var(--font-mono)]" : ""}
+        className={cn(mono && "font-[family-name:var(--font-mono)]")}
         {...rest}
       />
     </div>

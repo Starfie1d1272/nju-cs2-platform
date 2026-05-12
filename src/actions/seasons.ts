@@ -8,6 +8,7 @@ import { auditLogs, seasonRegistrations, seasons } from "@/db/schema";
 import { ok, fail, type ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { actionError } from "@/lib/action-utils";
+import { parseCSTInput } from "@/lib/utils/date";
 import { auditActorId, requireSuperAdmin } from "@/lib/auth/session";
 import {
   RIVALS_REGISTRATION_CONFIG,
@@ -113,9 +114,7 @@ function withSeasonRefinements<T extends z.ZodTypeAny>(schema: T) {
 }
 
 function toDate(value: string | null): Date | null {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return parseCSTInput(value);
 }
 
 function fieldErrorsFromZod(error: z.ZodError): Record<string, string> {

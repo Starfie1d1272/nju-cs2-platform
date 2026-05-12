@@ -5,14 +5,10 @@ import { seasons } from "@/db/schema";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { normalizeRegistrationConfig, normalizeStagePlan, normalizeTeamRegistrationConfig } from "@/types/season";
 import { SeasonForm } from "@/components/admin/SeasonForm";
+import { toCSTDateTimeInput } from "@/lib/utils/date";
 
 interface SeasonSettingsPageProps {
   params: Promise<{ seasonSlug: string }>;
-}
-
-function toDateTimeInput(value: Date | null): string | null {
-  if (!value) return null;
-  return value.toISOString().slice(0, 16);
 }
 
 export default async function SeasonSettingsPage({ params }: SeasonSettingsPageProps) {
@@ -39,9 +35,9 @@ export default async function SeasonSettingsPage({ params }: SeasonSettingsPageP
           kind: season.kind,
           status: season.status,
           themeColor: season.themeColor,
-          startAt: toDateTimeInput(season.startAt),
-          registrationDeadline: toDateTimeInput(season.registrationDeadline),
-          endAt: toDateTimeInput(season.endAt),
+          startAt: toCSTDateTimeInput(season.startAt),
+          registrationDeadline: toCSTDateTimeInput(season.registrationDeadline),
+          endAt: toCSTDateTimeInput(season.endAt),
           registrationMode: season.registrationMode,
           hasCaptainVoting: season.hasCaptainVoting,
           hasDraft: season.hasDraft,

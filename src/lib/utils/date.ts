@@ -1,5 +1,6 @@
 const CST_LOCALE = "zh-CN";
 const CST_TZ = "Asia/Shanghai";
+const CST_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 export function formatCST(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -15,6 +16,20 @@ export function formatCST(date: Date | string): string {
 
 export function parseCST(str: string): Date {
   return new Date(str);
+}
+
+/** datetime-local 输入不含时区信息，管理员在 CST 时区输入 → 解析为 UTC Date */
+export function parseCSTInput(value: string | null): Date | null {
+  if (!value) return null;
+  const date = new Date(value + "+08:00");
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** 将 UTC Date 转为 CST datetime-local 输入框显示值 */
+export function toCSTDateTimeInput(value: Date | null): string | null {
+  if (!value) return null;
+  const d = new Date(value.getTime() + CST_OFFSET_MS);
+  return d.toISOString().slice(0, 16);
 }
 
 export function getCountdownSeconds(deadline: Date | string): number {

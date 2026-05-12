@@ -122,12 +122,12 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+        <h1 className="text-2xl font-bold text-[var(--color-fg)]">
           比赛管理 · {season.name}
         </h1>
         <Link
           href={`/${seasonSlug}/matches`}
-          className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] transition-colors"
         >
           查看公开赛程 →
         </Link>
@@ -175,7 +175,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
               {/* 积分榜 */}
               {standings.length > 0 && (
                 <section className="space-y-2">
-                  <h2 className="text-base font-semibold text-[var(--text-primary)]">积分榜</h2>
+                  <h2 className="text-base font-semibold text-[var(--color-fg)]">积分榜</h2>
                   <Card className="p-0 overflow-hidden">
                     <StandingsTable
                       standings={standings}
@@ -188,7 +188,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
 
               {/* 排位赛列表 */}
               <section className="space-y-3">
-                <h2 className="text-base font-semibold text-[var(--text-primary)]">赛程</h2>
+                <h2 className="text-base font-semibold text-[var(--color-fg)]">赛程</h2>
                 <div className="space-y-3">
                   {qualifierMatches.map((m) => {
                     const teamAName = teamMap.get(m.teamAId) ?? "未知队伍";
@@ -198,7 +198,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3">
                             <span className="font-semibold">{teamAName}</span>
-                            <span className="text-[var(--text-secondary)]">
+                            <span className="text-[var(--color-fg-mid)]">
                               {m.status === "finished"
                                 ? `${m.scoreA ?? 0} : ${m.scoreB ?? 0}`
                                 : "vs"}
@@ -206,7 +206,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                             <span className="font-semibold">{teamBName}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs text-[var(--text-secondary)]">
+                            <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
                               {FORMAT_LABELS[m.format as keyof typeof FORMAT_LABELS]}
                             </Badge>
                             <MatchStatusBadge
@@ -247,9 +247,9 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
           {/* 正赛面板 */}
           {hasPlayoff && (
             <TabsContent value={playoffKey} className="space-y-3 mt-4">
-              <h2 className="text-base font-semibold text-[var(--text-primary)]">赛程</h2>
+              <h2 className="text-base font-semibold text-[var(--color-fg)]">赛程</h2>
               {playoffMatches.length === 0 ? (
-                <Card className="p-8 text-center text-[var(--text-secondary)]">
+                <Card className="p-8 text-center text-[var(--color-fg-mid)]">
                   {allQualifierFinished ? "点击上方「生成正赛」按钮" : "排位赛全部结束后可生成正赛"}
                 </Card>
               ) : (
@@ -262,7 +262,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3">
                             <span className="font-semibold">{teamAName}</span>
-                            <span className="text-[var(--text-secondary)]">
+                            <span className="text-[var(--color-fg-mid)]">
                               {m.status === "finished"
                                 ? `${m.scoreA ?? 0} : ${m.scoreB ?? 0}`
                                 : "vs"}
@@ -270,7 +270,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                             <span className="font-semibold">{teamBName}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs text-[var(--text-secondary)]">
+                            <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
                               {FORMAT_LABELS[m.format as keyof typeof FORMAT_LABELS]}
                             </Badge>
                             <MatchStatusBadge
@@ -330,7 +330,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
       )}
 
       {!canGenerate && matchCount === 0 && (
-        <Card className="p-8 text-center text-[var(--text-secondary)]">暂无比赛记录</Card>
+        <Card className="p-8 text-center text-[var(--color-fg-mid)]">暂无比赛记录</Card>
       )}
     </div>
   );

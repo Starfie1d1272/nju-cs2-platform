@@ -41,11 +41,11 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
     };
     return (
       <div className="container mx-auto px-4 py-16 max-w-2xl">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-10 text-center">
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-3">
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-10 text-center">
+          <h1 className="text-2xl font-bold text-[var(--color-fg)] mb-3">
             {season.name}
           </h1>
-          <p className="text-[var(--text-secondary)]">
+          <p className="text-[var(--color-fg-mid)]">
             {statusMessages[season.status] ?? "报名通道当前不可用。"}
           </p>
         </div>
@@ -58,11 +58,11 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
   return (
     <div className="container mx-auto px-4 py-10 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-1">报名</h1>
-        <p className="text-[var(--text-secondary)]">{season.name}</p>
+        <h1 className="text-3xl font-bold text-[var(--color-fg)] mb-1">报名</h1>
+        <p className="text-[var(--color-fg-mid)]">{season.name}</p>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-6 sm:p-8">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-6 sm:p-8">
         <RegistrationForm
           seasonId={season.id}
           seasonName={season.name}
@@ -72,7 +72,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
         />
       </div>
 
-      <p className="text-xs text-[var(--text-muted)] text-center mt-6">
+      <p className="text-xs text-[var(--color-fg-dim)] text-center mt-6">
         提交即视为同意参赛规则。报名信息提交后不可自行修改，如需更改请联系管理员。
       </p>
     </div>

@@ -24,7 +24,7 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
 
   if (allTeams.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center text-[var(--text-secondary)]">
+      <div className="container mx-auto px-4 py-16 text-center text-[var(--color-fg-mid)]">
         队伍尚未生成，敬请期待
       </div>
     );
@@ -53,7 +53,7 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
-      <h1 className="text-3xl font-bold text-[var(--text-primary)]">参赛队伍</h1>
+      <h1 className="text-3xl font-bold text-[var(--color-fg)]">参赛队伍</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {allTeams.map((team) => {

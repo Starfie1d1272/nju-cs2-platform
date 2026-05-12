@@ -105,7 +105,7 @@ export default async function DraftCaptainPage({ params }: DraftCaptainPageProps
     <main className="container mx-auto max-w-5xl px-4 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">队长选人 · {season.name}</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
           当前队长端只在轮到本队时开放选择；重复点击会通过请求 ID 幂等处理。
         </p>
       </div>
@@ -144,7 +144,7 @@ function UnavailableCard({
     <main className="container mx-auto max-w-4xl px-4 py-10">
       <Card className="p-8">
         <h1 className="text-2xl font-bold">{title}</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">{message}</p>
+        <p className="mt-2 text-sm text-[var(--color-fg-mid)]">{message}</p>
         {href && action && (
           <Button asChild className="mt-4" variant="secondary">
             <Link href={href}>{action}</Link>

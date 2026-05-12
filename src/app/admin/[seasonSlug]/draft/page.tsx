@@ -36,7 +36,7 @@ export default async function AdminDraftPage({ params }: AdminDraftPageProps) {
     <main className="container mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">选秀管理 · {season.name}</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
           启动、暂停、恢复选秀流程。选秀开始后选手可围观实时进度。
         </p>
       </div>

@@ -30,7 +30,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
       <main className="container mx-auto max-w-5xl px-4 py-10">
         <Card className="p-8">
           <h1 className="text-2xl font-bold">选秀直播间 · {season.name}</h1>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+          <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
             该赛季未启用蛇形选秀。
           </p>
         </Card>
@@ -51,7 +51,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
       <main className="container mx-auto max-w-5xl px-4 py-10">
         <Card className="p-8">
           <h1 className="text-2xl font-bold">选秀直播间 · {season.name}</h1>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+          <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
             {messages[season.status] ?? "选秀当前不可用。"}
           </p>
         </Card>
@@ -65,17 +65,17 @@ export default async function DraftPage({ params }: DraftPageProps) {
     <main className="container mx-auto max-w-7xl px-4 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">选秀直播间 · {season.name}</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
           实时更新选秀进度，队伍阵容与选手池自动刷新。
         </p>
       </div>
 
       {!data.state ? (
         <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
+          <h2 className="text-xl font-semibold text-[var(--color-fg)] mb-2">
             选秀尚未启动
           </h2>
-          <p className="text-sm text-[var(--text-secondary)]">
+          <p className="text-sm text-[var(--color-fg-mid)]">
             等待管理员启动选秀，页面会自动刷新。
           </p>
         </Card>

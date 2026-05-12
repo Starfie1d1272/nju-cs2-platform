@@ -69,7 +69,7 @@ export default async function AdminRegistrationsPage({ params }: PageProps) {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">报名审核 · {season.name}</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">
+        <p className="text-sm text-[var(--color-fg-mid)] mt-1">
           共 {registrations.length} 份报名 · 赛季状态：{season.status}
         </p>
       </div>

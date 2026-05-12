@@ -45,8 +45,8 @@ export function LoginForm() {
           onClick={() => setMode("login")}
           className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
             mode === "login"
-              ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
-              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              ? "bg-[var(--bg-primary)] text-[var(--color-fg)] shadow-sm"
+              : "text-[var(--color-fg-mid)] hover:text-[var(--color-fg)]"
           }`}
         >
           登录
@@ -56,8 +56,8 @@ export function LoginForm() {
           onClick={() => setMode("register")}
           className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
             mode === "register"
-              ? "bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm"
-              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              ? "bg-[var(--bg-primary)] text-[var(--color-fg)] shadow-sm"
+              : "text-[var(--color-fg-mid)] hover:text-[var(--color-fg)]"
           }`}
         >
           注册
@@ -94,12 +94,12 @@ export function LoginForm() {
         {isPending ? "处理中…" : mode === "login" ? "登录" : "注册"}
       </Button>
 
-      <p className="text-xs text-center text-[var(--text-secondary)]">
+      <p className="text-xs text-center text-[var(--color-fg-mid)]">
         {mode === "register" ? "已有账号？" : "首次参赛？"}
         <button
           type="button"
           onClick={() => setMode(mode === "login" ? "register" : "login")}
-          className="ml-0.5 underline hover:text-[var(--text-primary)]"
+          className="ml-0.5 underline hover:text-[var(--color-fg)]"
         >
           {mode === "register" ? "切换到登录" : "切换到注册"}
         </button>

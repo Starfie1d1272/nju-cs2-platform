@@ -64,7 +64,7 @@ export function BracketView({ data, themeColor, matchNodeMap, seasonSlug }: Brac
 
   if (data.stage.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16 text-[var(--text-secondary)]">
+      <div className="flex items-center justify-center py-16 text-[var(--color-fg-mid)]">
         赛程尚未生成
       </div>
     );

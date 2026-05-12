@@ -38,21 +38,21 @@ export function AdminNav({ email }: { email?: string }) {
   }
 
   return (
-    <div className="border-b border-[var(--border)] bg-[var(--bg-elevated)]/95">
+    <div className="border-b border-[var(--color-border)] bg-[var(--color-panel)]/95">
       <div className="container mx-auto px-4 h-12 flex items-center justify-between text-sm">
         <div className="flex items-center gap-6">
-          <Link href="/admin" className="font-semibold text-[var(--text-primary)]">
+          <Link href="/admin" className="font-semibold text-[var(--color-fg)]">
             管理后台
           </Link>
-          <nav className="flex items-center gap-4 text-[var(--text-secondary)]">
+          <nav className="flex items-center gap-4 text-[var(--color-fg-mid)]">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={
                   isActive(item.href, pathname)
-                    ? "text-[var(--text-primary)]"
-                    : "hover:text-[var(--text-primary)] transition-colors"
+                    ? "text-[var(--color-fg)]"
+                    : "hover:text-[var(--color-fg)] transition-colors"
                 }
               >
                 {item.label}
@@ -62,12 +62,12 @@ export function AdminNav({ email }: { email?: string }) {
         </div>
         <div className="flex items-center gap-3">
           {email && (
-            <span className="text-[var(--text-secondary)]">{email}</span>
+            <span className="text-[var(--color-fg-mid)]">{email}</span>
           )}
           <button
             onClick={handleLogout}
             disabled={isPending}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+            className="text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] transition-colors disabled:opacity-50"
           >
             {isPending ? "退出中…" : "退出登录"}
           </button>

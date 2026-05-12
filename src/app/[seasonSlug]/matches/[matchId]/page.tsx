@@ -187,14 +187,14 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       <div className="flex items-center gap-4">
         <Link
           href={`/${seasonSlug}/matches`}
-          className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          className="text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] transition-colors"
         >
           ← 返回赛程总览
         </Link>
         {match.stage === "playoff" && match.bracketNodeId && (
           <Link
             href={`/${seasonSlug}/matches#bracket`}
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            className="text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] transition-colors"
           >
             查看对阵图 →
           </Link>
@@ -204,17 +204,17 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       {/* 头部：比赛信息 */}
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-[var(--text-secondary)]">
+          <Badge variant="outline" className="text-[var(--color-fg-mid)]">
             {STAGE_LABELS[match.stage as keyof typeof STAGE_LABELS]}
           </Badge>
-          <Badge variant="outline" className="text-[var(--text-secondary)]">
+          <Badge variant="outline" className="text-[var(--color-fg-mid)]">
             {FORMAT_LABELS[match.format as keyof typeof FORMAT_LABELS]}
           </Badge>
           <MatchStatusBadge status={match.status as "scheduled" | "in_progress" | "finished" | "cancelled"} />
         </div>
 
         <div className="flex items-center justify-center gap-6 py-4">
-          <span className="text-2xl font-bold text-[var(--text-primary)]">
+          <span className="text-2xl font-bold text-[var(--color-fg)]">
             {teamA?.name ?? "未知队伍"}
           </span>
           <div className="text-center">
@@ -223,10 +223,10 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                 {match.scoreA ?? 0}&nbsp;:&nbsp;{match.scoreB ?? 0}
               </span>
             ) : (
-              <span className="text-3xl font-bold text-[var(--text-secondary)]">vs</span>
+              <span className="text-3xl font-bold text-[var(--color-fg-mid)]">vs</span>
             )}
           </div>
-          <span className="text-2xl font-bold text-[var(--text-primary)]">
+          <span className="text-2xl font-bold text-[var(--color-fg)]">
             {teamB?.name ?? "未知队伍"}
           </span>
         </div>
@@ -235,16 +235,16 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       {/* 单图结果 */}
       {maps.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">地图结果</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-fg)]">地图结果</h2>
           <div className="space-y-2">
             {maps.map((map) => (
               <Card key={map.id} className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-[var(--text-secondary)] w-5">
+                    <span className="text-xs text-[var(--color-fg-mid)] w-5">
                       #{map.mapOrder}
                     </span>
-                    <span className="font-medium text-[var(--text-primary)]">{map.mapName}</span>
+                    <span className="font-medium text-[var(--color-fg)]">{map.mapName}</span>
                     {map.pickedByTeamId === match.teamAId && (
                       <Badge variant="outline" className="text-xs">
                         {teamA?.name} Pick
@@ -256,19 +256,19 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
                       </Badge>
                     )}
                     {map.pickedByTeamId === null && (
-                      <Badge variant="outline" className="text-xs text-[var(--text-secondary)]">
+                      <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
                         决胜图
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     {map.teamAStartSide && (
-                      <span className="text-[var(--text-secondary)]">
+                      <span className="text-[var(--color-fg-mid)]">
                         {teamA?.name} {SIDE_LABELS[map.teamAStartSide]}先
                       </span>
                     )}
                     {map.scoreA !== null && map.scoreB !== null && (
-                      <span className="font-mono font-bold text-[var(--text-primary)]">
+                      <span className="font-mono font-bold text-[var(--color-fg)]">
                         {map.scoreA}&nbsp;:&nbsp;{map.scoreB}
                       </span>
                     )}
@@ -286,7 +286,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       {/* 赛前名单 */}
       {match.status !== "finished" && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="text-lg font-semibold text-[var(--color-fg)]">
             赛前名单
           </h2>
           <Card className="p-4">
@@ -313,7 +313,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       {/* 比赛时间协商 */}
       {match.status === "scheduled" && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="text-lg font-semibold text-[var(--color-fg)]">
             比赛时间协商
           </h2>
           <Card className="p-4 space-y-4">

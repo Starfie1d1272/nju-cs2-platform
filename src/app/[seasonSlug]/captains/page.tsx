@@ -25,7 +25,7 @@ export default async function CaptainsPage({ params }: CaptainsPageProps) {
       <main className="container mx-auto max-w-5xl px-4 py-10">
         <Card className="p-8">
           <h1 className="text-2xl font-bold">队长投票 · {season.name}</h1>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+          <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
             该赛季未启用队长投票。
           </p>
         </Card>
@@ -60,7 +60,7 @@ export default async function CaptainsPage({ params }: CaptainsPageProps) {
     <main className="container mx-auto max-w-6xl px-4 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">队长投票 · {season.name}</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
           公开票数与当前前 8 会定时刷新；赛季进入 drafting 后本页保留最终结果。
         </p>
       </div>

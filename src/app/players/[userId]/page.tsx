@@ -22,7 +22,7 @@ function pct(n: number, d: number) {
 function AvatarFallback({ name }: { name: string }) {
   const initials = name.slice(0, 2).toUpperCase();
   return (
-    <div className="w-24 h-24 rounded-full bg-[var(--surface-elevated)] border border-[var(--border)] flex items-center justify-center text-2xl font-bold text-[var(--text-secondary)]">
+    <div className="w-24 h-24 rounded-full bg-[var(--surface-elevated)] border border-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[var(--color-fg-mid)]">
       {initials}
     </div>
   );
@@ -161,14 +161,14 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
             alt={user.steamName ?? "选手头像"}
             width={96}
             height={96}
-            className="rounded-full border border-[var(--border)]"
+            className="rounded-full border border-[var(--color-border)]"
           />
         ) : (
           <AvatarFallback name={user.steamName ?? user.email} />
         )}
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-black text-[var(--text-primary)]">
+          <h1 className="text-3xl font-black text-[var(--color-fg)]">
             {user.steamName ?? "未知选手"}
           </h1>
 
@@ -178,7 +178,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                 <Badge variant="outline" className="text-[var(--primary)]">
                   {POSITION_LABELS[latestReg.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? latestReg.primaryPosition}
                 </Badge>
-                <Badge variant="outline" className="text-[var(--text-secondary)]">
+                <Badge variant="outline" className="text-[var(--color-fg-mid)]">
                   {POSITION_LABELS[latestReg.secondaryPosition as keyof typeof POSITION_LABELS]?.cn ?? latestReg.secondaryPosition}
                 </Badge>
               </>
@@ -188,7 +188,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                 href={user.steamProfileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                className="text-xs text-[var(--color-fg-mid)] hover:text-[var(--primary)] transition-colors"
               >
                 Steam ↗
               </a>
@@ -200,7 +200,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       {/* 职业生涯战绩 */}
       {played > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">职业生涯战绩</h2>
+          <h2 className="text-base font-semibold text-[var(--color-fg)]">职业生涯战绩</h2>
           <div className="grid grid-cols-4 gap-3">
             {[
               { label: "出场", value: played },
@@ -209,13 +209,13 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
               { label: "胜率", value: pct(totalWins, played) },
             ].map(({ label, value }) => (
               <Card key={label} className="p-4 text-center">
-                <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
-                <p className="text-xs text-[var(--text-secondary)] mt-1">{label}</p>
+                <p className="text-xl font-bold text-[var(--color-fg)]">{value}</p>
+                <p className="text-xs text-[var(--color-fg-mid)] mt-1">{label}</p>
               </Card>
             ))}
           </div>
           {totalNetRounds !== 0 && (
-            <p className="text-xs text-[var(--text-secondary)] px-1">
+            <p className="text-xs text-[var(--color-fg-mid)] px-1">
               净胜回合：
               <span className={totalNetRounds > 0 ? "text-green-500" : "text-red-500"}>
                 {totalNetRounds > 0 ? "+" : ""}{totalNetRounds}
@@ -228,7 +228,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       {/* 个人数据 */}
       {playerStats.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">
+          <h2 className="text-base font-semibold text-[var(--color-fg)]">
             个人数据
           </h2>
 
@@ -238,7 +238,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
               <Badge variant="outline" className="text-[var(--primary)]">
                 生涯总计
               </Badge>
-              <span className="text-xs text-[var(--text-secondary)]">
+              <span className="text-xs text-[var(--color-fg-mid)]">
                 {playerStats.reduce((s, x) => s + x.maps, 0)} 图
               </span>
             </div>
@@ -292,10 +292,10 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                 },
               ].map(({ label, value }) => (
                 <div key={label}>
-                  <p className="text-lg font-bold text-[var(--text-primary)]">
+                  <p className="text-lg font-bold text-[var(--color-fg)]">
                     {value}
                   </p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  <p className="text-[10px] text-[var(--color-fg-dim)] mt-0.5">
                     {label}
                   </p>
                 </div>
@@ -311,15 +311,15 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                   href={
                     `/${ps.seasonSlug}/stats` as any
                   }
-                  className="text-sm font-semibold text-[var(--text-primary)] hover:text-[var(--primary)] transition-colors"
+                  className="text-sm font-semibold text-[var(--color-fg)] hover:text-[var(--primary)] transition-colors"
                 >
                   {ps.seasonName}
                 </Link>
-                <span className="text-[11px] text-[var(--text-muted)]">
+                <span className="text-[11px] text-[var(--color-fg-dim)]">
                   {ps.maps} 图 · 场均 {ps.avgKills}-{ps.avgDeaths}-{ps.avgAssists}
                 </span>
               </div>
-              <div className="flex gap-4 text-xs text-[var(--text-secondary)]">
+              <div className="flex gap-4 text-xs text-[var(--color-fg-mid)]">
                 <span>
                   Rating{" "}
                   <span className="text-[var(--primary)] font-semibold">
@@ -328,11 +328,11 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                 </span>
                 <span>
                   ADR{" "}
-                  <span className="text-[var(--text-primary)]">{ps.avgAdr}</span>
+                  <span className="text-[var(--color-fg)]">{ps.avgAdr}</span>
                 </span>
                 <span>
                   K/D{" "}
-                  <span className="text-[var(--text-primary)]">
+                  <span className="text-[var(--color-fg)]">
                     {ps.avgDeaths > 0
                       ? (ps.totalKills / ps.totalDeaths).toFixed(2)
                       : "—"}
@@ -340,7 +340,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                 </span>
                 <span>
                   WE{" "}
-                  <span className="text-[var(--text-primary)]">{ps.avgWe}</span>
+                  <span className="text-[var(--color-fg)]">{ps.avgWe}</span>
                 </span>
               </div>
             </Card>
@@ -351,7 +351,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       {/* 赛季记录 */}
       {registrations.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">参赛记录</h2>
+          <h2 className="text-base font-semibold text-[var(--color-fg)]">参赛记录</h2>
           <div className="space-y-3">
             {[...registrations].reverse().map((reg) => {
               const teamInfo = regIdToTeam.get(reg.id);
@@ -360,11 +360,11 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                   {/* 赛季标题行 */}
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div className="space-y-0.5">
-                      <p className="font-semibold text-[var(--text-primary)]">{reg.seasonName}</p>
+                      <p className="font-semibold text-[var(--color-fg)]">{reg.seasonName}</p>
                       {teamInfo && (
                         <Link
                           href={`/${teamInfo.seasonSlug}/teams/${teamInfo.teamId}`}
-                          className="text-xs text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                          className="text-xs text-[var(--color-fg-mid)] hover:text-[var(--primary)] transition-colors"
                         >
                           {teamInfo.teamName} ↗
                         </Link>
@@ -374,7 +374,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
                       <Badge variant="outline" className="text-xs text-[var(--primary)]">
                         {POSITION_LABELS[reg.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? reg.primaryPosition}
                       </Badge>
-                      <span className="text-xs text-[var(--text-secondary)]">
+                      <span className="text-xs text-[var(--color-fg-mid)]">
                         峰值 {reg.peakRank}（{reg.peakRankSeason}）
                       </span>
                     </div>
@@ -382,14 +382,14 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
 
                   {/* 风格描述 */}
                   {reg.gameplayStyle && (
-                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                    <p className="text-sm text-[var(--color-fg-mid)] leading-relaxed">
                       {reg.gameplayStyle}
                     </p>
                   )}
 
                   {/* 参赛历史 */}
                   {reg.competitionHistory && (
-                    <p className="text-xs text-[var(--text-secondary)] opacity-80 leading-relaxed border-t border-[var(--border)] pt-2">
+                    <p className="text-xs text-[var(--color-fg-mid)] opacity-80 leading-relaxed border-t border-[var(--color-border)] pt-2">
                       {reg.competitionHistory}
                     </p>
                   )}
@@ -413,7 +413,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       )}
 
       {registrations.length === 0 && (
-        <Card className="p-8 text-center text-[var(--text-secondary)]">暂无参赛记录</Card>
+        <Card className="p-8 text-center text-[var(--color-fg-mid)]">暂无参赛记录</Card>
       )}
     </div>
   );

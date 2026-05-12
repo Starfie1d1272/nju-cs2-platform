@@ -24,7 +24,7 @@ export default async function AdminCaptainsPage({ params }: AdminCaptainsPagePro
       <main className="container mx-auto max-w-5xl px-4 py-8">
         <Card className="p-8">
           <h1 className="text-2xl font-bold">队长确认 · {season.name}</h1>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+          <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
             该赛季未启用队长投票。
           </p>
         </Card>
@@ -41,7 +41,7 @@ export default async function AdminCaptainsPage({ params }: AdminCaptainsPagePro
     <main className="container mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">队长确认 · {season.name}</h1>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
           查看票数排序，确认前 8 名后自动生成队伍与 draft order。
         </p>
       </div>

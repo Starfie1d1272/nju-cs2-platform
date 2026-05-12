@@ -28,8 +28,8 @@ export function TeamCard({ teamId, teamName, seasonSlug, draftOrder, players }: 
         <div className="space-y-4">
           {/* 队名 */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--text-secondary)]">#{draftOrder}</span>
-            <h3 className="font-bold text-lg text-[var(--text-primary)]">{teamName}</h3>
+            <span className="text-xs text-[var(--color-fg-mid)]">#{draftOrder}</span>
+            <h3 className="font-bold text-lg text-[var(--color-fg)]">{teamName}</h3>
           </div>
 
           {/* 首发阵容 */}
@@ -42,9 +42,9 @@ export function TeamCard({ teamId, teamName, seasonSlug, draftOrder, players }: 
                       C
                     </Badge>
                   )}
-                  <span className="text-sm text-[var(--text-primary)]">{p.name}</span>
+                  <span className="text-sm text-[var(--color-fg)]">{p.name}</span>
                 </div>
-                <span className="text-xs text-[var(--text-secondary)]">
+                <span className="text-xs text-[var(--color-fg-mid)]">
                   {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
                 </span>
               </div>
@@ -53,11 +53,11 @@ export function TeamCard({ teamId, teamName, seasonSlug, draftOrder, players }: 
 
           {/* 替补 */}
           {subs.length > 0 && (
-            <div className="border-t border-[var(--border)] pt-2 space-y-1">
+            <div className="border-t border-[var(--color-border)] pt-2 space-y-1">
               {subs.map((p) => (
                 <div key={p.name} className="flex items-center justify-between gap-2 opacity-60">
-                  <span className="text-xs text-[var(--text-secondary)]">{p.name}</span>
-                  <span className="text-[10px] text-[var(--text-secondary)]">替补</span>
+                  <span className="text-xs text-[var(--color-fg-mid)]">{p.name}</span>
+                  <span className="text-[10px] text-[var(--color-fg-mid)]">替补</span>
                 </div>
               ))}
             </div>

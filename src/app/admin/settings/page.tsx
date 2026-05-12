@@ -25,18 +25,18 @@ export default async function AdminSettingsPage() {
     <div className="container mx-auto px-4 py-8 max-w-2xl space-y-10">
         <div>
           <h1 className="text-2xl font-bold mb-2">系统设置</h1>
-          <p className="text-sm text-[var(--text-secondary)]">
+          <p className="text-sm text-[var(--color-fg-mid)]">
             当前登录：{admin.email}
           </p>
         </div>
 
         {/* 修改密码 */}
         <section className="space-y-4">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">修改密码</h2>
+          <h2 className="text-base font-semibold text-[var(--color-fg)]">修改密码</h2>
           {admin.authSource === "root" ? (
             <ChangePasswordForm />
           ) : (
-            <Card className="p-4 text-sm text-[var(--text-secondary)]">
+            <Card className="p-4 text-sm text-[var(--color-fg-mid)]">
               Magic Link 登录用户无需在后台修改密码。
             </Card>
           )}
@@ -45,34 +45,34 @@ export default async function AdminSettingsPage() {
         {/* 环境变量状态 */}
         <section className="space-y-4">
           <div className="space-y-1">
-            <h2 className="text-base font-semibold text-[var(--text-primary)]">环境变量状态</h2>
-            <p className="text-xs text-[var(--text-secondary)]">
+            <h2 className="text-base font-semibold text-[var(--color-fg)]">环境变量状态</h2>
+            <p className="text-xs text-[var(--color-fg-mid)]">
               这些配置需在服务器环境变量中设置（.env.local 或 Vercel Dashboard），不能通过界面修改。
             </p>
           </div>
-          <Card className="p-0 overflow-hidden divide-y divide-[var(--border)]">
+          <Card className="p-0 overflow-hidden divide-y divide-[var(--color-border)]">
             {ENV_VARS.map(({ key, label, description, required }) => {
               const isSet = !!process.env[key];
               return (
                 <div key={key} className="flex items-start justify-between gap-4 px-5 py-4">
                   <div className="space-y-0.5 min-w-0">
                     <div className="flex items-center gap-2">
-                      <code className="text-xs font-mono text-[var(--text-primary)]">{key}</code>
+                      <code className="text-xs font-mono text-[var(--color-fg)]">{key}</code>
                       {required && (
                         <Badge variant="outline" className="text-[10px] px-1 py-0 text-red-500 border-red-500/30">
                           必填
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-[var(--text-secondary)]">{label}</p>
-                    <p className="text-xs text-[var(--text-secondary)] opacity-70">{description}</p>
+                    <p className="text-xs text-[var(--color-fg-mid)]">{label}</p>
+                    <p className="text-xs text-[var(--color-fg-mid)] opacity-70">{description}</p>
                   </div>
                   <Badge
                     variant="outline"
                     className={
                       isSet
                         ? "text-green-600 border-green-500/30 bg-green-500/5 shrink-0"
-                        : "text-[var(--text-secondary)] shrink-0"
+                        : "text-[var(--color-fg-mid)] shrink-0"
                     }
                   >
                     {isSet ? "已配置" : "未配置"}

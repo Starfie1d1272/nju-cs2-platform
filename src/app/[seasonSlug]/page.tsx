@@ -68,21 +68,21 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <div className="season-glow relative mb-12 pt-6">
+      <div className="relative mb-12 pt-6">
         <div className="flex items-center gap-3 mb-4 text-xs uppercase tracking-wider">
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border"
             style={{
-              backgroundColor: `rgba(var(--season-primary-rgb), 0.12)`,
-              borderColor: `rgba(var(--season-primary-rgb), 0.4)`,
-              color: "var(--season-primary)",
+              backgroundColor: `rgba(255, 107, 26, 0.12)`,
+              borderColor: `rgba(255, 107, 26, 0.4)`,
+              color: "var(--color-accent)",
             }}
           >
             {SEASON_STATUS_LABELS[season.status as SeasonStatus] ?? season.status}
           </span>
-          <span className="text-[var(--text-muted)]">{season.kind}</span>
+          <span className="text-[var(--color-fg-dim)]">{season.kind}</span>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-[var(--text-primary)] mb-4 leading-tight">
+        <h1 className="text-4xl sm:text-5xl font-bold text-[var(--color-fg)] mb-4 leading-tight">
           {season.name}
         </h1>
       </div>
@@ -92,19 +92,19 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
           <Link
             key={href}
             href={href as never}
-            className="card-elevated group flex flex-col gap-2 p-5 rounded-lg border border-[var(--border)]"
+            className="group flex flex-col gap-2 p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)]"
           >
             <div
               className="inline-flex items-center justify-center w-10 h-10 rounded-md mb-1 transition-colors"
               style={{
-                backgroundColor: `rgba(var(--season-primary-rgb), 0.1)`,
-                color: "var(--season-primary)",
+                backgroundColor: `rgba(255, 107, 26, 0.1)`,
+                color: "var(--color-accent)",
               }}
             >
               <Icon size={18} />
             </div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{label}</h3>
-            <p className="text-xs text-[var(--text-muted)]">{description}</p>
+            <h3 className="text-sm font-semibold text-[var(--color-fg)]">{label}</h3>
+            <p className="text-xs text-[var(--color-fg-dim)]">{description}</p>
           </Link>
         ))}
       </div>

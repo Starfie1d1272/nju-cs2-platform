@@ -29,7 +29,7 @@ function AvatarButton({ email }: { email: string }) {
   return (
     <span
       className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold text-white"
-      style={{ backgroundColor: "var(--season-primary, #f97316)" }}
+      style={{ backgroundColor: "var(--color-accent)" }}
     >
       {initial}
     </span>
@@ -61,12 +61,12 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
   const isAdmin = session && session.role !== "user";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-elevated)]/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-panel)]/95 backdrop-blur">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link
           href="/"
-          className="font-bold text-lg text-[var(--text-primary)] hover:text-white transition-colors"
+          className="font-bold text-lg text-[var(--color-fg)] hover:text-white transition-colors"
         >
           {APP_BRAND.name}
         </Link>
@@ -80,12 +80,12 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors",
                 link.active
-                  ? "bg-[var(--bg-overlay)] text-[var(--text-primary)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+                  ? "bg-[var(--color-panel-hi)] text-[var(--color-fg)]"
+                  : "text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
               )}
             >
               {link.label}
-              <span className="text-xs px-1.5 py-0.5 rounded-sm bg-[var(--bg-base)] text-[var(--text-muted)]">
+              <span className="text-xs px-1.5 py-0.5 rounded-sm bg-[var(--color-bg)] text-[var(--color-fg-dim)]">
                 {link.badge}
               </span>
             </Link>
@@ -95,8 +95,8 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
             className={cn(
               "px-3 py-1.5 rounded-md text-sm transition-colors",
               pathname === "/seasons"
-                ? "bg-[var(--bg-overlay)] text-[var(--text-primary)]"
-                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+                ? "bg-[var(--color-panel-hi)] text-[var(--color-fg)]"
+                : "text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
             )}
           >
             历史赛季
@@ -142,7 +142,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
             ) : (
               <Link
                 href="/login"
-                className="px-3 py-1.5 rounded-md text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)] transition-colors"
+                className="px-3 py-1.5 rounded-md text-sm font-medium text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)] transition-colors"
               >
                 登录
               </Link>
@@ -151,7 +151,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
 
           {/* Mobile hamburger */}
           <button
-            className="sm:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            className="sm:hidden p-2 text-[var(--color-fg-mid)] hover:text-[var(--color-fg)]"
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="菜单"
           >
@@ -162,39 +162,39 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="sm:hidden border-t border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-3 flex flex-col gap-1">
+        <div className="sm:hidden border-t border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 flex flex-col gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href as never}
               onClick={() => setMobileOpen(false)}
-              className="flex items-center justify-between px-3 py-2 rounded-md text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+              className="flex items-center justify-between px-3 py-2 rounded-md text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
             >
               {link.label}
-              <span className="text-xs text-[var(--text-muted)]">{link.badge}</span>
+              <span className="text-xs text-[var(--color-fg-dim)]">{link.badge}</span>
             </Link>
           ))}
           <Link
             href="/seasons"
             onClick={() => setMobileOpen(false)}
-            className="px-3 py-2 rounded-md text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+            className="px-3 py-2 rounded-md text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
           >
             历史赛季
           </Link>
 
           {/* 移动端用户区域 */}
-          <div className="mt-2 pt-2 border-t border-[var(--border)] flex flex-col gap-1">
+          <div className="mt-2 pt-2 border-t border-[var(--color-border)] flex flex-col gap-1">
             {session ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5">
                   <AvatarButton email={session.email} />
-                  <span className="text-sm text-[var(--text-muted)] truncate">{session.email}</span>
+                  <span className="text-sm text-[var(--color-fg-dim)] truncate">{session.email}</span>
                 </div>
                 {isAdmin && (
                   <Link
                     href="/admin"
                     onClick={() => setMobileOpen(false)}
-                    className="px-3 py-2 rounded-md text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+                    className="px-3 py-2 rounded-md text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
                   >
                     管理后台
                   </Link>
@@ -202,7 +202,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
                 <Link
                   href="/invite"
                   onClick={() => setMobileOpen(false)}
-                  className="px-3 py-2 rounded-md text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+                  className="px-3 py-2 rounded-md text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
                 >
                   使用邀请码
                 </Link>
@@ -211,7 +211,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
                     setMobileOpen(false);
                     void handleLogout();
                   }}
-                  className="text-left px-3 py-2 rounded-md text-sm text-red-500 hover:bg-[var(--bg-overlay)]"
+                  className="text-left px-3 py-2 rounded-md text-sm text-red-500 hover:bg-[var(--color-panel-hi)]"
                 >
                   退出登录
                 </button>
@@ -220,7 +220,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-overlay)]"
+                className="px-3 py-2 rounded-md text-sm font-medium text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
               >
                 登录
               </Link>

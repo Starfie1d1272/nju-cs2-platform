@@ -96,10 +96,10 @@ export default async function StatsPage({ params, searchParams }: StatsPageProps
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+        <h1 className="text-2xl font-bold text-[var(--color-fg)]">
           赛季排行榜
         </h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">
+        <p className="text-sm text-[var(--color-fg-mid)] mt-1">
           {season.name} · 最少 3 图
         </p>
       </div>

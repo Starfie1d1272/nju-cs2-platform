@@ -191,6 +191,13 @@ export async function claimInviteCode(code: string): Promise<ActionResult<{ role
         .where(eq(users.id, session.userId))
         .returning();
 
+      if (!updatedUser) {
+        return fail({
+          code: ErrorCode.UNAUTHORIZED,
+          message: "账号不存在，请重新登录后重试",
+        });
+      }
+
       await tx
         .update(adminInvites)
         .set({

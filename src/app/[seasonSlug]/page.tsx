@@ -86,7 +86,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       const stage = stagePlan[i];
       phases.push({
         key: stage.key,
-        label: stage.name || stage.key.toUpperCase(),
+        label: stage.key.toUpperCase(),
         done: i < currentMatchIdx,
       });
     }

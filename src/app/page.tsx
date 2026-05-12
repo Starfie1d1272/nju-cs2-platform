@@ -1,21 +1,25 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { and, eq, not } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { APP_BRAND } from "@/lib/branding";
 import { SEASON_STATUS_LABELS } from "@/types/season";
-import { Panel, Btn, Marker, StatusPill } from "@/components/rivalhub";
+import { Panel, Btn, Marker, StatusPill, EmptyState } from "@/components/rivalhub";
 
 export default async function HomePage() {
-  const allSeasons = await db
+  const activeSeasons = await db
     .select()
     .from(seasons)
+    .where(
+      and(
+        not(eq(seasons.status, "archived")),
+        not(eq(seasons.status, "draft"))
+      )
+    )
     .orderBy(seasons.createdAt);
 
-  const activeSeasons = allSeasons.filter(
-    (s) => s.status !== "archived" && s.status !== "draft"
-  );
   const featured = activeSeasons[0];
   const others = activeSeasons.slice(1);
 
@@ -23,16 +27,10 @@ export default async function HomePage() {
     return (
       <div className="mx-auto px-9 py-8 max-w-[1240px]">
         <Panel>
-          <div
-            className="text-center py-16"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 13,
-              color: "var(--color-fg-mid)",
-            }}
-          >
-            暂无进行中的赛季 — 请通过管理后台创建赛季。
-          </div>
+          <EmptyState
+            title="暂无进行中的赛季"
+            sub="请通过管理后台创建赛季。"
+          />
         </Panel>
       </div>
     );

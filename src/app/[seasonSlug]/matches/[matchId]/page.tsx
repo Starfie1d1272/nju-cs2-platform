@@ -7,7 +7,7 @@ import { matchPlayerStats } from "@/db/schema/player-stats";
 import { matchMvpVotes } from "@/db/schema/mvp-votes";
 import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
 import { MatchMvpVote } from "@/components/matches/MatchMvpVote";
-import { Panel, PosChip } from "@/components/rivalhub";
+import { Panel, PosChip, TeamBadge } from "@/components/rivalhub";
 import { PlayerStatsTable } from "@/components/matches/PlayerStatsTable";
 import { TimeProposalHistory } from "@/components/matches/TimeProposalHistory";
 import { MatchTimeNegotiation } from "@/components/matches/MatchTimeNegotiation";
@@ -25,6 +25,12 @@ interface MatchDetailPageProps {
 const FORMAT_LABELS = { bo1: "BO1", bo3: "BO3", bo5: "BO5" };
 const STAGE_LABELS = { qualifier: "排位赛", playoff: "正赛" };
 const SIDE_LABELS = { t: "T 方", ct: "CT 方" };
+
+const TEAM_COLORS = ["#ff6b1a", "#3aa1ff", "#a8ff3a", "#ff3a7a", "#9b6bff", "#ffd23a", "#3affc7", "#ff8a3a"];
+
+function teamBadgeData(name: string, idx: number): { tag: string; color: string } {
+  return { tag: name.slice(0, 3).toUpperCase(), color: TEAM_COLORS[idx % TEAM_COLORS.length] };
+}
 
 export default async function MatchDetailPage({ params }: MatchDetailPageProps) {
   const { seasonSlug, matchId } = await params;
@@ -200,32 +206,109 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         )}
       </div>
 
-      {/* 头部：比赛信息 */}
-      <Panel pad={24}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <PosChip pos={STAGE_LABELS[match.stage as keyof typeof STAGE_LABELS]} />
-          <PosChip pos={FORMAT_LABELS[match.format as keyof typeof FORMAT_LABELS]} />
-          <MatchStatusBadge status={match.status as "scheduled" | "in_progress" | "finished" | "cancelled"} />
-        </div>
-
-        <div className="flex items-center justify-center gap-6 py-4">
-          <span className="text-2xl font-bold text-[var(--color-fg)]">
-            {teamA?.name ?? "未知队伍"}
-          </span>
-          <div className="text-center">
-            {isFinished ? (
-              <span className="text-4xl font-mono font-bold text-[var(--color-accent)]">
-                {match.scoreA ?? 0}&nbsp;:&nbsp;{match.scoreB ?? 0}
-              </span>
-            ) : (
-              <span className="text-3xl font-bold text-[var(--color-fg-mid)]">vs</span>
+      {/* Hero header */}
+      <div
+        className="grid items-center gap-6 px-8 py-8 border-b"
+        style={{
+          gridTemplateColumns: "1fr auto 1fr",
+          background: teamA && teamB
+            ? `linear-gradient(90deg, ${teamBadgeData(teamA.name, 0).color}15 0%, transparent 35%, transparent 65%, ${teamBadgeData(teamB.name, 1).color}15 100%)`
+            : `var(--color-panel-low)`,
+          borderColor: "var(--color-border)",
+          borderRadius: "var(--radius-lg)",
+          border: `1px solid var(--color-border)`,
+        }}
+      >
+        {/* Team A */}
+        <div className="flex items-center gap-4 justify-end">
+          <div className="text-right min-w-0">
+            <div
+              className="font-bold"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 28,
+                color: "var(--color-fg)",
+                letterSpacing: "var(--tracking-tight-1)",
+              }}
+            >
+              {teamA?.name ?? "未知队伍"}
+            </div>
+            {teamA && (
+              <div className="mt-1" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }} />
             )}
           </div>
-          <span className="text-2xl font-bold text-[var(--color-fg)]">
-            {teamB?.name ?? "未知队伍"}
-          </span>
+          {teamA && <TeamBadge team={teamBadgeData(teamA.name, 0)} size={64} />}
         </div>
-      </Panel>
+
+        {/* Score / VS */}
+        <div className="text-center px-4">
+          {match.status === "in_progress" && (
+            <div
+              className="inline-block mb-2 px-2.5 py-0.5 rounded-sm font-bold"
+              style={{
+                background: "var(--color-danger)",
+                color: "var(--color-accent-fg)",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "var(--tracking-label)",
+              }}
+            >
+              ● LIVE
+            </div>
+          )}
+          {isFinished ? (
+            <div
+              className="font-bold"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 56,
+                color: "var(--color-fg)",
+                letterSpacing: "-0.04em",
+                lineHeight: 1,
+              }}
+            >
+              {match.scoreA ?? 0}
+              <span className="mx-3" style={{ color: "var(--color-fg-dim)", fontSize: 24 }}>:</span>
+              {match.scoreB ?? 0}
+            </div>
+          ) : (
+            <div
+              className="font-bold"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 42,
+                color: "var(--color-fg-dim)",
+                letterSpacing: "var(--tracking-tight-1)",
+              }}
+            >
+              VS
+            </div>
+          )}
+          <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
+            <PosChip pos={STAGE_LABELS[match.stage as keyof typeof STAGE_LABELS]} />
+            <PosChip pos={FORMAT_LABELS[match.format as keyof typeof FORMAT_LABELS]} />
+            <MatchStatusBadge status={match.status as "scheduled" | "in_progress" | "finished" | "cancelled"} />
+          </div>
+        </div>
+
+        {/* Team B */}
+        <div className="flex items-center gap-4">
+          {teamB && <TeamBadge team={teamBadgeData(teamB.name, 1)} size={64} />}
+          <div className="min-w-0">
+            <div
+              className="font-bold"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 28,
+                color: "var(--color-fg)",
+                letterSpacing: "var(--tracking-tight-1)",
+              }}
+            >
+              {teamB?.name ?? "未知队伍"}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* 单图结果 */}
       {maps.length > 0 && (

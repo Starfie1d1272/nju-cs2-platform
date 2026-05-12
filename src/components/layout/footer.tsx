@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_BRAND } from "@/lib/branding";
+import { version } from "@/../package.json";
 
 export function Footer() {
   return (
@@ -28,7 +29,7 @@ export function Footer() {
           RULES
         </Link>
         <span>PRIVACY</span>
-        <span style={{ color: "var(--color-accent)" }}>{process.env.npm_package_version ?? "dev"}</span>
+        <span style={{ color: "var(--color-accent)" }}>{version}</span>
       </div>
     </footer>
   );

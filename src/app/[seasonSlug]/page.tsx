@@ -90,13 +90,15 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
       {/* Phase tracker */}
       <Panel pad={0}>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(6, 1fr)" }}>
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${PHASES.length}, 1fr)` }}>
           {(() => {
             const statusOrder: SeasonStatus[] = ["draft", "registration", "voting", "drafting", "playing", "finished", "archived"];
             const currentIdx = statusOrder.indexOf(season.status);
+            const thresholdIdx = Object.fromEntries(PHASES.map((p) => [p.key, statusOrder.indexOf(p.after)]));
             return PHASES.map((phase, i) => {
-              const phaseDone = currentIdx >= statusOrder.indexOf(phase.after);
-              const isCurrent = !phaseDone && (i === 0 || currentIdx >= statusOrder.indexOf(PHASES[i - 1].after));
+              const phaseDone = currentIdx >= thresholdIdx[phase.key];
+              const prevKey = i > 0 ? PHASES[i - 1].key : "";
+              const isCurrent = !phaseDone && (i === 0 || currentIdx >= (thresholdIdx[prevKey] ?? Infinity));
               return (
                 <div key={phase.key}
                   className="relative"

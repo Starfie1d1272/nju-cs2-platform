@@ -13,8 +13,7 @@ import { MapByMapInput } from "@/components/matches/MapByMapInput";
 import { ScheduledAtInput } from "@/components/matches/ScheduledAtInput";
 import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Panel, StatusPill } from "@/components/rivalhub";
 import { Separator } from "@/components/ui/separator";
 import { getFirstStageOfType, normalizeStagePlan } from "@/types/season";
 import Link from "next/link";
@@ -135,11 +134,11 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
 
       {/* 赛季状态提示 */}
       {season.status !== "playing" && matchCount === 0 && (
-        <Card className="p-4 border-yellow-500/30 bg-yellow-500/5">
+        <Panel pad={16} className="border-yellow-500/30 bg-yellow-500/5">
           <p className="text-sm text-yellow-600">
             赛季当前状态为「{season.status}」，需进入 playing 状态后才能生成赛程。
           </p>
-        </Card>
+        </Panel>
       )}
 
       {/* 一键生成赛程（首次） */}
@@ -176,13 +175,13 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
               {standings.length > 0 && (
                 <section className="space-y-2">
                   <h2 className="text-base font-semibold text-[var(--color-fg)]">积分榜</h2>
-                  <Card className="p-0 overflow-hidden">
+                  <Panel pad={0} className="overflow-hidden">
                     <StandingsTable
                       standings={standings}
                       seasonSlug={seasonSlug}
                       isFinal={allQualifierFinished}
                     />
-                  </Card>
+                  </Panel>
                 </section>
               )}
 
@@ -194,7 +193,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                     const teamAName = teamMap.get(m.teamAId) ?? "未知队伍";
                     const teamBName = teamMap.get(m.teamBId) ?? "未知队伍";
                     return (
-                      <Card key={m.id} className="p-4 space-y-3">
+                      <Panel key={m.id} pad={16} className="space-y-3">
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3">
                             <span className="font-semibold">{teamAName}</span>
@@ -206,9 +205,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                             <span className="font-semibold">{teamBName}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
-                              {FORMAT_LABELS[m.format as keyof typeof FORMAT_LABELS]}
-                            </Badge>
+                            <StatusPill status={FORMAT_LABELS[m.format as keyof typeof FORMAT_LABELS]} />
                             <MatchStatusBadge
                               status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
                             />
@@ -236,7 +233,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                             <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
                           </div>
                         ))}
-                      </Card>
+                      </Panel>
                     );
                   })}
                 </div>
@@ -249,16 +246,16 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
             <TabsContent value={playoffKey} className="space-y-3 mt-4">
               <h2 className="text-base font-semibold text-[var(--color-fg)]">赛程</h2>
               {playoffMatches.length === 0 ? (
-                <Card className="p-8 text-center text-[var(--color-fg-mid)]">
+                <Panel pad={32} className="text-center text-[var(--color-fg-mid)]">
                   {allQualifierFinished ? "点击上方「生成正赛」按钮" : "排位赛全部结束后可生成正赛"}
-                </Card>
+                </Panel>
               ) : (
                 <div className="space-y-3">
                   {playoffMatches.map((m) => {
                     const teamAName = teamMap.get(m.teamAId) ?? "TBD";
                     const teamBName = teamMap.get(m.teamBId) ?? "TBD";
                     return (
-                      <Card key={m.id} className="p-4 space-y-3">
+                      <Panel key={m.id} pad={16} className="space-y-3">
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3">
                             <span className="font-semibold">{teamAName}</span>
@@ -270,9 +267,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                             <span className="font-semibold">{teamBName}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
-                              {FORMAT_LABELS[m.format as keyof typeof FORMAT_LABELS]}
-                            </Badge>
+                            <StatusPill status={FORMAT_LABELS[m.format as keyof typeof FORMAT_LABELS]} />
                             <MatchStatusBadge
                               status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
                             />
@@ -319,7 +314,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
                             <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
                           </div>
                         ))}
-                      </Card>
+                      </Panel>
                     );
                   })}
                 </div>
@@ -330,7 +325,7 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
       )}
 
       {!canGenerate && matchCount === 0 && (
-        <Card className="p-8 text-center text-[var(--color-fg-mid)]">暂无比赛记录</Card>
+        <Panel pad={32} className="text-center text-[var(--color-fg-mid)]">暂无比赛记录</Panel>
       )}
     </div>
   );

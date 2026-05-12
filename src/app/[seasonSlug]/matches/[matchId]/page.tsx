@@ -8,6 +8,7 @@ import { matchMvpVotes } from "@/db/schema/mvp-votes";
 import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
 import { MatchMvpVote } from "@/components/matches/MatchMvpVote";
 import { Panel, PosChip, TeamBadge } from "@/components/rivalhub";
+import { MATCH_FORMAT_LABELS, MATCH_STAGE_LABELS } from "@/types/match";
 import { PlayerStatsTable } from "@/components/matches/PlayerStatsTable";
 import { TimeProposalHistory } from "@/components/matches/TimeProposalHistory";
 import { MatchTimeNegotiation } from "@/components/matches/MatchTimeNegotiation";
@@ -22,8 +23,6 @@ interface MatchDetailPageProps {
   params: Promise<{ seasonSlug: string; matchId: string }>;
 }
 
-const FORMAT_LABELS = { bo1: "BO1", bo3: "BO3", bo5: "BO5" };
-const STAGE_LABELS = { qualifier: "排位赛", playoff: "正赛" };
 const SIDE_LABELS = { t: "T 方", ct: "CT 方" };
 
 const TEAM_COLORS = ["#ff6b1a", "#3aa1ff", "#a8ff3a", "#ff3a7a", "#9b6bff", "#ffd23a", "#3affc7", "#ff8a3a"];
@@ -233,9 +232,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             >
               {teamA?.name ?? "未知队伍"}
             </div>
-            {teamA && (
-              <div className="mt-1" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }} />
-            )}
           </div>
           {teamA && <TeamBadge team={teamBadgeData(teamA.name, 0)} size={64} />}
         </div>
@@ -285,8 +281,8 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             </div>
           )}
           <div className="mt-2 flex items-center justify-center gap-2 flex-wrap">
-            <PosChip pos={STAGE_LABELS[match.stage as keyof typeof STAGE_LABELS]} />
-            <PosChip pos={FORMAT_LABELS[match.format as keyof typeof FORMAT_LABELS]} />
+            <PosChip pos={MATCH_STAGE_LABELS[match.stage] ?? match.stage} />
+            <PosChip pos={MATCH_FORMAT_LABELS[match.format] ?? match.format} />
             <MatchStatusBadge status={match.status as "scheduled" | "in_progress" | "finished" | "cancelled"} />
           </div>
         </div>

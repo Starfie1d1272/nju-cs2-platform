@@ -18,6 +18,14 @@ function pct(n: number, d: number) {
   return `${Math.round((n / d) * 100)}%`;
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase", marginBottom: 12 }}>
+      {children}
+    </div>
+  );
+}
+
 function AvatarFallback({ name }: { name: string }) {
   const initials = name.slice(0, 2).toUpperCase();
   return (
@@ -195,7 +203,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       {/* 职业生涯战绩 */}
       {played > 0 && (
         <section className="space-y-3">
-          <div style={{fontFamily:"var(--font-mono)", fontSize:11, color:"var(--color-fg-mid)", letterSpacing:"var(--tracking-label)", textTransform:"uppercase", marginBottom:12}}>职业生涯战绩</div>
+          <SectionHeading>职业生涯战绩</SectionHeading>
           <div className="grid grid-cols-4 gap-3">
             <Stat label="出场" value={played} />
             <Stat label="胜" value={totalWins} />
@@ -205,7 +213,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
           {totalNetRounds !== 0 && (
             <p className="text-xs text-[var(--color-fg-mid)] px-1">
               净胜回合：
-              <span className={totalNetRounds > 0 ? "text-green-500" : "text-red-500"}>
+              <span style={{ color: totalNetRounds > 0 ? "var(--color-ok)" : "var(--color-danger)" }}>
                 {totalNetRounds > 0 ? "+" : ""}{totalNetRounds}
               </span>
             </p>
@@ -216,7 +224,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       {/* 个人数据 */}
       {playerStats.length > 0 && (
         <section className="space-y-3">
-            <div style={{fontFamily:"var(--font-mono)", fontSize:11, color:"var(--color-fg-mid)", letterSpacing:"var(--tracking-label)", textTransform:"uppercase", marginBottom:12}}>个人数据</div>
+            <SectionHeading>个人数据</SectionHeading>
 
           {/* 生涯总计 */}
           <Panel label="生涯总计">
@@ -289,9 +297,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
             <Panel key={ps.seasonSlug} pad={16}>
               <div className="flex items-center gap-2 mb-2">
                 <Link
-                  href={
-                    `/${ps.seasonSlug}/stats` as any
-                  }
+                  href={`/${ps.seasonSlug}/stats`}
                   className="text-sm font-semibold text-[var(--color-fg)] hover:text-[var(--color-accent)] transition-colors"
                 >
                   {ps.seasonName}
@@ -332,7 +338,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
       {/* 赛季记录 */}
       {registrations.length > 0 && (
         <section className="space-y-3">
-          <div style={{fontFamily:"var(--font-mono)", fontSize:11, color:"var(--color-fg-mid)", letterSpacing:"var(--tracking-label)", textTransform:"uppercase", marginBottom:12}}>参赛记录</div>
+          <SectionHeading>参赛记录</SectionHeading>
           <div className="space-y-3">
             {[...registrations].reverse().map((reg) => {
               const teamInfo = regIdToTeam.get(reg.id);

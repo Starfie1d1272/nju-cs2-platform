@@ -3,8 +3,7 @@ import { eq, or, and, inArray, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, teams, teamMembers, seasonRegistrations, users, matches, matchMaps } from "@/db/schema";
 import { matchPlayerStats } from "@/db/schema/player-stats";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Panel, Stat, Marker, PosChip } from "@/components/rivalhub";
 import Link from "next/link";
 import { POSITION_LABELS } from "@/lib/validators/registration";
 import { CS2_POSITIONS } from "@/types/season";
@@ -210,101 +209,84 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
           {" / "}
           <span className="text-[var(--color-fg)]">#{team.draftOrder}</span>
         </p>
-        <h1 className="text-4xl font-black text-[var(--color-fg)]">{team.name}</h1>
+        <Marker>{team.name}</Marker>
       </div>
 
       {/* 整体战绩 */}
       <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "出场", value: played },
-          { label: "胜", value: totalWins },
-          { label: "负", value: totalLosses },
-        ].map(({ label, value }) => (
-          <Card key={label} className="p-4 text-center">
-            <p className="text-2xl font-bold text-[var(--color-fg)]">{value}</p>
-            <p className="text-xs text-[var(--color-fg-mid)] mt-1">{label}</p>
-          </Card>
-        ))}
+        <Stat label="出场" value={played} />
+        <Stat label="胜" value={totalWins} />
+        <Stat label="负" value={totalLosses} />
       </div>
 
       {/* 阵容 */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-[var(--color-fg)]">阵容</h2>
-        <Card className="p-5 space-y-3">
-          {starters.map((p) => (
-            <div key={p.registrationId} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {p.registrationId === team.captainRegistrationId && (
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 text-[var(--primary)]">C</Badge>
-                )}
-                <span className="font-medium text-[var(--color-fg)]">
-                  {p.steamName ?? "未知选手"}
-                </span>
-              </div>
-              <span className="text-sm text-[var(--color-fg-mid)]">
-                {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
-              </span>
-            </div>
-          ))}
-
-          {subs.length > 0 && (
-            <div className="border-t border-[var(--color-border)] pt-3 space-y-2">
-              <p className="text-xs text-[var(--color-fg-mid)] font-medium uppercase tracking-wide">替补</p>
-              {subs.map((p) => (
-                <div key={p.registrationId} className="flex items-center justify-between opacity-70">
-                  <span className="text-sm text-[var(--color-fg)]">{p.steamName ?? "未知选手"}</span>
-                  <span className="text-xs text-[var(--color-fg-mid)]">
-                    {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
+      <section>
+        <Panel label="阵容" pad={20}>
+          <div className="space-y-3">
+            {starters.map((p) => (
+              <div key={p.registrationId} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {p.registrationId === team.captainRegistrationId && (
+                    <PosChip pos="C" small />
+                  )}
+                  <span className="font-medium text-[var(--color-fg)]">
+                    {p.steamName ?? "未知选手"}
                   </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </Card>
+                <span className="text-sm text-[var(--color-fg-mid)]">
+                  {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
+                </span>
+              </div>
+            ))}
+
+            {subs.length > 0 && (
+              <div className="border-t border-[var(--color-border)] pt-3 space-y-2">
+                <p className="text-xs text-[var(--color-fg-mid)] font-medium uppercase tracking-wide">替补</p>
+                {subs.map((p) => (
+                  <div key={p.registrationId} className="flex items-center justify-between opacity-70">
+                    <span className="text-sm text-[var(--color-fg)]">{p.steamName ?? "未知选手"}</span>
+                    <span className="text-xs text-[var(--color-fg-mid)]">
+                      {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Panel>
       </section>
 
       {/* 队伍数据 */}
       {teamAvgRating && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--color-fg)]">队伍数据</h2>
-          <Card className="p-5 space-y-4">
-            <div className="grid grid-cols-4 gap-4 text-center">
-              {[
-                { label: "场均 Rating", value: teamAvgRating },
-                { label: "场均 ADR", value: teamAvgAdr },
-                { label: "场均 K/D", value: teamAvgKd },
-                { label: "场均 WE", value: teamAvgWe },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <p className="text-xl font-bold text-[var(--color-accent)]">
-                    {value ?? "—"}
-                  </p>
-                  <p className="text-[10px] text-[var(--color-fg-dim)] mt-0.5">
-                    {label}
-                  </p>
-                </div>
-              ))}
-            </div>
-            {positionBest.size > 0 && (
-              <div className="text-[11px] text-[var(--color-fg-dim)] border-t border-[var(--color-border)] pt-3">
-                {[...positionBest.entries()]
-                  .map(([pos, info]) => {
-                    const label =
-                      POSITION_LABELS[pos as keyof typeof POSITION_LABELS]?.cn ?? pos;
-                    return `${label} ${info.name} (${info.rating.toFixed(2)})`;
-                  })
-                  .join(" · ")}
+        <section>
+          <Panel label="队伍数据" pad={20}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-4 gap-4">
+                <Stat label="场均 Rating" value={teamAvgRating ?? "—"} accent />
+                <Stat label="场均 ADR" value={teamAvgAdr ?? "—"} accent />
+                <Stat label="场均 K/D" value={teamAvgKd ?? "—"} accent />
+                <Stat label="场均 WE" value={teamAvgWe ?? "—"} accent />
               </div>
-            )}
-          </Card>
+              {positionBest.size > 0 && (
+                <div className="text-[11px] text-[var(--color-fg-dim)] border-t border-[var(--color-border)] pt-3">
+                  {[...positionBest.entries()]
+                    .map(([pos, info]) => {
+                      const label =
+                        POSITION_LABELS[pos as keyof typeof POSITION_LABELS]?.cn ?? pos;
+                      return `${label} ${info.name} (${info.rating.toFixed(2)})`;
+                    })
+                    .join(" · ")}
+                </div>
+              )}
+            </div>
+          </Panel>
         </section>
       )}
 
       {/* 地图胜率 */}
       {sortedMaps.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--color-fg)]">地图胜率</h2>
-          <Card className="p-0 overflow-hidden">
+        <section>
+          <Panel pad={0} className="overflow-hidden" label="地图胜率">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] text-[var(--color-fg-mid)] text-xs uppercase tracking-wide">
@@ -329,15 +311,14 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 ))}
               </tbody>
             </table>
-          </Card>
+          </Panel>
         </section>
       )}
 
       {/* 历史对阵 */}
       {h2hList.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--color-fg)]">历史对阵</h2>
-          <Card className="p-0 overflow-hidden">
+        <section>
+          <Panel pad={0} className="overflow-hidden" label="历史对阵">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] text-[var(--color-fg-mid)] text-xs uppercase tracking-wide">
@@ -356,7 +337,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                         {opp ? (
                           <Link
                             href={`/${seasonSlug}/teams/${opp.id}`}
-                            className="hover:underline hover:text-[var(--primary)]"
+                            className="hover:underline hover:text-[var(--color-accent)]"
                           >
                             {opp.name}
                           </Link>
@@ -372,15 +353,15 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 })}
               </tbody>
             </table>
-          </Card>
+          </Panel>
         </section>
       )}
 
       {/* 无赛果时的空态 */}
       {played === 0 && (
-        <Card className="p-8 text-center text-[var(--color-fg-mid)]">
+        <Panel pad={32} className="text-center text-[var(--color-fg-mid)]">
           暂无比赛记录
-        </Card>
+        </Panel>
       )}
     </div>
   );

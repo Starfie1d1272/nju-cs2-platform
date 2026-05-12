@@ -29,12 +29,12 @@ export default async function DraftCaptainPage({ params }: DraftCaptainPageProps
   if (!season) notFound();
 
   if (!season.hasDraft) {
-    return <UnavailableCard title={`队长选人 · ${season.name}`} message="该赛季未启用蛇形选秀。" />;
+    return <UnavailablePanel title={`队长选人 · ${season.name}`} message="该赛季未启用蛇形选秀。" />;
   }
 
   if (season.status !== "drafting") {
     return (
-      <UnavailableCard
+      <UnavailablePanel
         title={`队长选人 · ${season.name}`}
         message="当前不在选秀阶段，队长面板暂不可用。"
         href={`/${seasonSlug}/draft` as Route}
@@ -46,7 +46,7 @@ export default async function DraftCaptainPage({ params }: DraftCaptainPageProps
   const session = await getUserSession();
   if (!session) {
     return (
-      <UnavailableCard
+      <UnavailablePanel
         title={`队长选人 · ${season.name}`}
         message="请先登录队长账号后再进入选人面板。"
         href="/login"
@@ -76,7 +76,7 @@ export default async function DraftCaptainPage({ params }: DraftCaptainPageProps
 
   if (!captainTeam) {
     return (
-      <UnavailableCard
+      <UnavailablePanel
         title={`队长选人 · ${season.name}`}
         message="当前账号不是本赛季队长，无法操作队长选人面板。"
         href={`/${seasonSlug}/draft` as Route}
@@ -88,7 +88,7 @@ export default async function DraftCaptainPage({ params }: DraftCaptainPageProps
   const data = await getDraftData(season.id);
   if (!data.state) {
     return (
-      <UnavailableCard
+      <UnavailablePanel
         title={`队长选人 · ${season.name}`}
         message="选秀尚未启动，等待管理员开启后再操作。"
       />
@@ -128,7 +128,7 @@ export default async function DraftCaptainPage({ params }: DraftCaptainPageProps
   );
 }
 
-function UnavailableCard({
+function UnavailablePanel({
   title,
   message,
   href,

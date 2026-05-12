@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { logoutUser } from "@/actions/auth";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "概览" },
+  { href: "/admin", label: "赛季管理" },
   { href: "/admin/users", label: "用户管理" },
   { href: "/admin/invites", label: "邀请码" },
   { href: "/admin/settings", label: "系统设置" },

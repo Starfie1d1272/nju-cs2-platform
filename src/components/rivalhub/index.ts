@@ -8,3 +8,6 @@ export { InlineConfirm } from "./inline-confirm";
 export { EmptyState } from "./empty-state";
 export { ErrorState } from "./error-state";
 export { RivalSkeleton, SkeletonRow, Spinner } from "./skeleton";
+export { TeamBadge } from "./team-badge";
+export { PosChip } from "./pos-chip";
+export { StatusPill } from "./status-pill";

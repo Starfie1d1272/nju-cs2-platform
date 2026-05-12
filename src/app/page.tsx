@@ -76,8 +76,8 @@ export default async function HomePage() {
             className="absolute inset-0 opacity-50"
             style={{
               background: `
-                radial-gradient(circle at 90% 10%, var(--color-accent)22 0, transparent 40%),
-                repeating-linear-gradient(0deg, transparent 0 32px, var(--color-border)40 32px 33px)
+                radial-gradient(circle at 90% 10%, #ff6b1a22 0, transparent 40%),
+                repeating-linear-gradient(0deg, transparent 0 32px, #1f253040 32px 33px)
               `,
             }}
           />

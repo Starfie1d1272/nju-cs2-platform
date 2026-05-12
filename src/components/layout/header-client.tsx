@@ -65,7 +65,7 @@ export function HeaderClient({ seasons, session }: HeaderClientProps) {
       className="sticky top-0 z-50 border-b backdrop-blur"
       style={{
         padding: "12px 28px",
-        background: "var(--color-panel-low)" + "e6",
+        background: "#0d1016e6",
         borderColor: "var(--color-border)",
         display: "grid",
         gridTemplateColumns: "auto 1fr auto",

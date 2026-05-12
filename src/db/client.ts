@@ -24,6 +24,7 @@ pool.on("error", (err) => {
 export const db = drizzle(pool, { schema });
 
 export type DB = typeof db;
+export type TxDb = Parameters<Parameters<DB["transaction"]>[0]>[0];
 
 function shouldUseSsl(databaseUrl?: string): boolean {
   if (!databaseUrl) return false;

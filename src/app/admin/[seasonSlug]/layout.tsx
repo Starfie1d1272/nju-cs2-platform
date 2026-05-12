@@ -33,7 +33,7 @@ export default async function AdminSeasonLayout({
     redirect("/admin/login");
   }
 
-  const hasMatches = (season.stagePlan as unknown[])?.length > 0;
+  const hasMatches = season.stagePlan.length > 0;
   const isSuperAdmin = admin.role === "super_admin";
 
   return (

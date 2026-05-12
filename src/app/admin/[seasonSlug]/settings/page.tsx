@@ -5,16 +5,10 @@ import { seasons } from "@/db/schema";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { normalizeRegistrationConfig, normalizeStagePlan, normalizeTeamRegistrationConfig } from "@/types/season";
 import { SeasonForm } from "@/components/admin/SeasonForm";
+import { toCSTDateTimeInput } from "@/lib/utils/date";
 
 interface SeasonSettingsPageProps {
   params: Promise<{ seasonSlug: string }>;
-}
-
-function toDateTimeInput(value: Date | null): string | null {
-  if (!value) return null;
-  // 将 UTC 转为 CST (UTC+8) 显示在 datetime-local 输入框中
-  const d = new Date(value.getTime() + 8 * 3600 * 1000);
-  return d.toISOString().slice(0, 16);
 }
 
 export default async function SeasonSettingsPage({ params }: SeasonSettingsPageProps) {
@@ -41,9 +35,9 @@ export default async function SeasonSettingsPage({ params }: SeasonSettingsPageP
           kind: season.kind,
           status: season.status,
           themeColor: season.themeColor,
-          startAt: toDateTimeInput(season.startAt),
-          registrationDeadline: toDateTimeInput(season.registrationDeadline),
-          endAt: toDateTimeInput(season.endAt),
+          startAt: toCSTDateTimeInput(season.startAt),
+          registrationDeadline: toCSTDateTimeInput(season.registrationDeadline),
+          endAt: toCSTDateTimeInput(season.endAt),
           registrationMode: season.registrationMode,
           hasCaptainVoting: season.hasCaptainVoting,
           hasDraft: season.hasDraft,

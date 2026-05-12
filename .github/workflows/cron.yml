@@ -1,4 +1,4 @@
-name: Cron — Draft Timeout
+name: Cron
 
 on:
   schedule:
@@ -9,7 +9,13 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
-      - run: |
+      - name: Draft timeout
+        run: |
           curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             "https://match.starfie1d.top/api/cron/draft-timeout"
+      - name: Check registration deadline
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://match.starfie1d.top/api/cron/check-registration-deadline"

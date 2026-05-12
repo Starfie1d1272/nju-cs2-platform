@@ -9,7 +9,10 @@ import type { SeasonStatus } from "@/types/season";
 import { showStats } from "@/lib/utils/season";
 import { StatusPill, Panel, Marker } from "@/components/rivalhub";
 
-const STATUS_ORDER: SeasonStatus[] = ["draft", "registration", "voting", "drafting", "playing", "finished", "archived"];
+const STATUS_IDX: Record<SeasonStatus, number> = {
+  draft: 0, registration: 1, voting: 2, drafting: 3,
+  playing: 4, finished: 5, archived: 6,
+};
 
 interface SeasonPageProps {
   params: Promise<{ seasonSlug: string }>;
@@ -27,7 +30,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
   // 查询已初始化的赛程阶段（有 match 记录的 stage）
   const matchStageRows = await db
-    .select({ stage: matches.stage })
+    .selectDistinct({ stage: matches.stage })
     .from(matches)
     .where(eq(matches.seasonId, season.id));
   const initializedStages = new Set(matchStageRows.map((r) => r.stage));
@@ -39,7 +42,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
     done: boolean;
   }
 
-  const currentStatusIdx = STATUS_ORDER.indexOf(season.status);
+  const currentStatusIdx = STATUS_IDX[season.status];
   const phases: Phase[] = [];
 
   // 赛前阶段（capability 驱动）
@@ -56,36 +59,34 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
     phases.push({
       key: rule.key,
       label: rule.label,
-      done: currentStatusIdx > STATUS_ORDER.indexOf(rule.doneAfter),
+      done: currentStatusIdx > STATUS_IDX[rule.doneAfter],
     });
   }
 
   // 比赛阶段（从 stagePlan 读取）
   if (stagePlan.length > 0) {
-    // 确定当前 match stage 索引，-1 = 尚未进入 playing
+    const PLAYING_IDX = STATUS_IDX.playing;
     let currentMatchIdx = -1;
-    if (currentStatusIdx >= STATUS_ORDER.indexOf("playing")) {
-      if (currentStatusIdx > STATUS_ORDER.indexOf("playing")) {
-        // finished / archived → 所有阶段完成
-        currentMatchIdx = stagePlan.length;
-      } else {
-        // playing → 找到最后一个已初始化的阶段
-        let lastInit = -1;
-        for (let i = stagePlan.length - 1; i >= 0; i--) {
-          if (initializedStages.has(stagePlan[i].key)) {
-            lastInit = i;
-            break;
-          }
-        }
-        currentMatchIdx = Math.max(0, lastInit);
+
+    if (currentStatusIdx < PLAYING_IDX) {
+      // 尚未进入 playing —— 没有 match stage 开始
+    } else if (currentStatusIdx > PLAYING_IDX) {
+      // finished / archived → 所有阶段完成
+      currentMatchIdx = stagePlan.length;
+    } else {
+      // 恰好 playing → 找到最后一个已初始化的阶段
+      let lastInit = -1;
+      for (let i = stagePlan.length - 1; i >= 0; i--) {
+        if (initializedStages.has(stagePlan[i].key)) { lastInit = i; break; }
       }
+      currentMatchIdx = Math.max(0, lastInit);
     }
 
     for (let i = 0; i < stagePlan.length; i++) {
       const stage = stagePlan[i];
       phases.push({
         key: stage.key,
-        label: stage.key.toUpperCase(),
+        label: stage.name || stage.key.toUpperCase(),
         done: i < currentMatchIdx,
       });
     }
@@ -95,7 +96,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
   phases.push({
     key: "finished",
     label: "FINISHED",
-    done: currentStatusIdx > STATUS_ORDER.indexOf("finished"),
+    done: currentStatusIdx > STATUS_IDX.finished,
   });
 
   // 找当前阶段（第一个未完成的）

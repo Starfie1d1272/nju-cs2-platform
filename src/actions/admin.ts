@@ -215,7 +215,6 @@ export async function reviewRegistration(input: ReviewInput) {
         },
       });
 
-      // 审批通过后检查是否满足自动推进条件
       if (targetStatus === "approved") {
         await maybeAdvanceFromRegistration(tx, reg.seasonId);
       }

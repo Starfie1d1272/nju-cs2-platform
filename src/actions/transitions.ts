@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { eq, count, and } from "drizzle-orm";
+import type { TxDb } from "@/db/client";
 import { seasons, seasonRegistrations, auditLogs } from "@/db/schema";
 import { normalizeRegistrationConfig } from "@/types/season";
-
-type TxDb = Parameters<Parameters<typeof import("@/db/client").db.transaction>[0]>[0];
 
 async function getApprovedCountInTx(tx: TxDb, seasonId: string): Promise<number> {
   const [row] = await tx
@@ -43,8 +42,7 @@ export async function maybeAdvanceFromRegistration(
 
   if (!full && !deadlinePassed) return;
 
-  // 无队长投票的赛季直接跳到 playing
-  const nextStatus = season.hasCaptainVoting ? ("voting" as const) : ("playing" as const);
+  const nextStatus = season.hasCaptainVoting ? "voting" : "playing";
 
   await tx
     .update(seasons)

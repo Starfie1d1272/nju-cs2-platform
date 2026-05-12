@@ -3,16 +3,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { maybeAdvanceFromRegistration } from "@/actions/transitions";
+import { validateCronAuth } from "@/lib/cron-auth";
 
-// Vercel Cron 每分钟触发
-// 安全：Authorization: Bearer ${CRON_SECRET}
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = validateCronAuth(request);
+  if (authError) return authError;
 
   const activeSeasons = await db
     .select({ id: seasons.id })

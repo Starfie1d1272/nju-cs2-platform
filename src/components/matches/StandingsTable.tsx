@@ -26,7 +26,7 @@ export function StandingsTable({ standings, seasonSlug, isFinal }: StandingsTabl
           {standings.map((s) => (
             <tr
               key={s.teamId}
-              className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--surface-elevated)] transition-colors"
+              className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-panel-hi)] transition-colors"
             >
               <td className="py-3 px-3 text-[var(--color-fg-mid)] tabular-nums">
                 {isFinal ? (

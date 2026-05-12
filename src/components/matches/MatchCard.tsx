@@ -31,7 +31,7 @@ export function MatchCard({
 }: MatchCardProps) {
   return (
     <Link href={`/${seasonSlug}/matches/${matchId}`}>
-      <Card className="p-4 hover:bg-[var(--surface-elevated)] transition-colors cursor-pointer">
+      <Card className="p-4 hover:bg-[var(--color-panel-hi)] transition-colors cursor-pointer">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <span className="font-semibold truncate text-[var(--color-fg)]">{teamAName}</span>

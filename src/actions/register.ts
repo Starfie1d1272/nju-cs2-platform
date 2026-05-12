@@ -200,11 +200,16 @@ export async function submitRegistration(input: RegistrationFormData) {
       throw new AppError(ErrorCode.REGISTRATION_DUPLICATE, ERROR_MESSAGES.REGISTRATION_DUPLICATE);
     }
 
-    // 5. 全局总报名人数上限检查
+    // 5. 全局总报名人数上限检查（仅统计已通过，被拒/候补不占名额）
     const [totalCount] = await db
       .select({ count: count() })
       .from(seasonRegistrations)
-      .where(eq(seasonRegistrations.seasonId, data.seasonId));
+      .where(
+        and(
+          eq(seasonRegistrations.seasonId, data.seasonId),
+          eq(seasonRegistrations.status, "approved"),
+        ),
+      );
     if (Number(totalCount?.count ?? 0) >= registrationConfig.maxTotal) {
       throw new AppError(ErrorCode.REGISTRATION_FULL, ERROR_MESSAGES.REGISTRATION_FULL);
     }
@@ -281,4 +286,18 @@ export async function getPositionCounts(
     .groupBy(seasonRegistrations.primaryPosition);
 
   return Object.fromEntries(rows.map((r) => [r.position, Number(r.count)]));
+}
+
+/** 查询某赛季已通过审批的总人数 */
+export async function getApprovedCount(seasonId: string): Promise<number> {
+  const [row] = await db
+    .select({ count: count() })
+    .from(seasonRegistrations)
+    .where(
+      and(
+        eq(seasonRegistrations.seasonId, seasonId),
+        eq(seasonRegistrations.status, "approved"),
+      ),
+    );
+  return Number(row?.count ?? 0);
 }

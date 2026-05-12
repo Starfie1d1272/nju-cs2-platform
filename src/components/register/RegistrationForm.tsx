@@ -124,7 +124,9 @@ export function RegistrationForm({
         payload: compactUndefined({ ...values, seasonId, email }) as Record<string, unknown>,
       });
       if (result.success) {
-        toast.success("草稿已保存");
+        toast.success("草稿已保存", {
+          description: "下次输入邮箱即可自动恢复",
+        });
       } else {
         toast.error(result.error.message);
       }

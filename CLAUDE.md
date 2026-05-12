@@ -4,7 +4,7 @@
 
 RivalHub 是开源电竞赛事管理平台，通过 capability 驱动的多赛事模型支持各类赛制（选秀联赛、公开赛、杯赛等）的全流程运营：报名 → 审核 → 队长投票 → 蛇形选秀 → 队伍展示 → 赛程 + Bracket 视图 → 部署。
 
-当前阶段：**Phase 1–11.5 已完成，Phase 12（部署）进行中。v2 赛制引擎（StageExecutor v2 + 5 个 executor + entrySeeds 种子轮空 + finalFormat 决赛 BO5）已在 dev 落地。**
+当前阶段：**Phase 1–11.5 已完成，Phase 12（部署）进行中。Tactical Grid 设计系统全站迁移已合入 main（PR #64，v0.2.0）。v2 赛制引擎（StageExecutor v2 + 5 个 executor + entrySeeds 种子轮空 + finalFormat 决赛 BO5）已在 dev 落地。**
 
 ## 版本路线图
 
@@ -159,7 +159,7 @@ return null;                   // 成功/失败语义不明
 | `/[seasonSlug]/captains` | RSC 默认 + Realtime | 投票变化时 `revalidatePath` |
 | `/[seasonSlug]/teams` | RSC 默认（赛季进入 playing 后基本不变） | 选秀完成时 `revalidatePath` |
 | `/[seasonSlug]/matches/**` | RSC 默认 | 录入比分时 `revalidatePath` |
-| `/seasons` `/rules` | 静态 | 仅 deploy 时刷新 |
+| `/rules` | 静态 | 完整规则书（9 章，Tactical Grid 排版） |
 
 **约束**：
 - `force-dynamic` 只在选秀和后台路由使用，避免全站不缓存导致 RSC 退化
@@ -197,9 +197,12 @@ src/
 │   └── utils/        # date（UTC/CST）+ season（capability 工具）+ password（scrypt）+ cn
 ├── components/
 │   ├── layout/       # Header / Footer
-│   ├── ui/           # shadcn 组件（按需 add）
+│   ├── ui/           # shadcn 组件（按需 add，已覆盖 button/input/badge/card/skeleton/select）
+│   ├── rivalhub/     # Tactical Grid 组件（14 个：Panel/Btn/Field/Marker/Stat/MiniStat/
+│   │                 #   StatusBanner/InlineConfirm/EmptyState/ErrorState/Skeleton/Spinner/
+│   │                 #   TeamBadge/PosChip/StatusPill）
 │   ├── register/     # 报名业务组件
-│   ├── admin/        # 管理后台业务组件
+│   ├── admin/        # 管理后台业务组件（AdminSidebar 侧边栏 + 统一 layout）
 │   ├── draft/        # 选秀业务组件
 │   ├── captains/     # 队长投票业务组件
 │   ├── teams/        # 队伍展示业务组件

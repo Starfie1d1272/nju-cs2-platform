@@ -1,6 +1,8 @@
 import type { SeasonStatus } from "@/types/season";
 
 const STATUS_CONFIG: Record<SeasonStatus | string, { color: string; label: string }> = {
+  draft:        { color: "#525a6a", label: "DRAFT" },
+  archived:     { color: "#525a6a", label: "ARCHIVED" },
   live:         { color: "#ff5470", label: "● LIVE" },
   finished:     { color: "#525a6a", label: "FT" },
   scheduled:    { color: "#8e96a3", label: "UPCOMING" },

@@ -10,12 +10,12 @@ import { showStats } from "@/lib/utils/season";
 import { StatusPill, Panel, Marker } from "@/components/rivalhub";
 
 const PHASES: { key: string; label: string; after: SeasonStatus }[] = [
-  { key: "register", label: "REGISTER", after: "draft" },
-  { key: "vote", label: "VOTE", after: "registration" },
-  { key: "draft", label: "DRAFT", after: "voting" },
-  { key: "qualifiers", label: "REGULAR", after: "drafting" },
-  { key: "playoffs", label: "PLAYOFFS", after: "playing" },
-  { key: "finals", label: "FINALS", after: "finished" },
+  { key: "register", label: "REGISTER", after: "registration" },
+  { key: "vote", label: "VOTE", after: "voting" },
+  { key: "draft", label: "DRAFT", after: "drafting" },
+  { key: "qualifiers", label: "REGULAR", after: "playing" },
+  { key: "playoffs", label: "PLAYOFFS", after: "finished" },
+  { key: "finals", label: "FINALS", after: "archived" },
 ];
 
 interface SeasonPageProps {

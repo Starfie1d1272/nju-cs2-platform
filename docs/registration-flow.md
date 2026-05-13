@@ -7,7 +7,9 @@
   ↓
 检查赛季状态是否为 registration（Server Component fetch）
   ├── 否（已截止 / 未开放） → 显示"报名未开放"提示
-  └── 是 → 渲染报名表单（赛季发布后可见）
+  └── 是 → 检查用户登录状态
+            ├── 未登录 → redirect(`/login?next=/${seasonSlug}/register`)
+            └── 已登录 → 渲染报名表单
         ↓
         根据时间窗口计算操作权限：
           - now < startAt：可保存草稿，不可正式提交
@@ -16,7 +18,7 @@
         ↓
         展示各位置已报名人数（页面加载时静态渲染，提交后服务端二次校验）
         ↓
-用户填写表单（含 NJUBox 截图分享链接）
+用户填写表单（含地图偏好 + 可选 NJUBox 截图分享链接）
   ↓
 保存草稿：只要求 seasonId + email，写入 registration_drafts，不占名额、不进入审核
   或
@@ -24,13 +26,11 @@
   ↓
 调用 submitRegistration Server Action
   ↓
-服务端 Zod 二次校验
+服务端 Zod 二次校验 + session 验证
   ↓
-检查位置是否已满（COUNT GROUP BY）
-  ├── 已满 → 返回错误"该位置已满员"
+检查位置是否已满（COUNT GROUP BY）+ 总人数上限
+  ├── 已满 → 返回错误"该位置已满员"或"报名总人数已达上限"
   └── 未满 → INSERT season_registrations（status=pending）
-              ↓
-              不发送登录邮件；选手通过 /login 使用邮箱+密码登录
               ↓
               返回成功 → 页面跳转"报名成功"
 ```
@@ -119,8 +119,7 @@ GROUP BY primary_position;
 
 | 字段 | 说明 | 校验规则 |
 |---|---|---|
-| `email` | 邮箱（用于登录） | 有效 email 格式 |
-| `password` | 登录密码（未登录报名时） | 至少 6 位；两次输入一致 |
+| `email` | 邮箱（与登录邮箱一致，只读） | 有效 email 格式；必须与当前 session 邮箱一致 |
 | `studentId` | 学号 | 非空；毕业生填「毕业年份+学院」 |
 | `qq` | QQ 号 | 5-12 位数字 |
 | `perfectName` | 完美平台昵称（记分板显示名） | 非空 |
@@ -194,12 +193,13 @@ GROUP BY primary_position;
 
 ## 用户认证流程
 
-用户通过 `/login` 使用邮箱+密码注册或登录。生产环境关闭 Supabase 邮件确认，不依赖 Magic Link。
+**报名前必须先登录。** 未登录用户访问报名页时自动 redirect 到 `/login?next=/${seasonSlug}/register`，登录/注册成功后回到报名页。
 
 登录成功后：
-1. Server Action 调用 Supabase Auth `signUp` 或 `signInWithPassword`
+1. `/login` 页面调用 `loginWithPassword` 或 `signUp` Server Action
 2. 同步 `public.users`，并用 `iron-session` 写入 `rivalhub-session`
-3. 后续权限判断读取 `users.role` 与 `adminSeasonIds`
+3. 报名页通过 `getUserSession()` 验证 session，email 字段只读且必须匹配
+4. `submitRegistration` 不再包含 Auth 账号创建/密码验证逻辑，仅处理报名数据
 
 ---
 

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
@@ -59,12 +59,16 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
     );
   }
 
+  const registrationWindow = getRegistrationWindowState(season);
+  const userSession = await getUserSession();
+  if (!userSession) {
+    redirect(`/login?next=/${seasonSlug}/register`);
+  }
+
   const positionCounts = await getPositionCounts(season.id);
   const approvedCount = await getApprovedCount(season.id);
   const regConfig = normalizeRegistrationConfig(season.registrationConfig);
   const maxPerPos = regConfig.maxPerPosition;
-  const registrationWindow = getRegistrationWindowState(season);
-  const userSession = await getUserSession();
 
   // 位置容量数据
   const capacityEntries = season.positions.map((pos) => {

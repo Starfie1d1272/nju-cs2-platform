@@ -37,8 +37,6 @@ function validInput() {
     gameplayStyle: "进攻型步枪手",
     competitionHistory: "参加过校级比赛",
     willingToBeCaptain: true,
-    password: "secret123",
-    confirmPassword: "secret123",
     antiCheatPledge: true as const,
   };
 }
@@ -121,27 +119,6 @@ describe("buildRegistrationSchema", () => {
       screenshotUrls: [],
     });
     expect(r.success).toBe(true);
-  });
-
-  it("拒绝密码少于 6 位", () => {
-    const r = schema.safeParse({
-      ...validInput(),
-      password: "12345",
-      confirmPassword: "12345",
-    });
-    expect(r.success).toBe(false);
-  });
-
-  it("拒绝两次密码不一致", () => {
-    const r = schema.safeParse({
-      ...validInput(),
-      confirmPassword: "different123",
-    });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      const issue = r.error.issues.find((i) => i.path[0] === "confirmPassword");
-      expect(issue).toBeDefined();
-    }
   });
 
   it("拒绝能打地图少于 3 张", () => {

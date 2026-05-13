@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ import { loadRegistrationDraft, saveRegistrationDraft, submitRegistration } from
 import type { RegistrationWindowState } from "@/lib/registration/window";
 import { normalizeEmail } from "@/lib/utils/email";
 import { compactUndefined } from "@/lib/utils/object";
-import { defaultMapPreferences, mapLabel, normalizeMapPreferences } from "@/lib/maps";
+import { defaultMapPreferences, mapLabel, normalizeMapPreferences, PLAYABLE_MAP_LEVELS } from "@/lib/maps";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,15 +59,15 @@ export function RegistrationForm({
   const [submittedEmail, setSubmittedEmail] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [loadingDraftEmail, setLoadingDraftEmail] = useState<string | null>(null);
-  const [lastBlurredEmail, setLastBlurredEmail] = useState<string | null>(null);
+  const lastBlurredEmailRef = useRef<string | null>(null);
   const [loadedDraftEmail, setLoadedDraftEmail] = useState<string | null>(null);
   const registrationConfig = useMemo(
     () => normalizeRegistrationConfig(inputRegistrationConfig),
     [inputRegistrationConfig],
   );
   const schema = useMemo(
-    () => buildRegistrationSchema(registrationConfig, positions, { requirePassword: !currentUserEmail }),
-    [currentUserEmail, registrationConfig, positions],
+    () => buildRegistrationSchema(registrationConfig, positions),
+    [registrationConfig, positions],
   );
   const activePositions = positions.length > 0 ? positions : [...positionValues];
 
@@ -86,8 +86,6 @@ export function RegistrationForm({
       email: currentUserEmail ?? "",
       willingToBeCaptain: false,
       playerType: registrationConfig.allowedPlayerTypes[0],
-      password: "",
-      confirmPassword: "",
       screenshotUrls: Array.from({ length: registrationConfig.screenshotCount }, () => ""),
       mapPreferences: defaultMapPreferences(registrationConfig.mapPool),
     },
@@ -126,11 +124,10 @@ export function RegistrationForm({
 
     setSavingDraft(true);
     try {
-      const { password: _password, confirmPassword: _confirmPassword, ...draftValues } = values;
       const result = await saveRegistrationDraft({
         seasonId,
         email,
-        payload: compactUndefined({ ...draftValues, seasonId, email }) as Record<string, unknown>,
+        payload: compactUndefined({ ...values, seasonId, email }) as Record<string, unknown>,
       });
       if (result.success) {
         toast.success("草稿已保存", {
@@ -178,7 +175,7 @@ export function RegistrationForm({
 
   useEffect(() => {
     if (!currentUserEmail || loadedDraftEmail === currentUserEmail) return;
-    setLastBlurredEmail(currentUserEmail);
+    lastBlurredEmailRef.current = currentUserEmail;
     void loadDraftForEmail(currentUserEmail);
   }, [currentUserEmail, loadedDraftEmail, loadDraftForEmail]);
 
@@ -186,8 +183,8 @@ export function RegistrationForm({
     onBlur: async (event) => {
       if (currentUserEmail) return;
       const email = normalizeEmail(event.target.value);
-      if (!email || email === lastBlurredEmail) return;
-      setLastBlurredEmail(email);
+      if (!email || email === lastBlurredEmailRef.current) return;
+      lastBlurredEmailRef.current = email;
       await loadDraftForEmail(email);
     },
   });
@@ -269,7 +266,7 @@ export function RegistrationForm({
 
   const mapPreferences = watch("mapPreferences") ?? defaultMapPreferences(registrationConfig.mapPool);
   const playableCount = mapPreferences.filter((preference) =>
-    ["playable", "proficient", "strong"].includes(preference.level),
+    PLAYABLE_MAP_LEVELS.has(preference.level),
   ).length;
   const strongCount = mapPreferences.filter((preference) => preference.level === "strong").length;
 
@@ -304,50 +301,11 @@ export function RegistrationForm({
             <FieldError name="email" />
             <p className="text-xs text-[var(--color-fg-dim)] mt-1">
               {currentUserEmail
-                ? "已登录报名，邮箱将绑定到当前账号。"
-                : "输入邮箱后自动恢复已保存的草稿。同时用于接收审核通知。"}
+                ? `已登录为 ${currentUserEmail}，已自动检查草稿。`
+                : "已自动检查草稿，提交后可直接用该账号查看审核进度。"}
               {loadingDraftEmail && " · 正在查询草稿…"}
             </p>
           </div>
-
-          {/* 登录密码 */}
-          {currentUserEmail ? (
-            <div className="rounded border border-[var(--color-border)] bg-[var(--color-panel-hi)] px-3 py-2 text-sm text-[var(--color-fg-mid)]">
-              已登录为 <span className="font-mono text-[var(--color-fg)]">{currentUserEmail}</span>，
-              {loadingDraftEmail ? "正在自动恢复草稿…" : "已自动检查草稿，提交后可直接用该账号查看审核进度。"}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="password" className="text-[var(--color-fg-mid)] mb-1.5 block">
-                  登录密码 <Required />
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="至少 6 位"
-                  className={inputCls}
-                  {...register("password")}
-                />
-                <FieldError name="password" />
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword" className="text-[var(--color-fg-mid)] mb-1.5 block">
-                  确认密码 <Required />
-                </Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="再次输入密码"
-                  className={inputCls}
-                  {...register("confirmPassword")}
-                />
-                <FieldError name="confirmPassword" />
-              </div>
-            </div>
-          )}
 
           {/* 学号 + QQ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -49,8 +49,6 @@ function validData(overrides?: Record<string, any>) {
       { map: "de_train", level: "none" },
     ],
     gameplayStyle: "激进突破",
-    password: "secret123",
-    confirmPassword: "secret123",
     antiCheatPledge: true,
     ...overrides,
   };
@@ -123,12 +121,6 @@ describe("buildRegistrationSchema", () => {
     const schema = buildSchema();
     const result = schema.safeParse(validData({ screenshotUrls: [] }));
     expect(result.success).toBe(true);
-  });
-
-  it("rejects mismatched passwords", () => {
-    const schema = buildSchema();
-    const result = schema.safeParse(validData({ confirmPassword: "different123" }));
-    expect(result.success).toBe(false);
   });
 
   it("rejects map preferences outside the season map pool", () => {

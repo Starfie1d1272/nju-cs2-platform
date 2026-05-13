@@ -31,10 +31,6 @@ export const registrationSeedSchema = z.object({
   seasonId: z.string().uuid("赛季 ID 格式不正确"),
 });
 
-interface RegistrationSchemaOptions {
-  requirePassword?: boolean;
-}
-
 function isAllowedRank(value: string): value is RankValue {
   return (RANK_ORDER as readonly string[]).includes(value);
 }
@@ -65,10 +61,8 @@ function nonEmptyAllowed<T extends string>(values: readonly T[], fallback: reado
 export function buildRegistrationSchema(
   inputConfig: Partial<RegistrationConfig> | null | undefined,
   inputPositions: readonly string[],
-  options: RegistrationSchemaOptions = {},
 ) {
   const config = normalizeRegistrationConfig(inputConfig);
-  const requirePassword = options.requirePassword ?? true;
   const positions = nonEmptyAllowed(inputPositions, positionValues);
   const allowedPlayerTypes = nonEmptyAllowed<PlayerType>(
     config.allowedPlayerTypes,
@@ -85,14 +79,6 @@ export function buildRegistrationSchema(
         .string()
         .min(1, "请填写电子邮件")
         .email("请输入有效的电子邮件地址"),
-
-      password: z
-        .string()
-        .default(""),
-
-      confirmPassword: z
-        .string()
-        .default(""),
 
       studentId: z
         .string()
@@ -250,27 +236,6 @@ export function buildRegistrationSchema(
       path: ["secondaryPosition"],
     })
     .superRefine((data, ctx) => {
-      if (requirePassword && data.password.length < 6) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "密码至少 6 位",
-          path: ["password"],
-        });
-      }
-      if (requirePassword && !data.confirmPassword) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "请再次输入密码",
-          path: ["confirmPassword"],
-        });
-      }
-      if ((data.password || data.confirmPassword) && data.password !== data.confirmPassword) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "两次输入的密码不一致",
-          path: ["confirmPassword"],
-        });
-      }
       const seen = new Set<string>();
       let playableCount = 0;
       let strongCount = 0;

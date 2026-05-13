@@ -125,7 +125,7 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
   const played = totalWins + totalLosses;
 
   // ── Steam 头像 ────────────────────────────────────────────────────────
-  const avatarUrl = user.steam64 ? await getSteamAvatar(user.steam64) : null;
+  const avatarUrl = user.avatarUrl ?? (user.steam64 ? await getSteamAvatar(user.steam64) : null);
 
   // 最新报名的主位置
   const latestReg = registrations[registrations.length - 1];

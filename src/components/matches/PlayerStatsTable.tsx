@@ -79,7 +79,7 @@ export async function PlayerStatsTable({ matchId, mapId }: PlayerStatsTableProps
   const cols = ["选手", "K", "D", "A", "ADR", "Rating"];
 
   return (
-    <div className="grid grid-cols-2 gap-3 mt-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
       <StatTeamBlock label="Team A" players={teamA} cols={cols} />
       <StatTeamBlock label="Team B" players={teamB} cols={cols} />
     </div>
@@ -100,10 +100,11 @@ function StatTeamBlock({
       <p className="text-[11px] text-[var(--color-fg-mid)] mb-2 font-medium">
         {label}
       </p>
-      <div
-        className="grid gap-x-2 gap-y-1 text-xs"
-        style={{ gridTemplateColumns: `1.5fr repeat(${cols.length - 1}, 1fr)` }}
-      >
+      <div className="overflow-x-auto">
+        <div
+          className="grid gap-x-2 gap-y-1 text-xs min-w-[320px]"
+          style={{ gridTemplateColumns: `1.5fr repeat(${cols.length - 1}, 1fr)` }}
+        >
         {cols.map((c) => (
           <span key={c} className="text-[var(--color-fg-dim)] text-[10px]">
             {c}
@@ -112,6 +113,7 @@ function StatTeamBlock({
         {players.map((p) => (
           <PlayerStatRow key={p.id} stat={p} />
         ))}
+      </div>
       </div>
     </div>
   );

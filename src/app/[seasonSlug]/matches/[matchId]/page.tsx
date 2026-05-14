@@ -207,9 +207,8 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
 
       {/* Hero header */}
       <div
-        className="grid items-center gap-6 px-8 py-8 border-b"
+        className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr] items-center gap-6 px-8 py-8 border-b"
         style={{
-          gridTemplateColumns: "1fr auto 1fr",
           background: teamA && teamB
             ? `linear-gradient(90deg, ${teamBadgeData(teamA.name, 0).color}15 0%, transparent 35%, transparent 65%, ${teamBadgeData(teamB.name, 1).color}15 100%)`
             : `var(--color-panel-low)`,
@@ -222,10 +221,9 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         <div className="flex items-center gap-4 justify-end">
           <div className="text-right min-w-0">
             <div
-              className="font-bold"
+              className="font-bold text-lg sm:text-[28px]"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 28,
                 color: "var(--color-fg)",
                 letterSpacing: "var(--tracking-tight-1)",
               }}
@@ -233,7 +231,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               {teamA?.name ?? "未知队伍"}
             </div>
           </div>
-          {teamA && <TeamBadge team={teamBadgeData(teamA.name, 0)} size={64} />}
+          {teamA && <div className="w-12 h-12 sm:w-16 sm:h-16"><TeamBadge team={teamBadgeData(teamA.name, 0)} size={64} /></div>}
         </div>
 
         {/* Score / VS */}
@@ -254,10 +252,9 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
           )}
           {isFinished ? (
             <div
-              className="font-bold"
+              className="font-bold text-4xl sm:text-[56px]"
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: 56,
                 color: "var(--color-fg)",
                 letterSpacing: "-0.04em",
                 lineHeight: 1,
@@ -289,13 +286,12 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
 
         {/* Team B */}
         <div className="flex items-center gap-4">
-          {teamB && <TeamBadge team={teamBadgeData(teamB.name, 1)} size={64} />}
+          {teamB && <div className="w-12 h-12 sm:w-16 sm:h-16"><TeamBadge team={teamBadgeData(teamB.name, 1)} size={64} /></div>}
           <div className="min-w-0">
             <div
-              className="font-bold"
+              className="font-bold text-lg sm:text-[28px]"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 28,
                 color: "var(--color-fg)",
                 letterSpacing: "var(--tracking-tight-1)",
               }}

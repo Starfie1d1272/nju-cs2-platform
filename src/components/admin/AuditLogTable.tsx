@@ -4,17 +4,9 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAuditLogs, type AuditLogFilters } from "@/actions/audit";
 import { formatCST } from "@/lib/utils/date";
+import type { AuditLog as DBAuditLog } from "@/db/schema/audit";
 
-interface AuditLog {
-  id: string;
-  seasonId: string | null;
-  action: string;
-  actorId: string | null;
-  targetId: string | null;
-  targetType: string | null;
-  meta: Record<string, unknown> | null;
-  createdAt: string;
-}
+type AuditLog = Omit<DBAuditLog, "createdAt" | "meta"> & { createdAt: string; meta: Record<string, unknown> | null };
 
 interface Props {
   initialLogs: AuditLog[];
@@ -27,6 +19,7 @@ const ACTION_CATEGORIES: Record<string, { label: string; color: string }> = {
   admin: { label: "管理", color: "var(--color-accent)" },
   registration: { label: "报名", color: "#22c55e" },
   captain: { label: "投票", color: "#a855f7" },
+  captains: { label: "投票", color: "#a855f7" },
   draft: { label: "选秀", color: "#f97316" },
   match: { label: "赛程", color: "#3b82f6" },
   season: { label: "赛季", color: "#eab308" },

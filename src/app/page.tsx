@@ -39,7 +39,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto px-9 py-8 max-w-[1240px] grid gap-7">
       {/* Hero */}
-      <div className="grid gap-6" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.6fr_1fr]">
         <Panel className="overflow-hidden relative" pad={0}>
           <div className="p-7 relative z-10">
             <div
@@ -54,10 +54,9 @@ export default async function HomePage() {
               [ RIVALHUB / {featured.slug.replace(/-/g, " ").toUpperCase()} ]
             </div>
             <h1
-              className="font-semibold leading-[0.95] m-0"
+              className="font-semibold leading-[0.95] m-0 text-4xl lg:text-[56px]"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 56,
                 letterSpacing: "var(--tracking-tight-2)",
                 color: "var(--color-fg)",
               }}
@@ -150,7 +149,7 @@ export default async function HomePage() {
         <Marker num={1} sub="NAVIGATION">
           入口
         </Marker>
-        <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { href: `/${featured.slug}/register`, label: "报名参赛", mono: "REGISTER", meta: "个人报名" },
             { href: `/${featured.slug}/captains`, label: "队长投票", mono: "CAPTAINS", meta: "实时票数" },
@@ -196,7 +195,7 @@ export default async function HomePage() {
           <Marker num={2} sub="MORE">
             其他赛季
           </Marker>
-          <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {others.map((s) => (
               <Link key={s.id} href={`/${s.slug}` as never}>
                 <Panel className="transition-colors hover:border-[var(--color-border-hi)]">

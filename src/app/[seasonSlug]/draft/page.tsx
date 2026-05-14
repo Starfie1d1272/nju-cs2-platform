@@ -80,47 +80,47 @@ export default async function DraftPage({ params }: DraftPageProps) {
         <>
           {data.state.isActive && (
             <Panel pad={0}>
-              <div className="grid items-stretch" style={{ gridTemplateColumns: "1.2fr 1.4fr 1fr 1fr" }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 items-stretch">
                 {/* LIVE indicator */}
-                <div className="flex items-center gap-3.5" style={{ padding: "16px 20px", borderRight: "1px solid var(--color-border)" }}>
-                  <div style={{ width: 8, height: 40, background: "var(--color-danger)", boxShadow: "0 0 12px var(--color-danger)" }} />
-                  <div>
-                    <div className="font-bold uppercase" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-danger)", letterSpacing: "var(--tracking-eyebrow)" }}>
+                <div className="flex items-center gap-3.5 min-w-0" style={{ padding: "16px 20px", borderRight: "1px solid var(--color-border)" }}>
+                  <div className="shrink-0" style={{ width: 8, height: 40, background: "var(--color-danger)", boxShadow: "0 0 12px var(--color-danger)" }} />
+                  <div className="min-w-0">
+                    <div className="font-bold uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-danger)", letterSpacing: "var(--tracking-eyebrow)" }}>
                       ● LIVE
                     </div>
-                    <div className="font-semibold mt-1" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-fg)" }}>
+                    <div className="font-semibold mt-1 truncate" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-fg)" }}>
                       选秀直播间
                     </div>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
+                    <div className="truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
                       观众实时观看
                     </div>
                   </div>
                 </div>
 
                 {/* Current pick */}
-                <div className="flex items-center gap-3.5" style={{ padding: "16px 20px", borderRight: "1px solid var(--color-border)" }}>
-                  <div style={{ width: 56, height: 56, background: "var(--color-accent)22", border: "1px solid var(--color-accent)55", borderRadius: "var(--radius-sm)", display: "grid", placeItems: "center", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20, color: "var(--color-accent)" }}>
+                <div className="flex items-center gap-3.5 min-w-0" style={{ padding: "16px 20px", borderRight: "1px solid var(--color-border)" }}>
+                  <div className="shrink-0" style={{ width: 56, height: 56, background: "var(--color-accent)22", border: "1px solid var(--color-accent)55", borderRadius: "var(--radius-sm)", display: "grid", placeItems: "center", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20, color: "var(--color-accent)" }}>
                     P
                   </div>
-                  <div>
-                    <div className="uppercase" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                  <div className="min-w-0">
+                    <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
                       CURRENT PICK
                     </div>
-                    <div className="font-semibold mt-1" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-accent)" }}>
+                    <div className="font-semibold mt-1 truncate" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-accent)" }}>
                       选秀进行中
                     </div>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
+                    <div className="truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
                       实时同步
                     </div>
                   </div>
                 </div>
 
                 {/* Timer */}
-                <div style={{ padding: "16px 20px", borderRight: "1px solid var(--color-border)" }}>
-                  <div className="uppercase" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                <div className="min-w-0" style={{ padding: "16px 20px", borderRight: "1px solid var(--color-border)" }}>
+                  <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
                     TIMER
                   </div>
-                  <div className="font-bold mt-1" style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "var(--color-accent)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+                  <div className="font-bold mt-1 truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "var(--color-accent)", letterSpacing: "-0.04em", lineHeight: 1 }}>
                     {data.state.roundDeadline ? "计时中" : "--:--"}
                   </div>
                   <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ background: "var(--color-border)" }}>
@@ -129,11 +129,11 @@ export default async function DraftPage({ params }: DraftPageProps) {
                 </div>
 
                 {/* Round + Pick */}
-                <div className="flex flex-col justify-center gap-1" style={{ padding: "16px 20px" }}>
-                  <div className="uppercase" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                <div className="flex flex-col justify-center gap-1 min-w-0" style={{ padding: "16px 20px" }}>
+                  <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
                     ROUND · PICK
                   </div>
-                  <div className="font-bold" style={{ fontFamily: "var(--font-mono)", fontSize: 28, color: "var(--color-fg)", letterSpacing: "-0.02em" }}>
+                  <div className="font-bold truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 28, color: "var(--color-fg)", letterSpacing: "-0.02em" }}>
                     {data.state.currentRound ?? 1} · <span style={{ color: "var(--color-fg-dim)" }}>—/—</span>
                   </div>
                 </div>

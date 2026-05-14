@@ -301,7 +301,7 @@ erDiagram
 | `pending` | 待审核 |
 | `approved` | 已通过 |
 | `rejected` | 已拒绝 |
-| `waitlisted` | 等待名单 |
+| `waitlisted` | 候补名单 |
 
 ### `admin_role`
 | 值 | 说明 |

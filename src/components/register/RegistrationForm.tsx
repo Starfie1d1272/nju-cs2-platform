@@ -650,7 +650,7 @@ export function RegistrationForm({
                 <div className="flex items-center text-sm font-semibold text-[var(--color-fg)]">
                   {mapLabel(map)}
                 </div>
-                <div className="grid grid-cols-5 gap-1">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1">
                   {MAP_PREFERENCE_LEVELS.map((level) => (
                     <button
                       key={level}

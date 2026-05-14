@@ -18,7 +18,7 @@ export function MatchRosterView({
   teamBRoster,
 }: MatchRosterViewProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <h4 className="font-medium">{teamAName}</h4>
         {teamARoster && teamARoster.length > 0 ? (

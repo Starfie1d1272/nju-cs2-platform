@@ -94,17 +94,18 @@ export function StatsLeaderboard({
 
       {/* 表格 */}
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-[var(--color-border)] text-[var(--color-fg-mid)] text-xs uppercase tracking-wide">
               <th className="px-4 py-3 text-left w-8">#</th>
               <th className="px-4 py-3 text-left">选手</th>
-              <th className="px-4 py-3 text-left">位置</th>
-              <th className="px-4 py-3 text-left">队伍</th>
-              <th className="px-4 py-3 text-center">图数</th>
+              <th className="px-4 py-3 text-left hidden sm:table-cell">位置</th>
+              <th className="px-4 py-3 text-left hidden sm:table-cell">队伍</th>
+              <th className="px-4 py-3 text-center hidden sm:table-cell">图数</th>
               <th className="px-4 py-3 text-center">Rating</th>
-              <th className="px-4 py-3 text-center">ADR</th>
-              <th className="px-4 py-3 text-center">K/D</th>
+              <th className="px-4 py-3 text-center hidden sm:table-cell">ADR</th>
+              <th className="px-4 py-3 text-center hidden sm:table-cell">K/D</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-border)]">
@@ -125,12 +126,12 @@ export function StatsLeaderboard({
                     r.perfectName
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs text-[var(--color-fg-mid)]">
+                <td className="px-4 py-3 text-xs text-[var(--color-fg-mid)] hidden sm:table-cell">
                   {r.position
                     ? POSITION_LABELS[r.position as keyof typeof POSITION_LABELS]?.cn ?? r.position
                     : "—"}
                 </td>
-                <td className="px-4 py-3 text-xs text-[var(--color-fg-mid)]">
+                <td className="px-4 py-3 text-xs text-[var(--color-fg-mid)] hidden sm:table-cell">
                   {r.teamId ? (
                     <Link
                       href={`/${seasonSlug}/teams/${r.teamId}`}
@@ -142,7 +143,7 @@ export function StatsLeaderboard({
                     r.teamName ?? "—"
                   )}
                 </td>
-                <td className="px-4 py-3 text-center tabular-nums text-[var(--color-fg-mid)]">
+                <td className="px-4 py-3 text-center tabular-nums text-[var(--color-fg-mid)] hidden sm:table-cell">
                   {r.maps}
                 </td>
                 <td
@@ -154,10 +155,10 @@ export function StatsLeaderboard({
                 >
                   {r.avgRating.toFixed(2)}
                 </td>
-                <td className="px-4 py-3 text-center tabular-nums text-[var(--color-fg)]">
+                <td className="px-4 py-3 text-center tabular-nums text-[var(--color-fg)] hidden sm:table-cell">
                   {r.avgAdr.toFixed(1)}
                 </td>
-                <td className="px-4 py-3 text-center tabular-nums text-[var(--color-fg)]">
+                <td className="px-4 py-3 text-center tabular-nums text-[var(--color-fg)] hidden sm:table-cell">
                   {r.avgDeaths > 0
                     ? (r.avgKills / r.avgDeaths).toFixed(2)
                     : "—"}
@@ -166,6 +167,7 @@ export function StatsLeaderboard({
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

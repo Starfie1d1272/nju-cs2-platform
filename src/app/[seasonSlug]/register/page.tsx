@@ -148,7 +148,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
               const full = cur >= max;
               const warn = !full && pct > 80;
               return (
-                <div key={pos} className="grid items-center gap-3" style={{ gridTemplateColumns: "72px 1fr 72px" }}>
+                <div key={pos} className="grid items-center gap-3 grid-cols-[48px_1fr_48px] sm:grid-cols-[72px_1fr_72px]">
                   <PosChip pos={label} />
                   <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--color-border)" }}>
                     <div

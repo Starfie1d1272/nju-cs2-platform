@@ -1,0 +1,100 @@
+# Changelog
+
+All notable changes to RivalHub are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.3.0] - 2026-05-14
+
+### Added
+- 队伍图标上传：`TeamLogoUpload` 组件 + `uploadTeamLogo` Server Action + Supabase Storage `team-logos` bucket（公开，1 MB / jpg+png+webp）
+- 管理后台报名草稿查看：`DraftRegistrationTable` 展示邮箱、Steam 昵称、位置、段位、最后保存时间
+- 修改密码功能：`changeUserPassword` Server Action（验证原密码 + Supabase Admin API 更新）+ `/settings/password` 页面
+- `revokeUserAdminRole` Server Action：super_admin 可撤销其他管理员权限（写 audit_log）
+- 共享常量配置：`src/lib/config/upload-limits.ts` / `auth-config.ts`
+
+### Changed
+- `MatchRosterForm` 视觉重设计：PosChip 位置标签、CSS 变量卡片样式、StatusPill 锁定态
+- 管理员用户列表改为查询 `users` 表（role ≠ "user"），正确展示所有管理员
+- `teams` 表新增 `logo_url` 列（nullable）
+- Header：super_admin 隐藏邀请码入口；所有已登录用户新增修改密码入口
+
+### Fixed
+- 上传失败回退竞态：`lastConfirmedUrlRef` 替代 stale prop 快照
+
+## [1.2.0] - 2026-05-13
+
+### Added
+- 报名地图熟练度：赛季图池配置 + 每图 5 档熟练度（不会/认路/能打/熟练/强图）
+- Steam 头像缓存（`users.avatar_url`，Header 不再每次调 Steam API）
+- 比赛时间协商截止自动裁定（`autoAwardMatchTime` + Cron API）
+- 队长修改队伍名称（`TeamNameForm` + `updateTeamName`）
+- 选秀池 + 队长面板选手主页链接（`/players/[userId]`）
+
+### Changed
+- 报名强制登录：未登录访问 `/register` → redirect `/login`，两条注册路径统一
+- 密码字段从报名表单移除，统一走 `/login` 认证
+- 报名截图链接改为选填
+- 分支策略简化：删除 v2/v3 版本分支，dev 重置到 main
+
+### Removed
+- Magic Link 邮件功能（生产关闭邮件确认，不依赖 Supabase 邮件）
+
+## [1.1.2] - 2026-05-13
+
+### Fixed
+- 报名草稿恢复逻辑修正
+- 品牌图标接入
+
+### Changed
+- 许可证 MIT → AGPLv3
+
+## [1.1.1] - 2026-05-13
+
+### Fixed
+- PhaseTracker 英文标签显示
+- 报名草稿恢复提示优化
+- 版本号显示修正
+
+## [1.1.0] - 2026-05-13
+
+### Added
+- 动态 PhaseTracker：从 `stagePlan` 读取阶段进度，自动高亮当前阶段
+- 报名草稿自动恢复（`registration_drafts` 表 + localStorage 兜底）
+- 错误参考文档（`docs/error-reference.md`）
+
+### Fixed
+- 时区显示问题（统一 UTC 存储 + Asia/Shanghai 展示）
+- 首页空赛季列表不崩溃
+- 报名表单多项交互细节
+
+## [1.0.2] - 2026-05-13
+
+### Fixed
+- 邀请码使用异常
+- 版本号显示与 semver 策略
+
+### Changed
+- SQL 查询 filter 逻辑下沉到数据库层
+- 统一使用 EmptyState 组件
+
+## [1.0.0] - 2026-05-13
+
+### Added
+- 完整 8 队选秀联赛全流程：报名 → 审核 → 队长投票 → 蛇形选秀 → 队伍展示 → 赛程 + Bracket → 比分录入
+- Tactical Grid 设计系统全站迁移（14 个组件 + CSS tokens + shadcn 覆盖）
+- 管理后台完整功能：报名审核、邀请码管理、管理员列表、赛季管理
+- 选手数据展示：跨赛季聚合、赛季排行榜、MVP 投票、比赛数据表
+- 规则书站内渲染（9 章内容）
+- Supabase Auth email+password + iron-session 双 Cookie 鉴权
+- GitHub Actions Cron（选秀超时 + 报名截止自动推进）
+- Vercel + Supabase 生产部署
+
+[1.3.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.1.2...v1.2.0
+[1.1.2]: https://github.com/Starfie1d1272/RivalHub/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.0.2...v1.1.0
+[1.0.2]: https://github.com/Starfie1d1272/RivalHub/compare/v1.0.0...v1.0.2
+[1.0.0]: https://github.com/Starfie1d1272/RivalHub/compare/v0.3.0...v1.0.0

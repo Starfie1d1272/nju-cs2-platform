@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { eq, desc } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, seasonRegistrations, users, registrationDrafts } from "@/db/schema";
 import { Marker } from "@/components/rivalhub";
@@ -52,7 +52,7 @@ export default async function AdminRegistrationsPage({ params }: PageProps) {
       .from(seasonRegistrations)
       .leftJoin(users, eq(seasonRegistrations.userId, users.id))
       .where(eq(seasonRegistrations.seasonId, season.id))
-      .orderBy(desc(seasonRegistrations.createdAt)),
+      .orderBy(asc(seasonRegistrations.createdAt)),
     db
       .select()
       .from(registrationDrafts)

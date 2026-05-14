@@ -170,6 +170,11 @@ export function HeaderClient({ seasons, session, avatarUrl }: HeaderClientProps)
                     </>
                   )}
                   <DropdownMenuItem asChild>
+                    <Link href={`/players/${session.userId}`} className="cursor-pointer">
+                      我的主页
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href={"/settings/password" as never} className="cursor-pointer">
                       修改密码
                     </Link>
@@ -253,6 +258,13 @@ export function HeaderClient({ seasons, session, avatarUrl }: HeaderClientProps)
                     管理后台
                   </Link>
                 )}
+                <Link
+                  href={`/players/${session.userId}`}
+                  onClick={() => setMobileOpen(false)}
+                  className="px-3 py-2 rounded-md text-sm text-[var(--color-fg-mid)] hover:text-[var(--color-fg)] hover:bg-[var(--color-panel-hi)]"
+                >
+                  我的主页
+                </Link>
                 <Link
                   href={"/settings/password" as never}
                   onClick={() => setMobileOpen(false)}

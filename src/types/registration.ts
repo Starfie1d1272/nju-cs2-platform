@@ -30,7 +30,7 @@ export const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   pending: "待审核",
   approved: "已通过",
   rejected: "已拒绝",
-  waitlisted: "等待名单",
+  waitlisted: "候补名单",
 };
 
 /** 每个位置的报名上限 */

@@ -1,11 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons } from "@/db/schema";
+import { seasons, seasonRegistrations, users } from "@/db/schema";
 import { getPositionCounts, getApprovedCount } from "@/actions/register";
 import { RegistrationForm } from "@/components/register/RegistrationForm";
 import { normalizeRegistrationConfig } from "@/types/season";
+import { REGISTRATION_STATUS_LABELS } from "@/types/registration";
 import { Panel, StatusBanner, PosChip } from "@/components/rivalhub";
 import { POSITION_LABELS } from "@/lib/validators/registration";
 import { getRegistrationWindowState, getWindowTone } from "@/lib/registration/window";
@@ -65,10 +66,53 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
     redirect(`/login?next=/${seasonSlug}/register`);
   }
 
-  const positionCounts = await getPositionCounts(season.id);
-  const approvedCount = await getApprovedCount(season.id);
+  const [positionCounts, approvedCount, currentRegistration, currentUser] = await Promise.all([
+    getPositionCounts(season.id),
+    getApprovedCount(season.id),
+    db.query.seasonRegistrations.findFirst({
+      where: and(
+        eq(seasonRegistrations.seasonId, season.id),
+        eq(seasonRegistrations.userId, userSession.userId),
+      ),
+    }),
+    db.query.users.findFirst({
+      where: eq(users.id, userSession.userId),
+    }),
+  ]);
   const regConfig = normalizeRegistrationConfig(season.registrationConfig);
   const maxPerPos = regConfig.maxPerPosition;
+  const existingStatus = currentRegistration?.status ?? null;
+  const existingStatusLabel = existingStatus ? REGISTRATION_STATUS_LABELS[existingStatus] : null;
+  const canEditExisting = !!currentRegistration && currentRegistration.status !== "approved";
+  const initialValues = currentRegistration
+    ? {
+        email: userSession.email,
+        studentId: currentUser?.studentId ?? "",
+        qq: currentUser?.qq ?? "",
+        perfectName: currentUser?.perfectName ?? "",
+        steamName: currentUser?.steamName ?? "",
+        steam64: currentUser?.steam64 ?? "",
+        steamProfileUrl: currentUser?.steamProfileUrl ?? "",
+        playerType: currentRegistration.playerType,
+        primaryPosition: currentRegistration.primaryPosition,
+        secondaryPosition: currentRegistration.secondaryPosition,
+        peakRank: currentRegistration.peakRank,
+        peakRankSeason: currentRegistration.peakRankSeason,
+        peakRating: currentRegistration.peakRating,
+        peakWe: currentRegistration.peakWe ?? undefined,
+        currentSeasonPeakRank: currentRegistration.currentSeasonPeakRank,
+        currentRating: currentRegistration.currentRating,
+        currentWe: currentRegistration.currentWe ?? undefined,
+        screenshotUrls: currentRegistration.screenshotUrls,
+        mapPreferences: currentRegistration.mapPreferences,
+        gameplayStyle: currentRegistration.gameplayStyle,
+        competitionHistory: currentRegistration.competitionHistory ?? "",
+        highlightVideoUrl: currentRegistration.highlightVideoUrl ?? "",
+        willingToBeCaptain: currentRegistration.willingToBeCaptain,
+        notes: currentRegistration.notes ?? "",
+        antiCheatPledge: true as const,
+      }
+    : undefined;
 
   // 位置容量数据
   const capacityEntries = season.positions.map((pos) => {
@@ -141,20 +185,45 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
         </Panel>
       </div>
 
+      {currentRegistration && (
+        <div className="mb-6">
+          <StatusBanner
+            tone={currentRegistration.status === "approved" ? "success" : currentRegistration.status === "rejected" ? "warn" : "info"}
+            title={`你的报名状态：${existingStatusLabel}`}
+            sub={
+              currentRegistration.status === "approved"
+                ? "审核已通过，报名信息已锁定。如确需调整请联系管理员。"
+                : "你可以在下方修改已提交的信息；重新提交后状态会回到待审核。"
+            }
+          />
+        </div>
+      )}
+
       <Panel pad={24}>
-        <RegistrationForm
-          seasonId={season.id}
-          seasonName={season.name}
-          positionCounts={positionCounts}
-          positions={season.positions}
-          registrationConfig={regConfig}
-          windowState={registrationWindow}
-          currentUserEmail={userSession?.email ?? null}
-        />
+        {currentRegistration?.status === "approved" ? (
+          <div className="py-10 text-center">
+            <h2 className="text-xl font-bold text-[var(--color-fg)]">报名已通过</h2>
+            <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
+              你已经进入本赛季名单，审核通过后暂不支持自行修改报名信息。
+            </p>
+          </div>
+        ) : (
+          <RegistrationForm
+            seasonId={season.id}
+            seasonName={season.name}
+            positionCounts={positionCounts}
+            positions={season.positions}
+            registrationConfig={regConfig}
+            windowState={registrationWindow}
+            currentUserEmail={userSession?.email ?? null}
+            initialValues={initialValues}
+            submitLabel={canEditExisting ? "更新报名" : undefined}
+          />
+        )}
       </Panel>
 
       <p className="text-xs text-[var(--color-fg-dim)] text-center mt-6">
-        提交即视为同意参赛规则。报名信息提交后不可自行修改，如需更改请联系管理员。
+        提交即视为同意参赛规则。审核通过前可自行修改；审核通过后如需更改请联系管理员。
       </p>
     </div>
   );

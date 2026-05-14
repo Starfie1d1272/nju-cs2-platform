@@ -162,13 +162,14 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
       {/* Phase tracker */}
       <Panel pad={0}>
-        <div className="grid" style={{ gridTemplateColumns: `repeat(${phases.length}, 1fr)` }}>
+        <div className="overflow-x-auto">
+        <div className="flex">
           {phases.map((phase, i) => {
             const isCurrent = i === currentPhaseIdx;
             const isDone = phase.done;
             return (
               <div key={phase.key}
-                className="relative"
+                className="relative flex-1 min-w-[120px]"
                 style={{
                   padding: "18px 16px",
                   borderRight: i < phases.length - 1 ? "1px solid var(--color-border)" : "none",
@@ -199,6 +200,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
               </div>
             );
           })}
+        </div>
         </div>
       </Panel>
 

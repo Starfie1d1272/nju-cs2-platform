@@ -39,7 +39,7 @@ export default async function HomePage() {
   return (
     <div className="mx-auto px-9 py-8 max-w-[1240px] grid gap-7">
       {/* Hero */}
-      <div className="grid gap-6" style={{ gridTemplateColumns: "1.6fr 1fr" }}>
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.6fr_1fr]">
         <Panel className="overflow-hidden relative" pad={0}>
           <div className="p-7 relative z-10">
             <div
@@ -54,10 +54,9 @@ export default async function HomePage() {
               [ RIVALHUB / {featured.slug.replace(/-/g, " ").toUpperCase()} ]
             </div>
             <h1
-              className="font-semibold leading-[0.95] m-0"
+              className="font-semibold leading-[0.95] m-0 text-4xl lg:text-[56px]"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 56,
                 letterSpacing: "var(--tracking-tight-2)",
                 color: "var(--color-fg)",
               }}

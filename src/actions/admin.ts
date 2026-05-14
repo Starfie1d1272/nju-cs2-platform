@@ -8,7 +8,7 @@ import { db } from "@/db/client";
 import { seasons, seasonRegistrations, auditLogs, adminUsers, adminInvites, users } from "@/db/schema";
 import { ok, fail } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
-import { actionError } from "@/lib/action-utils";
+import { actionError, failValidation } from "@/lib/action-utils";
 import {
   auditActorId,
   requireSeasonAdmin,
@@ -404,7 +404,7 @@ export async function revokeUserAdminRole(userId: string) {
     const session = await requireSuperAdmin();
 
     if (userId === session.userId) {
-      return fail({ code: ErrorCode.VALIDATION_FAILED, message: "不能撤销自己的权限" });
+      return failValidation("不能撤销自己的权限");
     }
 
     const target = await db.query.users.findFirst({

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { changeUserPassword } from "@/actions/account";
 import { Field, Btn } from "@/components/rivalhub";
+import { MIN_PASSWORD_LENGTH } from "@/lib/config/auth-config";
 
 export function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = useState("");
@@ -47,11 +48,11 @@ export function ChangePasswordForm() {
         id="new-password"
         label="新密码"
         type="password"
-        placeholder="至少 6 位"
+        placeholder={`至少 ${MIN_PASSWORD_LENGTH} 位`}
         value={newPassword}
         onChange={setNewPassword}
         required
-        minLength={6}
+        minLength={MIN_PASSWORD_LENGTH}
       />
       <Field
         id="confirm-password"
@@ -61,7 +62,7 @@ export function ChangePasswordForm() {
         value={confirmPassword}
         onChange={setConfirmPassword}
         required
-        minLength={6}
+        minLength={MIN_PASSWORD_LENGTH}
       />
       <Btn type="submit" full disabled={isPending}>
         {isPending ? "更新中…" : "更新密码"}

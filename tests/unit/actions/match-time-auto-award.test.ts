@@ -31,10 +31,14 @@ const {
 vi.mock("@/db/client", () => {
   const tx = {
     query: {
-      matches: { findFirst: txMatchFindFirstMock },
       matchTimeProposals: { findFirst: txProposalFindFirstMock },
       seasons: { findFirst: txSeasonFindFirstMock },
     },
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      for: txMatchFindFirstMock,
+    }),
     update: updateMock,
     insert: insertMock,
   };
@@ -105,13 +109,13 @@ describe("runMatchTimeAutoAwardCron", () => {
 
   it("awards the earliest pending proposal after the negotiation cutoff", async () => {
     matchFindManyMock.mockResolvedValue([{ id: "match-1" }]);
-    txMatchFindFirstMock.mockResolvedValue({
+    txMatchFindFirstMock.mockResolvedValue([{
       id: "match-1",
       seasonId: "season-1",
       status: "scheduled",
       scheduledAt: null,
       completionDeadline: new Date("2026-05-15T12:00:00.000Z"),
-    });
+    }]);
     txProposalFindFirstMock.mockResolvedValue({
       id: "proposal-1",
       proposedBy: "user-1",
@@ -121,7 +125,7 @@ describe("runMatchTimeAutoAwardCron", () => {
 
     const result = await runMatchTimeAutoAwardCron(now);
 
-    expect(result).toEqual({ processed: 1, awarded: 1, skipped: 0 });
+    expect(result).toEqual({ processed: 1, awarded: 1, skipped: 0, failed: 0 });
     expect(updateSetCalls).toContainEqual({ scheduledAt: proposedTime, updatedAt: now });
     expect(updateSetCalls).toContainEqual({ status: "expired", updatedAt: now });
     expect(updateSetCalls).toContainEqual({
@@ -146,18 +150,18 @@ describe("runMatchTimeAutoAwardCron", () => {
 
   it("skips matches without pending proposals", async () => {
     matchFindManyMock.mockResolvedValue([{ id: "match-1" }]);
-    txMatchFindFirstMock.mockResolvedValue({
+    txMatchFindFirstMock.mockResolvedValue([{
       id: "match-1",
       seasonId: "season-1",
       status: "scheduled",
       scheduledAt: null,
       completionDeadline: new Date("2026-05-15T12:00:00.000Z"),
-    });
+    }]);
     txProposalFindFirstMock.mockResolvedValue(null);
 
     const result = await runMatchTimeAutoAwardCron(now);
 
-    expect(result).toEqual({ processed: 1, awarded: 0, skipped: 1 });
+    expect(result).toEqual({ processed: 1, awarded: 0, skipped: 1, failed: 0 });
     expect(updateSetCalls).toEqual([]);
     expect(insertValuesCalls).toEqual([]);
     expect(revalidateMatchPathsMock).not.toHaveBeenCalled();

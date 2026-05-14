@@ -9,9 +9,7 @@ import { AppError, ErrorCode } from "@/lib/errors";
 import { auditActorId, requireAuth } from "@/lib/auth/session";
 import { revalidateSeasonPaths } from "@/lib/revalidation";
 import { ok, type ActionResult } from "@/types/action";
-
-export const MIN_TEAM_NAME_LENGTH = 2;
-export const MAX_TEAM_NAME_LENGTH = 32;
+import { MIN_TEAM_NAME_LENGTH, MAX_TEAM_NAME_LENGTH } from "@/lib/config/team-config";
 
 export async function updateTeamName(
   teamId: string,

@@ -2,7 +2,8 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
-import { updateTeamName, MIN_TEAM_NAME_LENGTH, MAX_TEAM_NAME_LENGTH } from "@/actions/teams";
+import { updateTeamName } from "@/actions/teams";
+import { MIN_TEAM_NAME_LENGTH, MAX_TEAM_NAME_LENGTH } from "@/lib/config/team-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -40,8 +41,8 @@ export function TeamNameForm({ teamId, initialName }: TeamNameFormProps) {
       <Input
         value={name}
         onChange={(event) => setName(event.target.value)}
-        minLength={2}
-        maxLength={32}
+        minLength={MIN_TEAM_NAME_LENGTH}
+        maxLength={MAX_TEAM_NAME_LENGTH}
         aria-label="队伍名称"
       />
       <Button type="submit" size="sm" disabled={!canSubmit || isPending}>

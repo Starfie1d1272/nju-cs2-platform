@@ -16,6 +16,7 @@ export interface MatchTimeAutoAwardCronSummary {
   processed: number;
   awarded: number;
   skipped: number;
+  failed: number;
 }
 
 /**
@@ -219,7 +220,7 @@ export async function runMatchTimeAutoAwardCron(
     ),
   });
 
-  const results = await Promise.all(
+  const settled = await Promise.allSettled(
     candidateMatches.map(async (match) => {
       const result = await autoAwardMatchTime(match.id, now);
       return { matchId: match.id, result };
@@ -228,7 +229,13 @@ export async function runMatchTimeAutoAwardCron(
 
   let awarded = 0;
   let skipped = 0;
-  for (const { matchId, result } of results) {
+  let failed = 0;
+  for (const item of settled) {
+    if (item.status === "rejected") {
+      failed += 1;
+      continue;
+    }
+    const { matchId, result } = item.value;
     if (result.awarded) {
       awarded += 1;
       revalidateMatchPaths(result.seasonSlug, matchId);
@@ -237,7 +244,7 @@ export async function runMatchTimeAutoAwardCron(
     }
   }
 
-  return { processed: candidateMatches.length, awarded, skipped };
+  return { processed: candidateMatches.length, awarded, skipped, failed };
 }
 
 /**
@@ -255,9 +262,7 @@ async function autoAwardMatchTime(
   now: Date,
 ): Promise<{ awarded: true; seasonSlug: string } | { awarded: false }> {
   return db.transaction(async (tx) => {
-    const match = await tx.query.matches.findFirst({
-      where: eq(matches.id, matchId),
-    });
+    const [match] = await tx.select().from(matches).where(eq(matches.id, matchId)).for("update");
     if (!match || match.status !== "scheduled" || match.scheduledAt || !match.completionDeadline) {
       return { awarded: false };
     }

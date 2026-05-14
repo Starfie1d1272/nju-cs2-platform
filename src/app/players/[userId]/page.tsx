@@ -170,7 +170,8 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
             alt={user.steamName ?? "选手头像"}
             width={96}
             height={96}
-            className="rounded-full border border-[var(--color-border)]"
+            unoptimized
+            className="rounded-full border border-[var(--color-border)] object-cover"
           />
         ) : (
           <AvatarFallback name={user.steamName ?? user.email} />

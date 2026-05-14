@@ -158,16 +158,13 @@ export function HeaderClient({ seasons, session, avatarUrl }: HeaderClientProps)
                     <AvatarButton email={session.email} avatarUrl={avatarUrl} />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuContent align="end" className="w-44 bg-[var(--color-panel)] border-[var(--color-border)]">
                   {isAdmin && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin" className="cursor-pointer">
-                          管理后台
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer">
+                        管理后台
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
                     <Link href={`/players/${session.userId}`} className="cursor-pointer">
@@ -186,7 +183,6 @@ export function HeaderClient({ seasons, session, avatarUrl }: HeaderClientProps)
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-500 focus:text-red-500 cursor-pointer"
                     onSelect={handleLogout}

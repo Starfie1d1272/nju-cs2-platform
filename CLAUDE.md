@@ -294,6 +294,7 @@ pnpm seed              # 运行种子脚本（阶段2+ 有真实 DB 后使用）
 | 文档 | 内容 |
 |---|---|
 | `PHASES.md` | 12 阶段 checkbox 路线图 |
+| `CHANGELOG.md` | 版本发布记录（Keep a Changelog 格式） |
 | `docs/state-machines.md` | 所有实体状态机（必读） |
 | `docs/draft-flow.md` | 选秀事务边界与并发安全（必读） |
 | `docs/data-integrity.md` | DB 与应用层约束分工、Storage bucket、soft delete 策略（必读） |

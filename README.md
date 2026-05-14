@@ -123,6 +123,7 @@ pnpm seed         # 创建 Root 管理员
 | 文档 | 内容 |
 |---|---|
 | [PHASES.md](./PHASES.md) | 开发阶段与完成情况 |
+| [CHANGELOG.md](./CHANGELOG.md) | 版本发布记录 |
 | [CLAUDE.md](./CLAUDE.md) | 项目工程手册与 AI 协作约束 |
 | [docs/launch-readiness.md](./docs/launch-readiness.md) | 1.0.0 上线前规则与功能对照 |
 | [docs/architecture.md](./docs/architecture.md) | 架构与模块边界 |

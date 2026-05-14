@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and, count } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/client";
 import { users, seasons, seasonRegistrations, registrationDrafts, auditLogs } from "@/db/schema";
@@ -189,8 +189,8 @@ export async function submitRegistration(input: RegistrationFormData) {
         eq(seasonRegistrations.seasonId, data.seasonId)
       ),
     });
-    if (existing) {
-      throw new AppError(ErrorCode.REGISTRATION_DUPLICATE, ERROR_MESSAGES.REGISTRATION_DUPLICATE);
+    if (existing?.status === "approved") {
+      throw new AppError(ErrorCode.REGISTRATION_DUPLICATE, "报名已审核通过，无法自行修改。如确需调整请联系管理员。");
     }
 
     const [totalCount] = await db
@@ -202,19 +202,23 @@ export async function submitRegistration(input: RegistrationFormData) {
           eq(seasonRegistrations.status, "approved"),
         ),
       );
-    if (Number(totalCount?.count ?? 0) >= registrationConfig.maxTotal) {
+    if (!existing && Number(totalCount?.count ?? 0) >= registrationConfig.maxTotal) {
       throw new AppError(ErrorCode.REGISTRATION_FULL, ERROR_MESSAGES.REGISTRATION_FULL);
+    }
+
+    const positionFilters = [
+      eq(seasonRegistrations.seasonId, data.seasonId),
+      eq(seasonRegistrations.primaryPosition, data.primaryPosition),
+      ne(seasonRegistrations.status, "rejected"),
+    ];
+    if (existing) {
+      positionFilters.push(ne(seasonRegistrations.id, existing.id));
     }
 
     const [posCount] = await db
       .select({ count: count() })
       .from(seasonRegistrations)
-      .where(
-        and(
-          eq(seasonRegistrations.seasonId, data.seasonId),
-          eq(seasonRegistrations.primaryPosition, data.primaryPosition)
-        )
-      );
+      .where(and(...positionFilters));
     if (Number(posCount?.count ?? 0) >= registrationConfig.maxPerPosition) {
       throw new AppError(ErrorCode.POSITION_FULL, ERROR_MESSAGES.POSITION_FULL);
     }
@@ -244,30 +248,44 @@ export async function submitRegistration(input: RegistrationFormData) {
       throw new AppError(ErrorCode.INTERNAL_ERROR, ERROR_MESSAGES.INTERNAL_ERROR);
     }
 
-    const [registration] = await db
-      .insert(seasonRegistrations)
-      .values({
-        userId: user.id,
-        seasonId: data.seasonId,
-        playerType: data.playerType,
-        primaryPosition: data.primaryPosition,
-        secondaryPosition: data.secondaryPosition,
-        peakRank: data.peakRank,
-        peakRankSeason: data.peakRankSeason,
-        peakRating: data.peakRating,
-        peakWe: data.peakWe,
-        currentSeasonPeakRank: data.currentSeasonPeakRank,
-        currentRating: data.currentRating,
-        currentWe: data.currentWe,
-        screenshotUrls: data.screenshotUrls,
-        mapPreferences: data.mapPreferences,
-        gameplayStyle: data.gameplayStyle,
-        competitionHistory: data.competitionHistory,
-        highlightVideoUrl: data.highlightVideoUrl,
-        willingToBeCaptain: data.willingToBeCaptain,
-        notes: data.notes,
-      })
-      .returning();
+    const registrationValues = {
+      playerType: data.playerType,
+      primaryPosition: data.primaryPosition,
+      secondaryPosition: data.secondaryPosition,
+      peakRank: data.peakRank,
+      peakRankSeason: data.peakRankSeason,
+      peakRating: data.peakRating,
+      peakWe: data.peakWe,
+      currentSeasonPeakRank: data.currentSeasonPeakRank,
+      currentRating: data.currentRating,
+      currentWe: data.currentWe,
+      screenshotUrls: data.screenshotUrls,
+      mapPreferences: data.mapPreferences,
+      gameplayStyle: data.gameplayStyle,
+      competitionHistory: data.competitionHistory,
+      highlightVideoUrl: data.highlightVideoUrl,
+      willingToBeCaptain: data.willingToBeCaptain,
+      notes: data.notes,
+    };
+
+    const [registration] = existing
+      ? await db
+          .update(seasonRegistrations)
+          .set({
+            ...registrationValues,
+            status: "pending",
+            updatedAt: new Date(),
+          })
+          .where(eq(seasonRegistrations.id, existing.id))
+          .returning()
+      : await db
+          .insert(seasonRegistrations)
+          .values({
+            userId: user.id,
+            seasonId: data.seasonId,
+            ...registrationValues,
+          })
+          .returning();
 
     await db
       .delete(registrationDrafts)
@@ -306,7 +324,12 @@ export async function getPositionCounts(
       count: count(),
     })
     .from(seasonRegistrations)
-    .where(eq(seasonRegistrations.seasonId, seasonId))
+    .where(
+      and(
+        eq(seasonRegistrations.seasonId, seasonId),
+        ne(seasonRegistrations.status, "rejected"),
+      ),
+    )
     .groupBy(seasonRegistrations.primaryPosition);
 
   return Object.fromEntries(rows.map((r) => [r.position, Number(r.count)]));

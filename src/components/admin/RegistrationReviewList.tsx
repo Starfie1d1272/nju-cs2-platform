@@ -80,7 +80,7 @@ export function RegistrationReviewList({ registrations }: Props) {
     waitlisted: registrations.filter((r) => r.status === "waitlisted").length,
   };
 
-  function handleReview(registrationId: string, status: "approved" | "rejected" | "waitlisted") {
+  function handleReview(registrationId: string, status: "pending" | "approved" | "rejected" | "waitlisted") {
     const label = REGISTRATION_STATUS_LABELS[status];
     startTransition(async () => {
       const result = await reviewRegistration({ registrationId, status });
@@ -97,7 +97,7 @@ export function RegistrationReviewList({ registrations }: Props) {
     { key: "pending", label: "待审核" },
     { key: "approved", label: "已通过" },
     { key: "rejected", label: "已拒绝" },
-    { key: "waitlisted", label: "等待名单" },
+    { key: "waitlisted", label: "候补名单" },
   ];
 
   return (
@@ -219,7 +219,7 @@ export function RegistrationReviewList({ registrations }: Props) {
                         disabled={isPending}
                         onClick={() => handleReview(r.id, "waitlisted")}
                       >
-                        等待
+                        候补
                       </Button>
                       <Button
                         size="sm"
@@ -256,20 +256,30 @@ export function RegistrationReviewList({ registrations }: Props) {
                       size="sm"
                       variant="ghost"
                       disabled={isPending}
-                      onClick={() => handleReview(r.id, "rejected")}
+                      onClick={() => handleReview(r.id, "pending")}
                     >
-                      撤销通过
+                      撤回待审
                     </Button>
                   )}
                   {r.status === "rejected" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isPending}
-                      onClick={() => handleReview(r.id, "approved")}
-                    >
-                      改为通过
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "approved")}
+                      >
+                        改为通过
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isPending}
+                        onClick={() => handleReview(r.id, "pending")}
+                      >
+                        回到待审
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

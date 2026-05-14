@@ -43,6 +43,8 @@ interface RegistrationFormProps {
   registrationConfig: RegistrationConfig;
   windowState: RegistrationWindowState;
   currentUserEmail?: string | null;
+  initialValues?: Partial<RegistrationInput>;
+  submitLabel?: string;
 }
 
 export function RegistrationForm({
@@ -53,6 +55,8 @@ export function RegistrationForm({
   registrationConfig: inputRegistrationConfig,
   windowState,
   currentUserEmail,
+  initialValues,
+  submitLabel,
 }: RegistrationFormProps) {
   const { canSaveDraft, canSubmit, message: windowMessage } = windowState;
   const [submitted, setSubmitted] = useState(false);
@@ -82,12 +86,16 @@ export function RegistrationForm({
   } = useForm<RegistrationInput, unknown, RegistrationFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      ...initialValues,
       seasonId,
-      email: currentUserEmail ?? "",
-      willingToBeCaptain: false,
-      playerType: registrationConfig.allowedPlayerTypes[0],
-      screenshotUrls: Array.from({ length: registrationConfig.screenshotCount }, () => ""),
-      mapPreferences: defaultMapPreferences(registrationConfig.mapPool),
+      email: initialValues?.email ?? currentUserEmail ?? "",
+      willingToBeCaptain: initialValues?.willingToBeCaptain ?? false,
+      playerType: initialValues?.playerType ?? registrationConfig.allowedPlayerTypes[0],
+      screenshotUrls: initialValues?.screenshotUrls ?? Array.from({ length: registrationConfig.screenshotCount }, () => ""),
+      mapPreferences: normalizeMapPreferences(
+        initialValues?.mapPreferences,
+        registrationConfig.mapPool,
+      ),
     },
   });
 
@@ -806,6 +814,7 @@ export function RegistrationForm({
           <input
             id="antiCheatPledge"
             type="checkbox"
+            defaultChecked={!!initialValues?.antiCheatPledge}
             className="mt-0.5 h-4 w-4 accent-amber-400"
             onChange={(e) =>
               setValue("antiCheatPledge", e.target.checked as true, {
@@ -855,7 +864,7 @@ export function RegistrationForm({
               提交中…
             </>
           ) : (
-            canSubmit ? "提交报名" : windowMessage ?? "报名提交暂未开放"
+            canSubmit ? submitLabel ?? "提交报名" : windowMessage ?? "报名提交暂未开放"
           )}
         </Button>
       </div>

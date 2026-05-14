@@ -61,10 +61,12 @@ waitlisted
   └─ [admin: reject]  → rejected
 
 approved
+  ├─ [admin: revoke]  → pending    ← 仅在赛季 registration 阶段允许
   └─ [admin: reject]  → rejected   ← 仅在赛季 registration 阶段允许
 
 rejected
-  └─ [admin: approve] → approved   ← 仅在赛季 registration 阶段允许
+  ├─ [admin: approve] → approved   ← 仅在赛季 registration 阶段允许
+  └─ [admin: reopen]  → pending    ← 仅在赛季 registration 阶段允许
 ```
 
 ### 合法迁移表
@@ -76,13 +78,13 @@ rejected
 | `pending` | `waitlisted` | admin | 赛季 status = registration |
 | `waitlisted` | `approved` | admin | 赛季 status = registration 或 voting，且位置未满 |
 | `waitlisted` | `rejected` | admin | 任意阶段 |
+| `approved` | `pending` | admin | 赛季 status = registration（撤销通过，回到待审核） |
 | `approved` | `rejected` | admin | 赛季 status = registration（已进入 voting/drafting 后不允许） |
 | `rejected` | `approved` | admin | 赛季 status = registration，且位置未满 |
+| `rejected` | `pending` | admin | 赛季 status = registration |
 
 ### 禁止迁移
 
-- `approved → pending`（不允许回到待审核）
-- `rejected → pending`（不允许回到待审核）
 - 赛季进入 `voting` 或之后，禁止 `approved → rejected`
 
 ---

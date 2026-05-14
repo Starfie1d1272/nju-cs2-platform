@@ -147,14 +147,14 @@ export async function registerAdmin(
 
 interface ReviewInput {
   registrationId: string;
-  status: "approved" | "rejected" | "waitlisted";
+  status: "pending" | "approved" | "rejected" | "waitlisted";
   reason?: string;
 }
 
 export async function reviewRegistration(input: ReviewInput) {
   const { registrationId, status: targetStatus, reason } = input;
 
-  if (!["approved", "rejected", "waitlisted"].includes(targetStatus)) {
+  if (!["pending", "approved", "rejected", "waitlisted"].includes(targetStatus)) {
     return fail({ code: ErrorCode.VALIDATION_FAILED, message: "无效的审核状态" });
   }
 

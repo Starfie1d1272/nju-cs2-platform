@@ -5,6 +5,15 @@ All notable changes to RivalHub are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-05-15
+
+### Added
+- 核心用户流程移动端适配：报名、投票、选秀、赛程查看 7 个组件/页面响应式布局
+
+### Fixed
+- 首页 Hero 两栏布局移动端溢出，改为响应式堆叠 + 标题字号缩小
+- 赛季首页阶段流程图移动端裁切，改为 flex 横向滑动 + 桌面端等宽
+
 ## [1.4.1] - 2026-05-14
 
 ### Fixed

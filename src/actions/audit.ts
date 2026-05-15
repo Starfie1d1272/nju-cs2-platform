@@ -3,7 +3,7 @@
 import { and, desc, eq, gte, lt, or, count, like, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { getDisplayName } from "@/lib/utils/display-name";
-import { auditLogs, seasons, users, teams, matches, seasonRegistrations, captainVotes, draftPicks, draftState, adminInvites } from "@/db/schema";
+import { auditLogs, seasons, users, teams, matches, seasonRegistrations, draftPicks, draftState, adminInvites } from "@/db/schema";
 import { ok } from "@/types/action";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { actionError } from "@/lib/action-utils";
@@ -142,8 +142,8 @@ export async function fetchAuditLogs(filters: AuditLogFilters = {}) {
       );
     }
 
-    const regIds = byType.get("registration");
-    if (regIds?.length) {
+    const regIds = [...new Set([...(byType.get("registration") ?? []), ...(byType.get("captain_vote") ?? [])])];
+    if (regIds.length) {
       resolvers.push(
         db.select({ id: seasonRegistrations.id, uid: users.id, email: users.email, steamName: users.steamName, displayName: users.displayName, perfectName: users.perfectName })
           .from(seasonRegistrations).innerJoin(users, eq(seasonRegistrations.userId, users.id))
@@ -178,28 +178,6 @@ export async function fetchAuditLogs(filters: AuditLogFilters = {}) {
       resolvers.push(
         db.select({ id: adminInvites.id, code: adminInvites.code }).from(adminInvites).where(inArray(adminInvites.id, inviteIds))
           .then((rows) => { for (const i of rows) targetNameMap[i.id] = `邀请码 ${i.code}`; }),
-      );
-    }
-
-    const voteIds = byType.get("captain_vote");
-    if (voteIds?.length) {
-      resolvers.push(
-        db.select({
-          id: captainVotes.id,
-          voterId: captainVotes.voterRegistrationId,
-          candidateId: captainVotes.candidateRegistrationId,
-        }).from(captainVotes).where(inArray(captainVotes.id, voteIds))
-          .then(async (rows) => {
-            const allRegIds = [...new Set(rows.flatMap((r) => [r.voterId, r.candidateId]))];
-            const regMap: Record<string, string> = {};
-            if (allRegIds.length) {
-              const regRows = await db.select({ id: seasonRegistrations.id, email: users.email, steamName: users.steamName, displayName: users.displayName, perfectName: users.perfectName })
-                .from(seasonRegistrations).innerJoin(users, eq(seasonRegistrations.userId, users.id))
-                .where(inArray(seasonRegistrations.id, allRegIds));
-              for (const r of regRows) regMap[r.id] = getDisplayName(r);
-            }
-            for (const v of rows) targetNameMap[v.id] = `${regMap[v.voterId] ?? "?"} → ${regMap[v.candidateId] ?? "?"}`;
-          }),
       );
     }
 

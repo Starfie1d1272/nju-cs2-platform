@@ -7,7 +7,7 @@ import { seasons, matches } from "@/db/schema";
 import { normalizeStagePlan } from "@/types/season";
 import type { SeasonStatus } from "@/types/season";
 import { showStats } from "@/lib/utils/season";
-import { StatusPill, Panel, Marker } from "@/components/rivalhub";
+import { StatusPill, Panel, Marker, ScrollHint } from "@/components/rivalhub";
 
 const STATUS_IDX: Record<SeasonStatus, number> = {
   draft: 0, registration: 1, voting: 2, drafting: 3,
@@ -162,7 +162,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
       {/* Phase tracker */}
       <Panel pad={0}>
-        <div className="overflow-x-auto">
+        <ScrollHint fromColor="var(--color-panel)">
         <div className="flex">
           {phases.map((phase, i) => {
             const isCurrent = i === currentPhaseIdx;
@@ -201,7 +201,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
             );
           })}
         </div>
-        </div>
+        </ScrollHint>
       </Panel>
 
       <Marker sub="快速访问各功能模块">赛季导航</Marker>

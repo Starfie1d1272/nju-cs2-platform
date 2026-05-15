@@ -25,7 +25,7 @@ export default async function HomePage() {
 
   if (!featured) {
     return (
-      <div className="mx-auto px-9 py-8 max-w-[1240px]">
+      <div className="mx-auto px-4 lg:px-9 py-8 max-w-[1240px]">
         <Panel>
           <EmptyState
             title="暂无进行中的赛季"
@@ -37,7 +37,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="mx-auto px-9 py-8 max-w-[1240px] grid gap-7">
+    <div className="mx-auto px-4 lg:px-9 py-8 max-w-[1240px] grid gap-7">
       {/* Hero */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-[1.6fr_1fr]">
         <Panel className="overflow-hidden relative" pad={0}>

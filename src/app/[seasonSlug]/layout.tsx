@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { cache } from "react";
 import { eq, and, count } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, seasonRegistrations } from "@/db/schema";
@@ -9,6 +10,10 @@ import { hexToRgbString } from "@/lib/utils/color";
 import { normalizeStagePlan } from "@/types/season";
 import { showStats } from "@/lib/utils/season";
 
+const getSeason = cache(async (slug: string) => {
+  return db.query.seasons.findFirst({ where: eq(seasons.slug, slug) });
+});
+
 interface SeasonLayoutProps {
   children: React.ReactNode;
   params: Promise<{ seasonSlug: string }>;
@@ -16,9 +21,7 @@ interface SeasonLayoutProps {
 
 export async function generateMetadata({ params }: SeasonLayoutProps): Promise<Metadata> {
   const { seasonSlug } = await params;
-  const season = await db.query.seasons.findFirst({
-    where: eq(seasons.slug, seasonSlug),
-  });
+  const season = await getSeason(seasonSlug);
   return {
     title: season?.name ?? seasonSlug,
   };
@@ -27,9 +30,7 @@ export async function generateMetadata({ params }: SeasonLayoutProps): Promise<M
 export default async function SeasonLayout({ children, params }: SeasonLayoutProps) {
   const { seasonSlug } = await params;
 
-  const season = await db.query.seasons.findFirst({
-    where: eq(seasons.slug, seasonSlug),
-  });
+  const season = await getSeason(seasonSlug);
 
   if (!season) notFound();
 

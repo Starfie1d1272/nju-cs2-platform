@@ -5,18 +5,9 @@ import Link from "next/link";
 import { db } from "@/db/client";
 import { seasons, seasonRegistrations, users, teams, teamMembers } from "@/db/schema";
 import { Marker, PosChip, Panel } from "@/components/rivalhub";
-import { POSITION_LABELS } from "@/lib/validators/registration";
+import { POSITION_LABELS, POS_ABBR } from "@/lib/validators/registration";
 import { getDisplayName } from "@/lib/utils/display-name";
 import type { Metadata } from "next";
-
-/** 位置缩写映射，避免 slice(0,1) 对 igl/awper 等位置产生错误缩写 */
-const POS_ABBR: Record<string, string> = {
-  opener: "O",
-  closer: "C",
-  anchor: "A",
-  igl: "I",
-  awper: "W",
-};
 
 interface PlayersPageProps {
   params: Promise<{ seasonSlug: string }>;

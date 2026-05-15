@@ -16,6 +16,8 @@ import { getDisplayName } from "@/lib/utils/display-name";
 import { sortByRank } from "@/lib/utils/rank";
 import type { MapPreference } from "@/types/season";
 
+const FILTER_ALL = "all";
+
 export interface CaptainDraftPlayer {
   registrationId: string;
   userId: string;
@@ -63,7 +65,7 @@ export function CaptainDraftPanel({
   captainPosition,
 }: CaptainDraftPanelProps) {
   const router = useRouter();
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(FILTER_ALL);
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [rosterOpen, setRosterOpen] = useState(false);
@@ -88,7 +90,7 @@ export function CaptainDraftPanel({
 
   const sortedPlayers = useMemo(() => {
     const filtered =
-      filter === "all"
+      filter === FILTER_ALL
         ? players
         : players.filter((player) => player.primaryPosition === filter);
     return sortByRank(filtered);
@@ -207,15 +209,13 @@ export function CaptainDraftPanel({
         )}
       </div>
 
-      {/* Player list */}
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
-        {/* Position filter buttons */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <Button
             type="button"
             size="sm"
-            variant={filter === "all" ? "default" : "secondary"}
-            onClick={() => setFilter("all")}
+            variant={filter === FILTER_ALL ? "default" : "secondary"}
+            onClick={() => setFilter(FILTER_ALL)}
           >
             全部 {players.length}
           </Button>
@@ -229,7 +229,7 @@ export function CaptainDraftPanel({
                 size="sm"
                 variant={filter === position ? "default" : "secondary"}
                 disabled={count === 0}
-                onClick={() => setFilter(filter === position ? "all" : position)}
+                onClick={() => setFilter(filter === position ? FILTER_ALL : position)}
               >
                 {positionLabel(position)} {teamCount}/2 · {count}
               </Button>
@@ -257,7 +257,6 @@ export function CaptainDraftPanel({
                     !positionOpen ? "opacity-40" : ""
                   }`}
                 >
-                  {/* Desktop: single row */}
                   <div className="hidden md:flex items-center gap-3">
                     {/* Rank badge */}
                     <span
@@ -319,7 +318,6 @@ export function CaptainDraftPanel({
                     </Button>
                   </div>
 
-                  {/* Mobile: two rows */}
                   <div className="md:hidden space-y-1.5">
                     <div className="flex items-center gap-2">
                       <span

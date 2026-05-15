@@ -10,13 +10,15 @@ import { PosChip } from "@/components/rivalhub/pos-chip";
 import { getDisplayName } from "@/lib/utils/display-name";
 import { sortByRank } from "@/lib/utils/rank";
 
+const FILTER_ALL = "all";
+
 interface PlayerPoolProps {
   players: DraftPlayerRow[];
   seasonPositions: string[];
 }
 
 export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(FILTER_ALL);
 
   const grouped = useMemo(() => {
     const map = new Map<string, DraftPlayerRow[]>();
@@ -38,7 +40,7 @@ export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
 
   const sortedPlayers = useMemo(() => {
     const filtered =
-      filter === "all"
+      filter === FILTER_ALL
         ? players
         : players.filter((p) => p.primaryPosition === filter);
     return sortByRank(filtered);
@@ -59,9 +61,9 @@ export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <button
-          onClick={() => setFilter("all")}
+          onClick={() => setFilter(FILTER_ALL)}
           className={`text-xs px-2 py-1 rounded transition-colors ${
-            filter === "all"
+            filter === FILTER_ALL
               ? "bg-[var(--color-accent)] text-white"
               : "bg-[var(--color-panel-hi)] text-[var(--color-fg-mid)] hover:text-[var(--color-fg)]"
           }`}
@@ -73,7 +75,7 @@ export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
           return (
             <button
               key={pos}
-              onClick={() => setFilter(pos === filter ? "all" : pos)}
+              onClick={() => setFilter(pos === filter ? FILTER_ALL : pos)}
               disabled={count === 0}
               className={`text-xs px-2 py-1 rounded transition-colors ${
                 pos === filter

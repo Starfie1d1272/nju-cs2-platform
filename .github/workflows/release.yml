@@ -12,6 +12,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main  # 读 main 最新 CHANGELOG，避免 tag 指向 npm version commit 时无 changelog 条目
 
       - name: Extract changelog for this version
         run: |

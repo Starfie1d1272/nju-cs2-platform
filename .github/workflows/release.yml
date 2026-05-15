@@ -12,8 +12,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main  # 读 main 最新 CHANGELOG，避免 tag 指向 npm version commit 时无 changelog 条目
+        # 不指定 ref，默认 checkout 触发此 workflow 的 tag 所在 commit。
+        # 前提：CHANGELOG 更新必须在 `npm version` 之前完成，
+        # 这样 tag 指向的 commit 就已包含对应版本的 CHANGELOG 条目。
 
       - name: Extract changelog for this version
         run: |
@@ -28,6 +29,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
-            --notes-file /tmp/release-notes.md
+          if gh release view "$GITHUB_REF_NAME" &>/dev/null; then
+            echo "Release $GITHUB_REF_NAME already exists, updating notes..."
+            gh release edit "$GITHUB_REF_NAME" --notes-file /tmp/release-notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file /tmp/release-notes.md
+          fi

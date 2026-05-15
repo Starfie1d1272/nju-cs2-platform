@@ -26,15 +26,22 @@ interface HeaderClientProps {
   displayName?: string | null;
 }
 
-function AvatarButton({ email, avatarUrl }: { email: string; avatarUrl?: string | null }) {
+function AvatarButton({ email, avatarUrl, imgError, onImgError }: {
+  email: string;
+  avatarUrl?: string | null;
+  imgError: boolean;
+  onImgError: () => void;
+}) {
   const initial = email.charAt(0).toUpperCase();
-  if (avatarUrl) {
+
+  if (avatarUrl && !imgError) {
     return (
       <img
         src={avatarUrl}
         alt={email}
         className="inline-flex w-8 h-8 rounded-full border border-[var(--color-border)] object-cover"
         referrerPolicy="no-referrer"
+        onError={onImgError}
       />
     );
   }
@@ -53,6 +60,7 @@ export function HeaderClient({ seasons, session, avatarUrl, steamName, displayNa
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -160,7 +168,7 @@ export function HeaderClient({ seasons, session, avatarUrl, steamName, displayNa
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] rounded-full">
-                    <AvatarButton email={steamName ?? session.email} avatarUrl={avatarUrl} />
+                    <AvatarButton email={steamName ?? session.email} avatarUrl={avatarUrl} imgError={imgError} onImgError={() => setImgError(true)} />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 bg-[var(--color-panel)] border-[var(--color-border)]">
@@ -255,7 +263,7 @@ export function HeaderClient({ seasons, session, avatarUrl, steamName, displayNa
             {session ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5">
-                  <AvatarButton email={steamName ?? session.email} avatarUrl={avatarUrl} />
+                  <AvatarButton email={steamName ?? session.email} avatarUrl={avatarUrl} imgError={imgError} onImgError={() => setImgError(true)} />
                   <span className="text-sm text-[var(--color-fg-dim)] truncate">{steamName ?? session.email}</span>
                 </div>
                 {isAdmin && (

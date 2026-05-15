@@ -5,7 +5,7 @@ import Link from "next/link";
 import { db } from "@/db/client";
 import { seasons, seasonRegistrations, users, teams, teamMembers } from "@/db/schema";
 import { Marker, PosChip, Panel } from "@/components/rivalhub";
-import { POSITION_LABELS, POS_ABBR } from "@/lib/validators/registration";
+import { POS_ABBR, positionLabel, positionValues } from "@/lib/validators/registration";
 import { getDisplayName } from "@/lib/utils/display-name";
 import type { Metadata } from "next";
 
@@ -75,11 +75,9 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
 
   const teamByRegId = new Map(teamMemberRows.map((r) => [r.registrationId, r.teamName]));
 
-  const positions = [
-    { value: "", label: "全部" },
-    { value: "opener", label: POSITION_LABELS["opener"]?.cn ?? "Opener" },
-    { value: "closer", label: POSITION_LABELS["closer"]?.cn ?? "Closer" },
-    { value: "anchor", label: POSITION_LABELS["anchor"]?.cn ?? "Anchor" },
+  const positionFilters = [
+    { value: "", label: "All" },
+    ...positionValues.map((p) => ({ value: p, label: positionLabel(p) })),
   ];
 
   return (
@@ -88,7 +86,7 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
 
       {/* 位置筛选 */}
       <div className="flex gap-2 flex-wrap">
-        {positions.map(({ value, label }) => {
+        {positionFilters.map(({ value, label }) => {
           const isActive = position === value;
           const href = value ? `/${seasonSlug}/players?position=${value}` : `/${seasonSlug}/players`;
           return (
@@ -115,7 +113,7 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
           {registrations.map((reg) => {
             const displayName = getDisplayName(reg);
             const teamName = teamByRegId.get(reg.registrationId);
-            const posLabel = POSITION_LABELS[reg.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? reg.primaryPosition;
+            const posLabel = positionLabel(reg.primaryPosition);
 
             return (
               <Link
@@ -128,11 +126,11 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
                     <span className="font-semibold text-[var(--color-fg)] truncate text-base">
                       {displayName}
                     </span>
-                    <PosChip pos={(POS_ABBR[reg.primaryPosition] ?? reg.primaryPosition.slice(0, 1).toUpperCase()) as "O" | "C" | "A"} small />
+                    <PosChip pos={POS_ABBR[reg.primaryPosition] ?? reg.primaryPosition.slice(0, 1).toUpperCase()} small />
                   </div>
                   <div className="space-y-1 text-sm text-[var(--color-fg-mid)]">
                     <div className="flex justify-between">
-                      <span>位置</span>
+                      <span>Position</span>
                       <span className="text-[var(--color-fg)]">{posLabel}</span>
                     </div>
                     <div className="flex justify-between">

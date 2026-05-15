@@ -11,6 +11,7 @@ import Link from "next/link";
 import { POSITION_LABELS } from "@/lib/validators/registration";
 import { CS2_POSITIONS } from "@/types/season";
 import { getUserSession } from "@/lib/auth/session";
+import { getDisplayName } from "@/lib/utils/display-name";
 
 interface TeamDetailPageProps {
   params: Promise<{ seasonSlug: string; teamId: string }>;
@@ -53,6 +54,8 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       primaryPosition: seasonRegistrations.primaryPosition,
       mapPreferences: seasonRegistrations.mapPreferences,
       steamName: users.steamName,
+      perfectName: users.perfectName,
+      email: users.email,
     })
     .from(teamMembers)
     .innerJoin(seasonRegistrations, eq(teamMembers.registrationId, seasonRegistrations.id))
@@ -261,7 +264,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                     <PosChip pos="C" small />
                   )}
                   <span className="font-medium text-[var(--color-fg)] truncate text-sm sm:text-base">
-                    {p.steamName ?? "未知选手"}
+                    {getDisplayName(p)}
                   </span>
                 </div>
                 <div className="text-right shrink-0">
@@ -280,7 +283,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 <p className="text-xs text-[var(--color-fg-mid)] font-medium uppercase tracking-wide">替补</p>
                 {subs.map((p) => (
                   <div key={p.registrationId} className="flex items-center justify-between gap-2 opacity-70">
-                    <span className="text-sm text-[var(--color-fg)] truncate">{p.steamName ?? "未知选手"}</span>
+                    <span className="text-sm text-[var(--color-fg)] truncate">{getDisplayName(p)}</span>
                     <span className="text-xs text-[var(--color-fg-mid)] shrink-0">
                       {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
                     </span>

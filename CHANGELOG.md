@@ -5,6 +5,18 @@ All notable changes to RivalHub are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-05-15
+
+### Added
+- 新增 `/[seasonSlug]/players` 选手名单页：展示所有审核通过的报名选手，支持按位置（突破手/自由人/主防）筛选，卡片展示历史最高段位、当前 Rating 及所属队伍
+- 赛季导航新增「选手」入口，所有赛季均可访问
+- 新增 `src/lib/utils/display-name.ts`：统一用户展示名称派生逻辑（perfectName > steamName > email 前缀），替代全站散落的 `steamName ?? "未知选手"` 模式
+- `public/favicon.ico`：添加静态 favicon，防止 `/favicon.ico` 请求被 `[seasonSlug]` 动态路由捕获触发无效 DB 查询
+
+### Fixed
+- 统计页 `db.execute()` 返回 `QueryResult { rows }` 对象直接当数组迭代 bug，修复为解构 `.rows`（与 1.6.1 队伍详情页同类问题）
+- 队伍页（列表与详情）选手名称统一使用 `getDisplayName()` 工具函数
+
 ## [1.6.1] - 2026-05-15
 
 ### Fixed

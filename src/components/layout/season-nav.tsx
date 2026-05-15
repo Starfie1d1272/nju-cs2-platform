@@ -30,6 +30,7 @@ export function SeasonNav({
   const items: NavItem[] = [
     { label: "首页", href: `/${slug}` },
     { label: "报名", href: `/${slug}/register` },
+    { label: "选手", href: `/${slug}/players` },
     ...(hasCaptainVoting ? [{ label: "队长投票", href: `/${slug}/captains` }] : []),
     ...(hasDraft ? [{ label: "选秀", href: `/${slug}/draft` }] : []),
     { label: "队伍", href: `/${slug}/teams` },

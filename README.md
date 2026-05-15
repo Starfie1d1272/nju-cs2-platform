@@ -124,7 +124,7 @@ pnpm seed         # 创建 Root 管理员
 |---|---|
 | [CHANGELOG.md](./CHANGELOG.md) | 版本发布记录 |
 | [CLAUDE.md](./CLAUDE.md) | 项目工程手册与 AI 协作约束 |
-| [docs/launch-readiness.md](./docs/launch-readiness.md) | 1.0.0 上线前规则与功能对照 |
+| [docs/launch-readiness.md](./docs/launch-readiness.md) | 上线前 / 线上常态运营核对清单 |
 | [docs/architecture.md](./docs/architecture.md) | 架构与模块边界 |
 | [docs/data-model.md](./docs/data-model.md) | 数据模型、ER 图、约束 |
 | [docs/auth-and-permissions.md](./docs/auth-and-permissions.md) | 鉴权、权限与 RLS 策略 |
@@ -133,7 +133,6 @@ pnpm seed         # 创建 Root 管理员
 | [docs/state-machines.md](./docs/state-machines.md) | 关键业务状态机 |
 | [docs/deployment.md](./docs/deployment.md) | Vercel/Supabase 部署手册 |
 | [docs/testing.md](./docs/testing.md) | 测试策略 |
-| [docs/superpowers/archive/](./docs/superpowers/archive/) | 过程性设计稿与执行计划归档 |
 
 ## 分支与发布
 
@@ -154,9 +153,7 @@ pnpm build
 
 ## 待办
 
-- RLS：默认拒绝所有，按表逐条开放最小权限（Supabase Dashboard 手动核对）
-- Playwright E2E 跑关键路径（注册 → 投票 → 选秀 → 比赛）
-- 性能基准（LCP / FCP）验收
+见 [issue #87](https://github.com/Starfie1d1272/RivalHub/issues/87)（v1 上线后验收 + v2/v3 远期规划）。
 
 ## License
 

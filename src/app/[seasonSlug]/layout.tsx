@@ -44,7 +44,7 @@ export default async function SeasonLayout({ children, params }: SeasonLayoutPro
         eq(seasonRegistrations.status, "approved"),
       ),
     );
-  const hasPlayers = (approvedResult?.cnt ?? 0) > 0;
+  const hasPlayers = Number(approvedResult?.cnt ?? 0) > 0;
 
   const themeColor = season.themeColor ?? "#f97316";
 

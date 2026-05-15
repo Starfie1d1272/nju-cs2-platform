@@ -28,13 +28,16 @@ interface HeaderClientProps {
 
 function AvatarButton({ email, avatarUrl }: { email: string; avatarUrl?: string | null }) {
   const initial = email.charAt(0).toUpperCase();
-  if (avatarUrl) {
+  const [imgError, setImgError] = useState(false);
+
+  if (avatarUrl && !imgError) {
     return (
       <img
         src={avatarUrl}
         alt={email}
         className="inline-flex w-8 h-8 rounded-full border border-[var(--color-border)] object-cover"
         referrerPolicy="no-referrer"
+        onError={() => setImgError(true)}
       />
     );
   }

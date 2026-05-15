@@ -9,10 +9,11 @@ import { pickPlayer } from "@/actions/draft";
 import { Button } from "@/components/ui/button";
 import { DraftCountdown } from "./DraftCountdown";
 import { canPickPosition } from "@/lib/draft/rules";
-import { POSITION_LABELS, RANK_ORDER } from "@/lib/validators/registration";
+import { positionLabel } from "@/lib/validators/registration";
 import { MapPreferenceChips } from "@/components/rivalhub/map-preference-chips";
 import { PosChip } from "@/components/rivalhub/pos-chip";
 import { getDisplayName } from "@/lib/utils/display-name";
+import { sortByRank } from "@/lib/utils/rank";
 import type { MapPreference } from "@/types/season";
 
 export interface CaptainDraftPlayer {
@@ -42,23 +43,8 @@ interface CaptainDraftPanelProps {
   players: CaptainDraftPlayer[];
   seasonPositions: string[];
   /** Already picked members for roster summary */
-  rosterMembers: { steamName: string; primaryPosition: string }[];
+  rosterMembers: { steamName: string; perfectName: string | null; displayName: string | null; primaryPosition: string }[];
   captainPosition: string;
-}
-
-function positionLabel(position: string): string {
-  return POSITION_LABELS[position as keyof typeof POSITION_LABELS]?.en ?? position;
-}
-
-/** Sort players by peakRank (higher index = higher rank = first) then peakRating DESC */
-function sortByRank(players: CaptainDraftPlayer[]): CaptainDraftPlayer[] {
-  return [...players].sort((a, b) => {
-    const rankA = RANK_ORDER.indexOf(a.peakRank as (typeof RANK_ORDER)[number]);
-    const rankB = RANK_ORDER.indexOf(b.peakRank as (typeof RANK_ORDER)[number]);
-    // Higher index = higher rank, show first
-    if (rankA !== rankB) return rankB - rankA;
-    return b.peakRating - a.peakRating;
-  });
 }
 
 export function CaptainDraftPanel({
@@ -213,7 +199,7 @@ export function CaptainDraftPanel({
               {rosterMembers.map((member, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-[var(--color-fg)]">
                   <PosChip pos={positionLabel(member.primaryPosition)} small />
-                  <span>{member.steamName}</span>
+                  <span>{getDisplayName(member)}</span>
                 </div>
               ))}
             </div>

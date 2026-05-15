@@ -46,22 +46,31 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
     : null;
   const canEditTeamName = currentUserRegistration?.id === team.captainRegistrationId;
 
-  // ── 阵容 ──────────────────────────────────────────────────────────────
-  const roster = await db
-    .select({
-      registrationId: teamMembers.registrationId,
-      isStarter: teamMembers.isStarter,
-      primaryPosition: seasonRegistrations.primaryPosition,
-      mapPreferences: seasonRegistrations.mapPreferences,
-      steamName: users.steamName,
-      perfectName: users.perfectName,
-      email: users.email,
-      qq: users.qq,
-    })
-    .from(teamMembers)
-    .innerJoin(seasonRegistrations, eq(teamMembers.registrationId, seasonRegistrations.id))
-    .innerJoin(users, eq(seasonRegistrations.userId, users.id))
-    .where(eq(teamMembers.teamId, teamId));
+  // ── 阵容 + 赛果（并行） ──────────────────────────────────────────────
+  const [roster, teamMatches] = await Promise.all([
+    db
+      .select({
+        registrationId: teamMembers.registrationId,
+        isStarter: teamMembers.isStarter,
+        primaryPosition: seasonRegistrations.primaryPosition,
+        mapPreferences: seasonRegistrations.mapPreferences,
+        steamName: users.steamName,
+        perfectName: users.perfectName,
+        email: users.email,
+        qq: users.qq,
+      })
+      .from(teamMembers)
+      .innerJoin(seasonRegistrations, eq(teamMembers.registrationId, seasonRegistrations.id))
+      .innerJoin(users, eq(seasonRegistrations.userId, users.id))
+      .where(eq(teamMembers.teamId, teamId)),
+    db.query.matches.findMany({
+      where: and(
+        eq(matches.seasonId, season.id),
+        eq(matches.status, "finished"),
+        or(eq(matches.teamAId, teamId), eq(matches.teamBId, teamId)),
+      ),
+    }),
+  ]);
 
   const isTeamMember = currentUserRegistration
     ? roster.some((r) => r.registrationId === currentUserRegistration.id)
@@ -75,15 +84,6 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
   const subs = roster.filter((r) => !r.isStarter);
-
-  // ── 赛果（已完赛） ─────────────────────────────────────────────────────
-  const teamMatches = await db.query.matches.findMany({
-    where: and(
-      eq(matches.seasonId, season.id),
-      eq(matches.status, "finished"),
-      or(eq(matches.teamAId, teamId), eq(matches.teamBId, teamId))
-    ),
-  });
 
   // 对手队名
   const opponentIds = [

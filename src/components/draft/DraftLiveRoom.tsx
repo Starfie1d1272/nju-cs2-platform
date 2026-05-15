@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DRAFT_TOTAL_ROUNDS } from "@/types/draft";
 import { createBrowserClient } from "@/lib/auth/supabase";
-import { POSITION_LABELS } from "@/lib/validators/registration";
 import { DraftCountdown } from "./DraftCountdown";
 import { TeamDraftGrid } from "./TeamDraftGrid";
 import { PlayerPool } from "./PlayerPool";
@@ -17,14 +16,9 @@ interface DraftLiveRoomProps {
   seasonPositions: string[];
 }
 
-function positionLabel(position: string): string {
-  return POSITION_LABELS[position as keyof typeof POSITION_LABELS]?.en ?? position;
-}
-
 interface PickNotification {
   teamName: string;
   playerName: string;
-  position: string;
 }
 
 export function DraftLiveRoom({
@@ -43,33 +37,33 @@ export function DraftLiveRoom({
   const [notification, setNotification] = useState<PickNotification | null>(null);
   const [notificationVisible, setNotificationVisible] = useState(false);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showPickNotification = useCallback(
-    (payload: { steamName?: string; team_id?: string; primary_position?: string }) => {
+    (payload: { steamName?: string; team_id?: string }) => {
       const teamName =
         teams.find((t) => t.teamId === payload.team_id)?.teamName ?? "未知队伍";
       const playerName = payload.steamName ?? "未知选手";
-      const position = payload.primary_position
-        ? positionLabel(payload.primary_position)
-        : "";
 
-      setNotification({ teamName, playerName, position });
+      setNotification({ teamName, playerName });
       setNotificationVisible(true);
 
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
       fadeTimerRef.current = setTimeout(() => {
         setNotificationVisible(false);
         // Remove from DOM after fade-out transition
-        setTimeout(() => setNotification(null), 300);
+        removeTimerRef.current = setTimeout(() => setNotification(null), 300);
       }, 3000);
     },
     [teams],
   );
 
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
     };
   }, []);
 
@@ -102,16 +96,7 @@ export function DraftLiveRoom({
           table: "draft_picks",
           filter: `season_id=eq.${seasonId}`,
         },
-        (payload) => {
-          // Show notification for new pick
-          const newRow = payload.new as Record<string, unknown> | undefined;
-          if (newRow) {
-            showPickNotification({
-              steamName: undefined, // Will be resolved after refresh
-              team_id: newRow.team_id as string | undefined,
-              primary_position: undefined,
-            });
-          }
+        () => {
           router.refresh();
         },
       )
@@ -120,7 +105,7 @@ export function DraftLiveRoom({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [router, seasonId, showPickNotification]);
+  }, [router, seasonId]);
 
   // Watch for new picks via completedPicks changes
   const prevPickCountRef = useRef(completedPicks.length);
@@ -128,24 +113,14 @@ export function DraftLiveRoom({
     if (completedPicks.length > prevPickCountRef.current) {
       const latestPick = completedPicks[completedPicks.length - 1];
       if (latestPick) {
-        const teamName =
-          teams.find((t) => t.teamId === latestPick.teamId)?.teamName ?? "未知队伍";
-        setNotification({
-          teamName,
-          playerName: latestPick.steamName,
-          position: positionLabel(latestPick.steamName), // fallback; position not in completedPicks
+        showPickNotification({
+          steamName: latestPick.steamName,
+          team_id: latestPick.teamId,
         });
-        setNotificationVisible(true);
-
-        if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-        fadeTimerRef.current = setTimeout(() => {
-          setNotificationVisible(false);
-          setTimeout(() => setNotification(null), 300);
-        }, 3000);
       }
     }
     prevPickCountRef.current = completedPicks.length;
-  }, [completedPicks, teams]);
+  }, [completedPicks, showPickNotification]);
 
   // 确定当前选秀队
   const pickingTeamId = isLive ? state?.currentTeamId ?? null : null;

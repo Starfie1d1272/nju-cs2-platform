@@ -22,6 +22,8 @@ export interface DraftTeamSlot {
   members: {
     registrationId: string;
     steamName: string;
+    perfectName: string | null;
+    displayName: string | null;
     primaryPosition: string;
     pickRound: number;
     pickNumber: number;
@@ -59,6 +61,7 @@ export interface DraftFullData {
     teamId: string;
     registrationId: string;
     steamName: string;
+    primaryPosition: string;
     round: number;
     pickNumber: number;
     autoPicked: boolean;
@@ -93,6 +96,8 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
             registrationId: teamMembers.registrationId,
             isStarter: teamMembers.isStarter,
             steamName: users.steamName,
+            perfectName: users.perfectName,
+            displayName: users.displayName,
             primaryPosition: seasonRegistrations.primaryPosition,
           })
           .from(teamMembers)
@@ -197,6 +202,8 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
         return {
           registrationId: m.registrationId,
           steamName: m.steamName ?? "未知选手",
+          perfectName: m.perfectName ?? null,
+          displayName: m.displayName ?? null,
           primaryPosition: m.primaryPosition,
           pickRound: pick?.round ?? 0,
           pickNumber: pick?.pickNumber ?? 0,
@@ -241,6 +248,7 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
       teamId: p.teamId,
       registrationId: p.registrationId,
       steamName: p.steamName ?? "未知选手",
+      primaryPosition: p.primaryPosition,
       round: p.round,
       pickNumber: p.pickNumber,
       autoPicked: p.autoPicked,

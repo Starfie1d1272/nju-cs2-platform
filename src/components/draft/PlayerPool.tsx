@@ -4,28 +4,15 @@ import React from "react";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { DraftPlayerRow } from "@/lib/draft/data";
-import { POSITION_LABELS, RANK_ORDER } from "@/lib/validators/registration";
+import { positionLabel } from "@/lib/validators/registration";
 import { MapPreferenceChips } from "@/components/rivalhub/map-preference-chips";
 import { PosChip } from "@/components/rivalhub/pos-chip";
 import { getDisplayName } from "@/lib/utils/display-name";
+import { sortByRank } from "@/lib/utils/rank";
 
 interface PlayerPoolProps {
   players: DraftPlayerRow[];
   seasonPositions: string[];
-}
-
-function positionLabel(position: string): string {
-  return POSITION_LABELS[position as keyof typeof POSITION_LABELS]?.en ?? position;
-}
-
-/** Sort players by peakRank (higher index = higher rank = first) then peakRating DESC */
-function sortByRank(players: DraftPlayerRow[]): DraftPlayerRow[] {
-  return [...players].sort((a, b) => {
-    const rankA = RANK_ORDER.indexOf(a.peakRank as (typeof RANK_ORDER)[number]);
-    const rankB = RANK_ORDER.indexOf(b.peakRank as (typeof RANK_ORDER)[number]);
-    if (rankA !== rankB) return rankB - rankA;
-    return b.peakRating - a.peakRating;
-  });
 }
 
 export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons } from "@/db/schema";
+import { seasons, seasonRegistrations } from "@/db/schema";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { SeasonNav } from "@/components/layout/season-nav";
 import { hexToRgbString } from "@/lib/utils/color";
@@ -33,6 +33,18 @@ export default async function SeasonLayout({ children, params }: SeasonLayoutPro
 
   if (!season) notFound();
 
+  // 查询已通过审核的报名数，用于决定是否显示「选手」导航项
+  const [approvedResult] = await db
+    .select({ cnt: count() })
+    .from(seasonRegistrations)
+    .where(
+      and(
+        eq(seasonRegistrations.seasonId, season.id),
+        eq(seasonRegistrations.status, "approved"),
+      ),
+    );
+  const hasPlayers = (approvedResult?.cnt ?? 0) > 0;
+
   const themeColor = season.themeColor ?? "#f97316";
 
   return (
@@ -57,6 +69,7 @@ export default async function SeasonLayout({ children, params }: SeasonLayoutPro
         hasDraft={season.hasDraft}
         hasMatches={normalizeStagePlan(season.stagePlan).length > 0}
         hasStats={showStats(season)}
+        hasPlayers={hasPlayers}
       />
       {children}
     </div>

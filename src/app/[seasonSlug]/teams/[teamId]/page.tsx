@@ -56,11 +56,16 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       steamName: users.steamName,
       perfectName: users.perfectName,
       email: users.email,
+      qq: users.qq,
     })
     .from(teamMembers)
     .innerJoin(seasonRegistrations, eq(teamMembers.registrationId, seasonRegistrations.id))
     .innerJoin(users, eq(seasonRegistrations.userId, users.id))
     .where(eq(teamMembers.teamId, teamId));
+
+  const isTeamMember = currentUserRegistration
+    ? roster.some((r) => r.registrationId === currentUserRegistration.id)
+    : false;
 
   const starters = roster
     .filter((r) => r.isStarter)
@@ -294,6 +299,28 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
           </div>
         </Panel>
       </section>
+
+      {/* 队内联系方式（仅同队成员可见） */}
+      {isTeamMember && (
+        <section>
+          <Panel label="队内联系方式" pad={20}>
+            <p className="text-xs text-[var(--color-fg-mid)] mb-4">仅同队成员可见</p>
+            <div className="space-y-3">
+              {roster.map((p) => (
+                <div key={p.registrationId} className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-[var(--color-fg)]">
+                    {getDisplayName(p)}
+                  </span>
+                  <div className="flex items-center gap-4 text-sm text-[var(--color-fg-mid)]">
+                    {p.qq && <span>QQ: {p.qq}</span>}
+                    {p.email && <span>邮箱: {p.email}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </section>
+      )}
 
       {/* 队伍数据 */}
       {teamAvgRating && (

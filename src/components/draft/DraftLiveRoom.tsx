@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DRAFT_TOTAL_ROUNDS } from "@/types/draft";
 import { createBrowserClient } from "@/lib/auth/supabase";
+import { POSITION_LABELS } from "@/lib/validators/registration";
 import { DraftCountdown } from "./DraftCountdown";
 import { TeamDraftGrid } from "./TeamDraftGrid";
 import { PlayerPool } from "./PlayerPool";
@@ -14,6 +15,16 @@ interface DraftLiveRoomProps {
   seasonId: string;
   seasonSlug: string;
   seasonPositions: string[];
+}
+
+function positionLabel(position: string): string {
+  return POSITION_LABELS[position as keyof typeof POSITION_LABELS]?.en ?? position;
+}
+
+interface PickNotification {
+  teamName: string;
+  playerName: string;
+  position: string;
 }
 
 export function DraftLiveRoom({
@@ -27,6 +38,40 @@ export function DraftLiveRoom({
     data;
 
   const isLive = state?.isActive ?? false;
+
+  // Pick notification state
+  const [notification, setNotification] = useState<PickNotification | null>(null);
+  const [notificationVisible, setNotificationVisible] = useState(false);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showPickNotification = useCallback(
+    (payload: { steamName?: string; team_id?: string; primary_position?: string }) => {
+      const teamName =
+        teams.find((t) => t.teamId === payload.team_id)?.teamName ?? "未知队伍";
+      const playerName = payload.steamName ?? "未知选手";
+      const position = payload.primary_position
+        ? positionLabel(payload.primary_position)
+        : "";
+
+      setNotification({ teamName, playerName, position });
+      setNotificationVisible(true);
+
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = setTimeout(() => {
+        setNotificationVisible(false);
+        // Remove from DOM after fade-out transition
+        setTimeout(() => setNotification(null), 300);
+      }, 3000);
+    },
+    [teams],
+  );
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
+  }, []);
 
   // 轮询兜底（10 秒刷新）
   useEffect(() => {
@@ -57,14 +102,50 @@ export function DraftLiveRoom({
           table: "draft_picks",
           filter: `season_id=eq.${seasonId}`,
         },
-        () => router.refresh(),
+        (payload) => {
+          // Show notification for new pick
+          const newRow = payload.new as Record<string, unknown> | undefined;
+          if (newRow) {
+            showPickNotification({
+              steamName: undefined, // Will be resolved after refresh
+              team_id: newRow.team_id as string | undefined,
+              primary_position: undefined,
+            });
+          }
+          router.refresh();
+        },
       )
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [router, seasonId]);
+  }, [router, seasonId, showPickNotification]);
+
+  // Watch for new picks via completedPicks changes
+  const prevPickCountRef = useRef(completedPicks.length);
+  useEffect(() => {
+    if (completedPicks.length > prevPickCountRef.current) {
+      const latestPick = completedPicks[completedPicks.length - 1];
+      if (latestPick) {
+        const teamName =
+          teams.find((t) => t.teamId === latestPick.teamId)?.teamName ?? "未知队伍";
+        setNotification({
+          teamName,
+          playerName: latestPick.steamName,
+          position: positionLabel(latestPick.steamName), // fallback; position not in completedPicks
+        });
+        setNotificationVisible(true);
+
+        if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+        fadeTimerRef.current = setTimeout(() => {
+          setNotificationVisible(false);
+          setTimeout(() => setNotification(null), 300);
+        }, 3000);
+      }
+    }
+    prevPickCountRef.current = completedPicks.length;
+  }, [completedPicks, teams]);
 
   // 确定当前选秀队
   const pickingTeamId = isLive ? state?.currentTeamId ?? null : null;
@@ -72,6 +153,22 @@ export function DraftLiveRoom({
 
   return (
     <div className="space-y-6">
+      {/* Pick notification banner */}
+      {notification && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 py-3 text-sm font-medium text-white transition-opacity duration-300"
+          style={{
+            background: "var(--color-accent)",
+            opacity: notificationVisible ? 1 : 0,
+            pointerEvents: notificationVisible ? "auto" : "none",
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          {"🎯"} {notification.teamName} 选择了 {notification.playerName}
+        </div>
+      )}
+
       {/* 顶部状态栏 */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)]">
         <div className="flex items-center gap-4 flex-wrap">
@@ -169,7 +266,7 @@ export function DraftLiveRoom({
                     {pick.steamName}
                   </span>
                   {pick.autoPicked && (
-                    <span className="text-amber-400 ml-0.5">⚡</span>
+                    <span className="text-amber-400 ml-0.5">{"⚡"}</span>
                   )}
                 </div>
               );

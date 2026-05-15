@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { eq, and, asc } from "drizzle-orm";
 import Link from "next/link";
@@ -8,16 +9,28 @@ import { POSITION_LABELS } from "@/lib/validators/registration";
 import { getDisplayName } from "@/lib/utils/display-name";
 import type { Metadata } from "next";
 
+/** 位置缩写映射，避免 slice(0,1) 对 igl/awper 等位置产生错误缩写 */
+const POS_ABBR: Record<string, string> = {
+  opener: "O",
+  closer: "C",
+  anchor: "A",
+  igl: "I",
+  awper: "W",
+};
+
 interface PlayersPageProps {
   params: Promise<{ seasonSlug: string }>;
   searchParams: Promise<{ position?: string }>;
 }
 
+/** 用 React.cache() 去重，generateMetadata 和页面组件共享同一次查询 */
+const getSeason = cache(async (slug: string) => {
+  return db.query.seasons.findFirst({ where: eq(seasons.slug, slug) });
+});
+
 export async function generateMetadata({ params }: PlayersPageProps): Promise<Metadata> {
   const { seasonSlug } = await params;
-  const season = await db.query.seasons.findFirst({
-    where: eq(seasons.slug, seasonSlug),
-  });
+  const season = await getSeason(seasonSlug);
   return {
     title: season ? `${season.name} · 选手名单` : "选手名单",
   };
@@ -27,9 +40,7 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
   const { seasonSlug } = await params;
   const { position = "" } = await searchParams;
 
-  const season = await db.query.seasons.findFirst({
-    where: eq(seasons.slug, seasonSlug),
-  });
+  const season = await getSeason(seasonSlug);
   if (!season) notFound();
 
   const whereConditions = position
@@ -126,7 +137,7 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
                     <span className="font-semibold text-[var(--color-fg)] truncate text-base">
                       {displayName}
                     </span>
-                    <PosChip pos={reg.primaryPosition.slice(0, 1).toUpperCase() as "O" | "C" | "A"} small />
+                    <PosChip pos={(POS_ABBR[reg.primaryPosition] ?? reg.primaryPosition.slice(0, 1).toUpperCase()) as "O" | "C" | "A"} small />
                   </div>
                   <div className="space-y-1 text-sm text-[var(--color-fg-mid)]">
                     <div className="flex justify-between">

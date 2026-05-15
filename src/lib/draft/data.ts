@@ -33,6 +33,9 @@ export interface DraftPlayerRow {
   registrationId: string;
   userId: string;
   steamName: string;
+  perfectName: string | null;
+  displayName: string | null;
+  email: string | null;
   primaryPosition: string;
   secondaryPosition: string;
   peakRank: string;
@@ -134,6 +137,9 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
       registrationId: seasonRegistrations.id,
       userId: seasonRegistrations.userId,
       steamName: users.steamName,
+      perfectName: users.perfectName,
+      displayName: users.displayName,
+      email: users.email,
       primaryPosition: seasonRegistrations.primaryPosition,
       secondaryPosition: seasonRegistrations.secondaryPosition,
       peakRank: seasonRegistrations.peakRank,
@@ -156,6 +162,9 @@ export async function getDraftData(seasonId: string): Promise<DraftFullData> {
       registrationId: r.registrationId,
       userId: r.userId,
       steamName: r.steamName ?? "未知选手",
+      perfectName: r.perfectName ?? null,
+      displayName: r.displayName ?? null,
+      email: r.email ?? null,
       primaryPosition: r.primaryPosition,
       secondaryPosition: r.secondaryPosition,
       peakRank: r.peakRank,

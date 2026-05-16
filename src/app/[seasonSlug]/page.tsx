@@ -318,7 +318,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       </div>
 
       {/* Stat 四格 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="TEAMS" value={teamCountRow?.value ?? 0} />
         <Stat label="PLAYERS" value={approvedCountRow?.value ?? 0} />
         <Stat

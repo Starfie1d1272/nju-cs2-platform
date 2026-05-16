@@ -42,6 +42,15 @@ export function DraftLiveRoom({
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce refresh to avoid burst DB pressure from Realtime + polling overlap
+  const lastRefreshRef = useRef(0);
+  const debouncedRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRefreshRef.current < 3000) return;
+    lastRefreshRef.current = now;
+    router.refresh();
+  }, [router]);
+
   const showPickNotification = useCallback(
     (payload: { steamName?: string; displayName?: string | null; perfectName?: string | null; team_id?: string }) => {
       const teamName =
@@ -73,9 +82,9 @@ export function DraftLiveRoom({
   // 轮询兜底（10 秒刷新）—— 仅直播模式
   useEffect(() => {
     if (isReadonly) return;
-    const timer = window.setInterval(() => router.refresh(), 10_000);
+    const timer = window.setInterval(debouncedRefresh, 10_000);
     return () => window.clearInterval(timer);
-  }, [router, isReadonly]);
+  }, [debouncedRefresh, isReadonly]);
 
   // Realtime 订阅 —— 仅直播模式
   useEffect(() => {
@@ -91,7 +100,7 @@ export function DraftLiveRoom({
           table: "draft_state",
           filter: `season_id=eq.${seasonId}`,
         },
-        () => router.refresh(),
+        () => debouncedRefresh(),
       )
       .on(
         "postgres_changes",
@@ -102,7 +111,7 @@ export function DraftLiveRoom({
           filter: `season_id=eq.${seasonId}`,
         },
         () => {
-          router.refresh();
+          debouncedRefresh();
         },
       )
       .subscribe();
@@ -110,7 +119,7 @@ export function DraftLiveRoom({
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [router, seasonId, isReadonly]);
+  }, [debouncedRefresh, seasonId, isReadonly]);
 
   // Watch for new picks via completedPicks changes
   const prevPickCountRef = useRef(completedPicks.length);

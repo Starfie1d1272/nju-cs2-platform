@@ -70,6 +70,14 @@ export default async function DraftPage({ params }: DraftPageProps) {
             以下为只读预览，包含已报名选手与队伍信息。选秀开始后页面会自动切换为直播模式。
           </p>
         </div>
+        <div className="mb-4">
+          <a
+            href={`/${seasonSlug}/draft/captain`}
+            className="inline-flex items-center gap-2 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent)]/10 px-4 py-2 text-sm font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
+          >
+            进入队长选人面板 →
+          </a>
+        </div>
 
         <DraftLiveRoom
           data={data}
@@ -87,6 +95,17 @@ export default async function DraftPage({ params }: DraftPageProps) {
       <Marker sub="实时更新选秀进度，队伍阵容与选手池自动刷新。">
         选秀直播间 · {season.name}
       </Marker>
+
+      {data.state.isActive && (
+        <div className="mt-4">
+          <a
+            href={`/${seasonSlug}/draft/captain`}
+            className="inline-flex items-center gap-2 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent)]/10 px-4 py-2 text-sm font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"
+          >
+            进入队长选人面板 →
+          </a>
+        </div>
+      )}
 
       {data.state.isActive && (
         <Panel pad={0}>

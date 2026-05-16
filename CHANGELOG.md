@@ -5,6 +5,12 @@ All notable changes to RivalHub are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2026-05-16
+
+### Fixed
+- **选秀预览模式时机修正**：从 registration/voting 阶段改为 drafting 未激活时展示（此时队伍已组建），非 drafting 恢复简单提示
+- **PLAYER_INFO_FIELDS 导入异常**：`as const` 常量从 `"use client"` 文件移至独立模块，修复 Server Component 中 `map is not a function` 运行时错误
+
 ## [1.10.0] - 2026-05-16
 
 ### Added
@@ -279,6 +285,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions Cron（选秀超时 + 报名截止自动推进）
 - Vercel + Supabase 生产部署
 
+[1.10.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.10.0...v1.10.1
 [1.10.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.7.4...v1.8.0

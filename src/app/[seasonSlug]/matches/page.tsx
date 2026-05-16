@@ -13,6 +13,8 @@ import { StandingsTable } from "@/components/matches/StandingsTable";
 import { SwissBracket } from "@/components/matches/SwissBracket";
 import { getSwissViewData } from "@/lib/swiss/data";
 import { getFirstStageOfType, normalizeStagePlan } from "@/types/season";
+import { checkAdminSession } from "@/lib/auth/session";
+import { AdminShortcut } from "@/components/layout/AdminShortcut";
 import type { Database } from "brackets-manager";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +28,11 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
   const { seasonSlug } = await params;
   const { team: filterTeamId } = await searchParams;
 
-  const season = await db.query.seasons.findFirst({
-    where: eq(seasons.slug, seasonSlug),
-  });
+  const [seasonResult, adminSession] = await Promise.all([
+    db.query.seasons.findFirst({ where: eq(seasons.slug, seasonSlug) }),
+    checkAdminSession(),
+  ]);
+  const season = seasonResult;
   if (!season) notFound();
 
   const [allTeams, allMatches] = await Promise.all([
@@ -120,7 +124,12 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
-      <Marker sub={season.name}>赛程总览</Marker>
+      <div className="flex items-center justify-between">
+        <Marker sub={season.name}>赛程总览</Marker>
+        {adminSession && (
+          <AdminShortcut href={`/admin/${seasonSlug}/matches`} />
+        )}
+      </div>
 
       {allTeams.length > 0 && (
         <MatchTeamFilter teams={allTeams.map((t) => ({ id: t.id, name: t.name }))} />
@@ -128,9 +137,9 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
 
       <Panel pad={24}>
       <Tabs defaultValue={hasQualifier ? qualifierKey : playoffKey} className="w-full">
-        <TabsList className="mb-6">
-          {qualifierStage && <TabsTrigger value={qualifierKey}>{qualifierStage.name}</TabsTrigger>}
-          {playoffStage && <TabsTrigger value={playoffKey}>{playoffStage.name}</TabsTrigger>}
+        <TabsList className="mb-6 bg-[var(--color-panel)] border border-[var(--color-border)] p-1">
+          {qualifierStage && <TabsTrigger value={qualifierKey} className="data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">{qualifierStage.name}</TabsTrigger>}
+          {playoffStage && <TabsTrigger value={playoffKey} className="data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">{playoffStage.name}</TabsTrigger>}
         </TabsList>
 
         {/* ── 排位赛面板 ─────────────────────────────────────────── */}

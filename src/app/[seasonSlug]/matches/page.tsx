@@ -8,6 +8,7 @@ import { Panel, Marker } from "@/components/rivalhub";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BracketView } from "@/components/matches/BracketView";
 import { MatchCard } from "@/components/matches/MatchCard";
+import { MatchTeamFilter } from "@/components/matches/MatchTeamFilter";
 import { StandingsTable } from "@/components/matches/StandingsTable";
 import { SwissBracket } from "@/components/matches/SwissBracket";
 import { getSwissViewData } from "@/lib/swiss/data";
@@ -18,10 +19,12 @@ export const dynamic = "force-dynamic";
 
 interface MatchesPageProps {
   params: Promise<{ seasonSlug: string }>;
+  searchParams: Promise<{ team?: string }>;
 }
 
-export default async function MatchesPage({ params }: MatchesPageProps) {
+export default async function MatchesPage({ params, searchParams }: MatchesPageProps) {
   const { seasonSlug } = await params;
+  const { team: filterTeamId } = await searchParams;
 
   const season = await db.query.seasons.findFirst({
     where: eq(seasons.slug, seasonSlug),
@@ -46,11 +49,17 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
   const qualifierKey = qualifierStage?.key ?? "qualifier";
   const playoffKey = playoffStage?.key ?? "playoff";
 
-  const qualifierMatches = allMatches.filter((m) => m.stage === qualifierKey);
-  const playoffMatches = allMatches.filter((m) => m.stage === playoffKey);
+  const qualifierMatchesAll = allMatches.filter((m) => m.stage === qualifierKey);
+  const playoffMatchesAll = allMatches.filter((m) => m.stage === playoffKey);
 
-  // 积分榜（仅当有 round_robin 排位赛时计算）
-  const finishedQualifierMatches = qualifierMatches.filter((m) => m.status === "finished");
+  // 按队伍筛选
+  const matchFilter = (m: { teamAId: string; teamBId: string }) =>
+    !filterTeamId || m.teamAId === filterTeamId || m.teamBId === filterTeamId;
+  const qualifierMatches = qualifierMatchesAll.filter(matchFilter);
+  const playoffMatches = playoffMatchesAll.filter(matchFilter);
+
+  // 积分榜（仅当有 round_robin 排位赛时计算，使用未筛选的全部排位赛）
+  const finishedQualifierMatches = qualifierMatchesAll.filter((m) => m.status === "finished");
   const standings = qualifierStage && qualifierStage.type !== "swiss"
     ? calculateStandings(allTeams, finishedQualifierMatches)
     : [];
@@ -61,8 +70,8 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
     : null;
 
   const allQualifierFinished =
-    qualifierMatches.length > 0 &&
-    qualifierMatches.every((m) => m.status === "finished" || m.status === "cancelled");
+    qualifierMatchesAll.length > 0 &&
+    qualifierMatchesAll.every((m) => m.status === "finished" || m.status === "cancelled");
 
   // Bracket 数据（用于正赛 bracket 视图）
   const fullBracketData = serializeBracket(
@@ -112,6 +121,10 @@ export default async function MatchesPage({ params }: MatchesPageProps) {
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
       <Marker sub={season.name}>赛程总览</Marker>
+
+      {allTeams.length > 0 && (
+        <MatchTeamFilter teams={allTeams.map((t) => ({ id: t.id, name: t.name }))} />
+      )}
 
       <Panel pad={24}>
       <Tabs defaultValue={hasQualifier ? qualifierKey : playoffKey} className="w-full">

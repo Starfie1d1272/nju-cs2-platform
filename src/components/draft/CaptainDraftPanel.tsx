@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronDown, ChevronRight, Clock, Loader2 } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Clock, Loader2, Search, Zap } from "lucide-react";
 import { pickPlayer } from "@/actions/draft";
 import { Button } from "@/components/ui/button";
 import { DraftCountdown } from "./DraftCountdown";
@@ -14,6 +14,7 @@ import { PosChip } from "@/components/rivalhub/pos-chip";
 import { PlayerInfoPopover } from "./PlayerInfoPopover";
 import { getDisplayName } from "@/lib/utils/display-name";
 import { sortByRank } from "@/lib/utils/rank";
+import { selectAutoPickCandidate } from "@/lib/draft/auto-pick";
 import type { DraftPlayerRow } from "@/lib/draft/data";
 
 const FILTER_ALL = "all";
@@ -54,6 +55,7 @@ export function CaptainDraftPanel({
 }: CaptainDraftPanelProps) {
   const router = useRouter();
   const [filter, setFilter] = useState(FILTER_ALL);
+  const [search, setSearch] = useState("");
   const [pendingRegistrationId, setPendingRegistrationId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [rosterOpen, setRosterOpen] = useState(false);
@@ -77,12 +79,27 @@ export function CaptainDraftPanel({
   }, [grouped, seasonPositions]);
 
   const sortedPlayers = useMemo(() => {
-    const filtered =
+    let filtered =
       filter === FILTER_ALL
         ? players
         : players.filter((player) => player.primaryPosition === filter);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      filtered = filtered.filter((player) => {
+        const name = getDisplayName(player).toLowerCase();
+        return name.includes(q);
+      });
+    }
     return sortByRank(filtered);
-  }, [players, filter]);
+  }, [players, filter, search]);
+
+  // Auto-pick candidate hint (resolve full player for display name)
+  const autoPickCandidate = useMemo(() => {
+    if (!isDraftActive || !isCurrentCaptainTurn) return null;
+    const candidate = selectAutoPickCandidate(players, positionCounts);
+    if (!candidate) return null;
+    return players.find((p) => p.registrationId === candidate.registrationId) ?? null;
+  }, [players, positionCounts, isDraftActive, isCurrentCaptainTurn]);
 
   const canSubmit = isDraftActive && isCurrentCaptainTurn && pendingRegistrationId === null;
 
@@ -202,31 +219,59 @@ export function CaptainDraftPanel({
       )}
 
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={filter === FILTER_ALL ? "default" : "secondary"}
-            onClick={() => setFilter(FILTER_ALL)}
-          >
-            全部 {players.length}
-          </Button>
-          {positionOptions.map((position) => {
-            const count = grouped.get(position)?.length ?? 0;
-            const teamCount = positionCounts[position] ?? 0;
-            return (
-              <Button
-                key={position}
-                type="button"
-                size="sm"
-                variant={filter === position ? "default" : "secondary"}
-                disabled={count === 0}
-                onClick={() => setFilter(filter === position ? FILTER_ALL : position)}
-              >
-                {positionLabel(position)} {teamCount}/2 · {count}
-              </Button>
-            );
-          })}
+        {/* Auto-pick candidate hint */}
+        {!isReadonly && autoPickCandidate && isCurrentCaptainTurn && (
+          <div className="mb-4 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <div className="flex items-center gap-2">
+              <Zap className="size-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                超时自动选人：<strong>{getDisplayName(autoPickCandidate)}</strong>（{positionLabel(autoPickCandidate.primaryPosition)}，{autoPickCandidate.peakRank}）
+              </span>
+            </div>
+            <p className="mt-1.5 pl-5.5 text-[10px] text-amber-400/70 leading-relaxed">
+              规则：历史最高段位 → 巅峰Rating → 当前段位 → 当前Rating；优先填空位，同位置不超过2人
+            </p>
+          </div>
+        )}
+
+        {/* Search + filters */}
+        <div className="mb-4 space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[var(--color-fg-dim)]" aria-hidden="true" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索选手名..."
+              className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-panel-hi)] py-1.5 pl-8 pr-3 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-fg-dim)] focus:border-[var(--color-accent)] focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={filter === FILTER_ALL ? "default" : "secondary"}
+              onClick={() => setFilter(FILTER_ALL)}
+            >
+              全部 {players.length}
+            </Button>
+            {positionOptions.map((position) => {
+              const count = grouped.get(position)?.length ?? 0;
+              const teamCount = positionCounts[position] ?? 0;
+              return (
+                <Button
+                  key={position}
+                  type="button"
+                  size="sm"
+                  variant={filter === position ? "default" : "secondary"}
+                  disabled={count === 0}
+                  onClick={() => setFilter(filter === position ? FILTER_ALL : position)}
+                >
+                  {positionLabel(position)} {teamCount}/2 · {count}
+                </Button>
+              );
+            })}
+          </div>
         </div>
 
         {sortedPlayers.length === 0 ? (
@@ -250,18 +295,35 @@ export function CaptainDraftPanel({
                   }`}
                 >
                   <div className="hidden md:flex items-center gap-3">
-                    {/* Rank badge */}
-                    <span
-                      className="inline-flex shrink-0 items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold"
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        color: "var(--color-fg)",
-                        borderColor: "var(--color-border)",
-                        background: "var(--color-panel)",
-                      }}
-                    >
-                      {player.peakRank}
-                    </span>
+                    {/* Rank badges: peak + current */}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span
+                        className="inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold"
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          color: "var(--color-fg)",
+                          borderColor: "var(--color-border)",
+                          background: "var(--color-panel)",
+                        }}
+                        title="历史最高段位"
+                      >
+                        {player.peakRank}
+                      </span>
+                      {player.currentRank && player.currentRank !== player.peakRank && (
+                        <span
+                          className="inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-medium opacity-70"
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            color: "var(--color-fg-mid)",
+                            borderColor: "var(--color-border)",
+                            background: "var(--color-panel)",
+                          }}
+                          title="当前赛季段位"
+                        >
+                          {player.currentRank}
+                        </span>
+                      )}
+                    </div>
 
                     {/* Name (clickable) */}
                     <Link
@@ -279,12 +341,15 @@ export function CaptainDraftPanel({
                       副选 {positionLabel(player.secondaryPosition)}
                     </span>
 
-                    {/* Rating */}
+                    {/* Rating: peak / current */}
                     <span
                       className="shrink-0 text-xs tabular-nums text-[var(--color-fg-mid)]"
                       style={{ fontFamily: "var(--font-mono)" }}
+                      title={`巅峰 ${player.peakRating.toFixed(0)} / 当前 ${player.currentRating.toFixed(0)}`}
                     >
-                      {player.peakRating.toFixed(2)}
+                      {player.peakRating.toFixed(0)}{player.currentRating !== player.peakRating && (
+                        <span className="opacity-60"> / {player.currentRating.toFixed(0)}</span>
+                      )}
                     </span>
 
                     {/* Map preferences */}
@@ -320,17 +385,32 @@ export function CaptainDraftPanel({
 
                   <div className="md:hidden space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span
-                        className="inline-flex shrink-0 items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold"
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          color: "var(--color-fg)",
-                          borderColor: "var(--color-border)",
-                          background: "var(--color-panel)",
-                        }}
-                      >
-                        {player.peakRank}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <span
+                          className="inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold"
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            color: "var(--color-fg)",
+                            borderColor: "var(--color-border)",
+                            background: "var(--color-panel)",
+                          }}
+                        >
+                          {player.peakRank}
+                        </span>
+                        {player.currentRank && player.currentRank !== player.peakRank && (
+                          <span
+                            className="inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-medium opacity-70"
+                            style={{
+                              fontFamily: "var(--font-mono)",
+                              color: "var(--color-fg-mid)",
+                              borderColor: "var(--color-border)",
+                              background: "var(--color-panel)",
+                            }}
+                          >
+                            {player.currentRank}
+                          </span>
+                        )}
+                      </div>
                       <Link
                         href={`/players/${player.userId}`}
                         className="min-w-0 truncate text-sm font-medium text-[var(--color-fg)] hover:text-[var(--color-accent)]"
@@ -347,8 +427,11 @@ export function CaptainDraftPanel({
                         <span
                           className="shrink-0 text-xs tabular-nums text-[var(--color-fg-mid)]"
                           style={{ fontFamily: "var(--font-mono)" }}
+                          title={`巅峰 ${player.peakRating.toFixed(0)} / 当前 ${player.currentRating.toFixed(0)}`}
                         >
-                          {player.peakRating.toFixed(2)}
+                          {player.peakRating.toFixed(0)}{player.currentRating !== player.peakRating && (
+                            <span className="opacity-60"> / {player.currentRating.toFixed(0)}</span>
+                          )}
                         </span>
                         <div className="min-w-0">
                           <MapPreferenceChips preferences={player.mapPreferences} compact minLevel="playable" />

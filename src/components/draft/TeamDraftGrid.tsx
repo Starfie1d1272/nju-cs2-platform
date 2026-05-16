@@ -2,15 +2,8 @@
 
 import { useState } from "react";
 import { getDisplayName } from "@/lib/utils/display-name";
+import { positionLabel } from "@/lib/validators/registration";
 import type { DraftTeamSlot } from "@/lib/draft/data";
-
-const POS_SHORT: Record<string, string> = {
-  igl: "IGL",
-  awper: "AWP",
-  opener: "突破",
-  closer: "自由",
-  anchor: "主防",
-};
 
 interface TeamDraftGridProps {
   teams: DraftTeamSlot[];
@@ -93,8 +86,7 @@ export function TeamDraftGrid({
                       {getDisplayName(team.captain)}
                     </span>
                     <span className="font-mono text-[10px] text-[var(--color-fg-dim)] uppercase">
-                      {POS_SHORT[team.captain.primaryPosition] ??
-                        team.captain.primaryPosition}
+                      {positionLabel(team.captain.primaryPosition)}
                     </span>
                   </div>
                   {/* 已选队员 */}
@@ -110,7 +102,7 @@ export function TeamDraftGrid({
                         )}
                       </span>
                       <span className="font-mono text-[10px] text-[var(--color-fg-dim)] uppercase">
-                        {POS_SHORT[m.primaryPosition] ?? m.primaryPosition}
+                        {positionLabel(m.primaryPosition)}
                       </span>
                     </div>
                   ))}
@@ -173,8 +165,7 @@ export function TeamDraftGrid({
                   {getDisplayName(team.captain)}
                 </span>
                 <span className="text-[var(--color-fg-dim)] ml-1">
-                  {POS_SHORT[team.captain.primaryPosition] ??
-                    team.captain.primaryPosition}
+                  {positionLabel(team.captain.primaryPosition)}
                 </span>
               </div>
 
@@ -186,7 +177,7 @@ export function TeamDraftGrid({
                   </span>
                   <span className="text-[var(--color-fg)]">{getDisplayName(m)}</span>
                   <span className="text-[var(--color-fg-dim)] ml-1">
-                    {POS_SHORT[m.primaryPosition] ?? m.primaryPosition}
+                    {positionLabel(m.primaryPosition)}
                   </span>
                   {m.autoPicked && (
                     <span className="text-amber-400 ml-0.5">⚡</span>

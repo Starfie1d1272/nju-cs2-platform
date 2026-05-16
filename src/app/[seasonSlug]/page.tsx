@@ -259,7 +259,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
           <Marker sub="已安排的比赛">近期对决</Marker>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {upcomingMatches.map((match) => (
-              <Link key={match.id} href={`/${seasonSlug}/matches` as never}>
+              <Link key={match.id} href={`/${seasonSlug}/matches/${match.id}` as never}>
                 <Panel className="transition-colors hover:border-[var(--color-border-hi)]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 min-w-0 flex-1">

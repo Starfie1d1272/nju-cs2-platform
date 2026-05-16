@@ -11,6 +11,7 @@ import { revalidateMatchPaths } from "@/lib/revalidation";
 import { getTeamIdForCaptain } from "./_shared";
 
 const TIME_CONFIRMATION_BUFFER_HOURS = 24;
+const PROPOSAL_AUTO_ACCEPT_HOURS = 24;
 
 export interface MatchTimeAutoAwardCronSummary {
   processed: number;
@@ -220,11 +221,16 @@ export async function forceSetMatchTime(
 }
 
 /**
- * 协商截止后自动采用最早创建的 pending 时间提议。
+ * 协商截止后自动采用最早创建的 pending 时间提议；
+ * 同时处理单条提议超过 24h 未回应自动采纳。
  */
 export async function runMatchTimeAutoAwardCron(
   now = new Date(),
 ): Promise<MatchTimeAutoAwardCronSummary> {
+  // 1. 单条提议超时自动采纳（24h 未回应）
+  const proposalTimeoutResult = await autoAcceptExpiredProposals(now);
+
+  // 2. 协商整体截止裁定（completionDeadline - 24h）
   const cutoffThreshold = new Date(
     now.getTime() + TIME_CONFIRMATION_BUFFER_HOURS * 60 * 60 * 1000,
   );
@@ -245,9 +251,9 @@ export async function runMatchTimeAutoAwardCron(
     }),
   );
 
-  let awarded = 0;
-  let skipped = 0;
-  let failed = 0;
+  let awarded = proposalTimeoutResult.awarded;
+  let skipped = proposalTimeoutResult.skipped;
+  let failed = proposalTimeoutResult.failed;
   for (const item of settled) {
     if (item.status === "rejected") {
       failed += 1;
@@ -262,7 +268,12 @@ export async function runMatchTimeAutoAwardCron(
     }
   }
 
-  return { processed: candidateMatches.length, awarded, skipped, failed };
+  return {
+    processed: candidateMatches.length + proposalTimeoutResult.processed,
+    awarded,
+    skipped,
+    failed,
+  };
 }
 
 /**
@@ -272,6 +283,115 @@ export async function getTimeProposals(matchId: string) {
   return db.query.matchTimeProposals.findMany({
     where: eq(matchTimeProposals.matchId, matchId),
     orderBy: (tps, { desc }) => [desc(tps.createdAt)],
+  });
+}
+
+async function autoAcceptExpiredProposals(
+  now: Date,
+): Promise<{ processed: number; awarded: number; skipped: number; failed: number }> {
+  const expiredBefore = new Date(
+    now.getTime() - PROPOSAL_AUTO_ACCEPT_HOURS * 60 * 60 * 1000,
+  );
+
+  const expiredProposals = await db.query.matchTimeProposals.findMany({
+    where: and(
+      eq(matchTimeProposals.status, "pending"),
+      lte(matchTimeProposals.createdAt, expiredBefore),
+    ),
+  });
+
+  let awarded = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const proposal of expiredProposals) {
+    try {
+      const accepted = await autoAcceptSingleProposal(proposal.id, proposal.matchId, now);
+      if (accepted) {
+        awarded += 1;
+      } else {
+        skipped += 1;
+      }
+    } catch {
+      failed += 1;
+    }
+  }
+
+  return { processed: expiredProposals.length, awarded, skipped, failed };
+}
+
+async function autoAcceptSingleProposal(
+  proposalId: string,
+  matchId: string,
+  now: Date,
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [match] = await tx.select().from(matches).where(eq(matches.id, matchId)).for("update");
+    if (!match || match.status !== "scheduled") {
+      return false;
+    }
+    // 如果比赛时间已经确定了（被其他提议抢先），跳过
+    if (match.scheduledAt) {
+      await tx
+        .update(matchTimeProposals)
+        .set({ status: "expired", updatedAt: now })
+        .where(eq(matchTimeProposals.id, proposalId));
+      return false;
+    }
+
+    const proposal = await tx.query.matchTimeProposals.findFirst({
+      where: and(
+        eq(matchTimeProposals.id, proposalId),
+        eq(matchTimeProposals.status, "pending"),
+      ),
+    });
+    if (!proposal) return false;
+
+    // 接受该提议
+    await tx
+      .update(matchTimeProposals)
+      .set({ status: "accepted", responseAt: now, updatedAt: now })
+      .where(eq(matchTimeProposals.id, proposalId));
+
+    // 过期同场其他 pending 提议
+    await tx
+      .update(matchTimeProposals)
+      .set({ status: "expired", updatedAt: now })
+      .where(
+        and(
+          eq(matchTimeProposals.matchId, matchId),
+          eq(matchTimeProposals.status, "pending"),
+        ),
+      );
+
+    // 设定比赛时间
+    await tx
+      .update(matches)
+      .set({ scheduledAt: proposal.proposedTime, updatedAt: now })
+      .where(eq(matches.id, matchId));
+
+    await tx.insert(auditLogs).values({
+      seasonId: match.seasonId,
+      action: "match.auto_accept_proposal_timeout",
+      actorId: "system",
+      targetId: matchId,
+      targetType: "match",
+      meta: {
+        proposalId: proposal.id,
+        proposedBy: proposal.proposedBy,
+        scheduledAt: proposal.proposedTime.toISOString(),
+        reason: "对方 24h 未回应自动采纳",
+      },
+    });
+
+    const season = await tx.query.seasons.findFirst({
+      where: eq(seasons.id, match.seasonId),
+    });
+    if (season) {
+      revalidateMatchPaths(season.slug, matchId);
+    }
+
+    return true;
   });
 }
 

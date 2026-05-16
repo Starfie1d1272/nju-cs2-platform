@@ -79,3 +79,64 @@ export async function updateDisplayName(
     return actionError("updateDisplayName", e);
   }
 }
+
+export interface ProfileInput {
+  displayName: string;
+  steamName: string;
+  perfectName: string;
+  steam64: string;
+  steamProfileUrl: string;
+  qq: string;
+  studentId: string;
+}
+
+/** 更新个人信息（跨赛季字段） */
+export async function updateProfile(
+  input: ProfileInput,
+): Promise<ActionResult<void>> {
+  const displayName = input.displayName.trim();
+  if (displayName.length < 2) return failValidation("昵称至少 2 个字符");
+  if (displayName.length > 20) return failValidation("昵称最多 20 个字符");
+
+  const steamName = input.steamName.trim();
+  if (steamName && steamName.length > 40) return failValidation("Steam 昵称最多 40 个字符");
+
+  const perfectName = input.perfectName.trim();
+  if (perfectName && perfectName.length > 40) return failValidation("完美平台昵称最多 40 个字符");
+
+  const steam64 = input.steam64.trim();
+  if (steam64 && !/^\d{17}$/.test(steam64)) return failValidation("Steam64 ID 格式不正确（应为 17 位数字）");
+
+  const steamProfileUrl = input.steamProfileUrl.trim();
+  if (steamProfileUrl && !steamProfileUrl.startsWith("https://steamcommunity.com/")) {
+    return failValidation("Steam 个人资料链接格式不正确");
+  }
+
+  const qq = input.qq.trim();
+  if (qq && !/^\d{5,12}$/.test(qq)) return failValidation("QQ 号格式不正确");
+
+  const studentId = input.studentId.trim();
+
+  try {
+    const session = await requireAuth();
+
+    await db
+      .update(users)
+      .set({
+        displayName,
+        steamName: steamName || null,
+        perfectName: perfectName || null,
+        steam64: steam64 || null,
+        steamProfileUrl: steamProfileUrl || null,
+        qq: qq || null,
+        studentId: studentId || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, session.userId));
+
+    revalidatePath("/settings");
+    return ok(undefined);
+  } catch (e) {
+    return actionError("updateProfile", e);
+  }
+}

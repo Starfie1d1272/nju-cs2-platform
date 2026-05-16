@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, or } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db/client";
 import { seasons, seasonRegistrations, users, teams, teamMembers } from "@/db/schema";
@@ -38,7 +38,10 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
     ? and(
         eq(seasonRegistrations.seasonId, season.id),
         eq(seasonRegistrations.status, "approved"),
-        eq(seasonRegistrations.primaryPosition, position),
+        or(
+          eq(seasonRegistrations.primaryPosition, position),
+          eq(seasonRegistrations.secondaryPosition, position),
+        ),
       )
     : and(
         eq(seasonRegistrations.seasonId, season.id),
@@ -114,6 +117,7 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
             const displayName = getDisplayName(reg);
             const teamName = teamByRegId.get(reg.registrationId);
             const posLabel = positionLabel(reg.primaryPosition);
+            const secPosLabel = reg.secondaryPosition ? positionLabel(reg.secondaryPosition) : null;
 
             return (
               <Link
@@ -130,9 +134,15 @@ export default async function PlayersPage({ params, searchParams }: PlayersPageP
                   </div>
                   <div className="space-y-1 text-sm text-[var(--color-fg-mid)]">
                     <div className="flex justify-between">
-                      <span>Position</span>
+                      <span>主位置</span>
                       <span className="text-[var(--color-fg)]">{posLabel}</span>
                     </div>
+                    {secPosLabel && (
+                      <div className="flex justify-between">
+                        <span>副位置</span>
+                        <span className="text-[var(--color-fg-mid)]">{secPosLabel}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>历史最高</span>
                       <span className="text-[var(--color-fg)]">{reg.peakRank}</span>

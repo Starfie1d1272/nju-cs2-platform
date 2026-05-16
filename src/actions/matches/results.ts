@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, matches, matchMaps, teams, auditLogs } from "@/db/schema";
 import { ok } from "@/types/action";
@@ -16,7 +16,7 @@ import {
 } from "@/lib/match-transitions";
 import { getWinThreshold } from "@/types/match";
 import { actionError, getSeasonOrThrow, getMatchOrThrow } from "@/lib/action-utils";
-import { revalidateMatchPaths } from "@/lib/revalidation";
+import { revalidateMatchPaths, revalidateSeasonPaths } from "@/lib/revalidation";
 import { normalizeRegistrationConfig, normalizeStagePlan } from "@/types/season";
 
 /**
@@ -408,5 +408,79 @@ export async function updateMatchCompletionDeadline(
     return ok(undefined);
   } catch (e) {
     return actionError("updateMatchCompletionDeadline", e);
+  }
+}
+
+/**
+ * 批量设置截止时间：按 stage + round（或 entryRound）维度。
+ * 将 completionDeadline 写入该维度下所有 scheduled/in_progress 状态的比赛。
+ */
+export async function batchSetCompletionDeadline(input: {
+  seasonId: string;
+  stage: string;
+  round?: number | null;
+  entryRound?: string | null;
+  completionDeadline: Date;
+}): Promise<ActionResult<{ updated: number }>> {
+  try {
+    const admin = await requireSeasonAdmin(input.seasonId);
+
+    if (input.completionDeadline.getTime() <= Date.now()) {
+      throw new AppError(ErrorCode.VALIDATION_FAILED, "截止时间必须晚于当前时间");
+    }
+
+    const season = await getSeasonOrThrow(input.seasonId);
+
+    const conditions = [
+      eq(matches.seasonId, input.seasonId),
+      eq(matches.stage, input.stage),
+      inArray(matches.status, ["scheduled", "in_progress"]),
+    ];
+
+    if (input.round != null) {
+      conditions.push(eq(matches.round, input.round));
+    }
+    if (input.entryRound != null) {
+      conditions.push(eq(matches.entryRound, input.entryRound));
+    }
+
+    const targetMatches = await db.query.matches.findMany({
+      where: and(...conditions),
+      columns: { id: true },
+    });
+
+    if (targetMatches.length === 0) {
+      return ok({ updated: 0 });
+    }
+
+    const matchIds = targetMatches.map((m) => m.id);
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(matches)
+        .set({ completionDeadline: input.completionDeadline, updatedAt: new Date() })
+        .where(inArray(matches.id, matchIds));
+
+      await tx.insert(auditLogs).values({
+        seasonId: input.seasonId,
+        action: "match.batch_set_completion_deadline",
+        actorId: admin.email,
+        targetId: input.seasonId,
+        targetType: "season",
+        meta: {
+          stage: input.stage,
+          round: input.round ?? null,
+          entryRound: input.entryRound ?? null,
+          completionDeadline: input.completionDeadline.toISOString(),
+          matchCount: matchIds.length,
+        },
+      });
+    });
+
+    revalidateSeasonPaths(season.slug, ["matches", "adminMatches"]);
+
+    return ok({ updated: matchIds.length });
+  } catch (e) {
+    return actionError("batchSetCompletionDeadline", e);
   }
 }

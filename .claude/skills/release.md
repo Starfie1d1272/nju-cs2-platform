@@ -172,6 +172,31 @@ gh run list --workflow=release.yml --limit=3
 
 ---
 
+## Step 9: 创建 PR（dev → main）
+
+```bash
+git log main..dev --oneline --no-decorate | head -20
+```
+
+```bash
+gh pr create \
+  --title "v${NEW_VER}: <简短描述>" \
+  --body "$(cat <<'EOF'
+## Summary
+- （根据 git log 整理关键变更，按 feat/fix/refactor 分组）
+
+## Test plan
+- [ ] pnpm test
+- [ ] pnpm tsc --noEmit
+- [ ] dev 环境手动验证关键路径
+EOF
+)"
+```
+
+如果 PR 已存在则跳过。输出 PR 链接。
+
+---
+
 ## 错误速查
 
 | 症状 | 原因 | 修复 |

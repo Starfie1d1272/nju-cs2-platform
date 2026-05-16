@@ -39,21 +39,32 @@ export default async function DraftPage({ params }: DraftPageProps) {
     );
   }
 
-  // 预览模式：选秀未开始，展示只读选手池供队长提前研究
   if (season.status !== "drafting") {
-    const data = await getDraftData(season.id);
     const stageLabel = SEASON_STATUS_LABELS[season.status] ?? season.status;
+    return (
+      <main className="container mx-auto max-w-5xl px-4 py-10">
+        <Panel pad={32}>
+          <h1 className="text-2xl font-bold">选秀直播间 · {season.name}</h1>
+          <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
+            选秀尚未开放 · 当前阶段：{stageLabel}
+          </p>
+        </Panel>
+      </main>
+    );
+  }
 
+  const data = await getDraftData(season.id);
+
+  if (!data.state) {
     return (
       <main className="container mx-auto max-w-7xl px-4 py-10">
-        <Marker sub="选秀开始前，队长可提前查看选手池研究阵容。">
+        <Marker sub="队伍已组建，选秀尚未启动。队长可提前查看选手池研究阵容。">
           选秀预览 · {season.name}
         </Marker>
 
         <div className="mb-6 rounded-lg border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5 px-4 py-3">
           <p className="text-sm text-[var(--color-fg-mid)]">
-            选秀尚未开始 · 当前阶段：{" "}
-            <span className="text-[var(--color-accent)] font-medium">{stageLabel}</span>
+            等待管理员启动选秀，页面会自动刷新。
           </p>
           <p className="mt-1 text-xs text-[var(--color-fg-dim)]">
             以下为只读预览，包含已报名选手与队伍信息。选秀开始后页面会自动切换为直播模式。
@@ -71,95 +82,80 @@ export default async function DraftPage({ params }: DraftPageProps) {
     );
   }
 
-  const data = await getDraftData(season.id);
-
   return (
     <main className="container mx-auto max-w-7xl px-4 py-10">
       <Marker sub="实时更新选秀进度，队伍阵容与选手池自动刷新。">
         选秀直播间 · {season.name}
       </Marker>
 
-      {!data.state ? (
-        <Panel pad={32} className="text-center">
-          <h2 className="text-xl font-semibold text-[var(--color-fg)] mb-2">
-            选秀尚未启动
-          </h2>
-          <p className="text-sm text-[var(--color-fg-mid)]">
-            等待管理员启动选秀，页面会自动刷新。
-          </p>
-        </Panel>
-      ) : (
-        <>
-          {data.state.isActive && (
-            <Panel pad={0}>
-              <div className="grid grid-cols-2 md:grid-cols-4 items-stretch">
-                {/* LIVE indicator */}
-                <div className="flex items-center gap-3.5 min-w-0 md:border-r border-[var(--color-border)]" style={{ padding: "16px 20px" }}>
-                  <div className="shrink-0" style={{ width: 8, height: 40, background: "var(--color-danger)", boxShadow: "0 0 12px var(--color-danger)" }} />
-                  <div className="min-w-0">
-                    <div className="font-bold uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-danger)", letterSpacing: "var(--tracking-eyebrow)" }}>
-                      ● LIVE
-                    </div>
-                    <div className="font-semibold mt-1 truncate" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-fg)" }}>
-                      选秀直播间
-                    </div>
-                    <div className="truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
-                      观众实时观看
-                    </div>
-                  </div>
+      {data.state.isActive && (
+        <Panel pad={0}>
+          <div className="grid grid-cols-2 md:grid-cols-4 items-stretch">
+            {/* LIVE indicator */}
+            <div className="flex items-center gap-3.5 min-w-0 md:border-r border-[var(--color-border)]" style={{ padding: "16px 20px" }}>
+              <div className="shrink-0" style={{ width: 8, height: 40, background: "var(--color-danger)", boxShadow: "0 0 12px var(--color-danger)" }} />
+              <div className="min-w-0">
+                <div className="font-bold uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-danger)", letterSpacing: "var(--tracking-eyebrow)" }}>
+                  ● LIVE
                 </div>
+                <div className="font-semibold mt-1 truncate" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-fg)" }}>
+                  选秀直播间
+                </div>
+                <div className="truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
+                  观众实时观看
+                </div>
+              </div>
+            </div>
 
-                {/* Current pick */}
-                <div className="flex items-center gap-3.5 min-w-0 md:border-r border-[var(--color-border)]" style={{ padding: "16px 20px" }}>
-                  <div className="shrink-0" style={{ width: 56, height: 56, background: "var(--color-accent)22", border: "1px solid var(--color-accent)55", borderRadius: "var(--radius-sm)", display: "grid", placeItems: "center", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20, color: "var(--color-accent)" }}>
-                    P
-                  </div>
-                  <div className="min-w-0">
-                    <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
-                      CURRENT PICK
-                    </div>
-                    <div className="font-semibold mt-1 truncate" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-accent)" }}>
-                      选秀进行中
-                    </div>
-                    <div className="truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
-                      实时同步
-                    </div>
-                  </div>
+            {/* Current pick */}
+            <div className="flex items-center gap-3.5 min-w-0 md:border-r border-[var(--color-border)]" style={{ padding: "16px 20px" }}>
+              <div className="shrink-0" style={{ width: 56, height: 56, background: "var(--color-accent)22", border: "1px solid var(--color-accent)55", borderRadius: "var(--radius-sm)", display: "grid", placeItems: "center", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 20, color: "var(--color-accent)" }}>
+                P
+              </div>
+              <div className="min-w-0">
+                <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                  CURRENT PICK
                 </div>
+                <div className="font-semibold mt-1 truncate" style={{ fontFamily: "var(--font-display)", fontSize: 18, color: "var(--color-accent)" }}>
+                  选秀进行中
+                </div>
+                <div className="truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)" }}>
+                  实时同步
+                </div>
+              </div>
+            </div>
 
-                {/* Timer */}
-                <div className="min-w-0 md:border-r border-[var(--color-border)]" style={{ padding: "16px 20px" }}>
-                  <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
-                    TIMER
-                  </div>
-                  <div className="font-bold mt-1 truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "var(--color-accent)", letterSpacing: "-0.04em", lineHeight: 1 }}>
-                    {data.state.roundDeadline ? "计时中" : "--:--"}
-                  </div>
-                  <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ background: "var(--color-border)" }}>
-                    <div className="h-full" style={{ width: "32%", background: "var(--color-accent)" }} />
-                  </div>
-                </div>
+            {/* Timer */}
+            <div className="min-w-0 md:border-r border-[var(--color-border)]" style={{ padding: "16px 20px" }}>
+              <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                TIMER
+              </div>
+              <div className="font-bold mt-1 truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "var(--color-accent)", letterSpacing: "-0.04em", lineHeight: 1 }}>
+                {data.state.roundDeadline ? "计时中" : "--:--"}
+              </div>
+              <div className="mt-1.5 h-1 rounded-full overflow-hidden" style={{ background: "var(--color-border)" }}>
+                <div className="h-full" style={{ width: "32%", background: "var(--color-accent)" }} />
+              </div>
+            </div>
 
-                {/* Round + Pick */}
-                <div className="flex flex-col justify-center gap-1 min-w-0" style={{ padding: "16px 20px" }}>
-                  <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
-                    ROUND · PICK
-                  </div>
-                  <div className="font-bold truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 28, color: "var(--color-fg)", letterSpacing: "-0.02em" }}>
-                    {data.state.currentRound ?? 1} · <span style={{ color: "var(--color-fg-dim)" }}>—/—</span>
-                  </div>
-                </div>
+            {/* Round + Pick */}
+            <div className="flex flex-col justify-center gap-1 min-w-0" style={{ padding: "16px 20px" }}>
+              <div className="uppercase truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--color-fg-dim)", letterSpacing: "var(--tracking-label)" }}>
+                ROUND · PICK
+              </div>
+              <div className="font-bold truncate" style={{ fontFamily: "var(--font-mono)", fontSize: 28, color: "var(--color-fg)", letterSpacing: "-0.02em" }}>
+                {data.state.currentRound ?? 1} · <span style={{ color: "var(--color-fg-dim)" }}>—/—</span>
+              </div>
+            </div>
               </div>
             </Panel>
           )}
-          <DraftLiveRoom
-            data={data}
-            seasonId={season.id}
-            seasonSlug={seasonSlug}
-            seasonPositions={season.positions}
-          />
-        </>
-      )}
+        <DraftLiveRoom
+          data={data}
+          seasonId={season.id}
+          seasonSlug={seasonSlug}
+          seasonPositions={season.positions}
+        />
     </main>
   );
 }

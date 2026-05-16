@@ -87,7 +87,41 @@ git commit -m "docs: CHANGELOG ${NEW_VER}"
 
 ---
 
-## Step 4: npm version（唯一合法方式）
+## Step 4: 同步项目文档
+
+自动更新以下文件中的版本引用（`vX.Y.Z` → `v${NEW_VER}`）：
+
+- `CLAUDE.md`：`当前阶段：**vX.Y.Z**`（在 `项目概述` 段落中）
+- `AGENTS.md`：`当前阶段：**vX.Y.Z**`
+- `README.md`：版本徽章或描述
+
+```bash
+# 查找需要更新的行
+grep -n "v${PREV_VER}" CLAUDE.md AGENTS.md README.md
+```
+
+用 `sed` 批量替换：
+
+```bash
+sed -i '' "s/v${PREV_VER}/v${NEW_VER}/g" CLAUDE.md AGENTS.md README.md
+```
+
+确认替换结果：
+
+```bash
+grep -n "v${NEW_VER}" CLAUDE.md AGENTS.md README.md
+```
+
+提交：
+
+```bash
+git add CLAUDE.md AGENTS.md README.md
+git commit -m "docs: 同步文档至 v${NEW_VER} — CLAUDE.md/AGENTS.md/README.md"
+```
+
+---
+
+## Step 5: npm version（唯一合法方式）
 
 ```bash
 npm version <patch|minor|major>
@@ -98,14 +132,14 @@ npm version <patch|minor|major>
 
 ---
 
-## Step 5: 确保 tag 在 HEAD
+## Step 6: 确保 tag 在 HEAD
 
 ```bash
 TAG_COMMIT=$(git rev-list -n1 v${NEW_VER})
 HEAD_COMMIT=$(git rev-parse HEAD)
 ```
 
-如果两者不同（Step 3/4 之后有额外 commit），**自动**移动 tag：
+如果两者不同（Step 5 之后有额外 commit），**自动**移动 tag：
 
 ```bash
 git tag -f v${NEW_VER} HEAD
@@ -115,7 +149,7 @@ git tag -f v${NEW_VER} HEAD
 
 ---
 
-## Step 6: 推送（必须带 tag）
+## Step 7: 推送（必须带 tag）
 
 ```bash
 git push origin dev --follow-tags
@@ -125,7 +159,7 @@ git push origin dev --follow-tags
 
 ---
 
-## Step 7: 验证
+## Step 8: 验证
 
 ```bash
 gh run list --workflow=release.yml --limit=3

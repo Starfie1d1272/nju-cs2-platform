@@ -93,10 +93,12 @@ export function CaptainDraftPanel({
     return sortByRank(filtered);
   }, [players, filter, search]);
 
-  // Auto-pick candidate hint
+  // Auto-pick candidate hint (resolve full player for display name)
   const autoPickCandidate = useMemo(() => {
     if (!isDraftActive || !isCurrentCaptainTurn) return null;
-    return selectAutoPickCandidate(players, positionCounts);
+    const candidate = selectAutoPickCandidate(players, positionCounts);
+    if (!candidate) return null;
+    return players.find((p) => p.registrationId === candidate.registrationId) ?? null;
   }, [players, positionCounts, isDraftActive, isCurrentCaptainTurn]);
 
   const canSubmit = isDraftActive && isCurrentCaptainTurn && pendingRegistrationId === null;

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
 import { eq, and, count, desc, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons, seasonRegistrations, auditLogs, adminUsers, adminInvites, users } from "@/db/schema";
+import { seasons, seasonRegistrations, auditLogs, adminUsers, adminInvites, users, draftPicks } from "@/db/schema";
 import { ok, fail } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { actionError, failValidation } from "@/lib/action-utils";
@@ -185,6 +185,19 @@ export async function reviewRegistration(input: ReviewInput) {
       }
 
       validateTransition(reg.status as RegistrationStatus, targetStatus, season.status);
+
+      if (reg.status === "approved" && targetStatus !== "approved") {
+        const [pickCount] = await tx
+          .select({ count: count() })
+          .from(draftPicks)
+          .where(eq(draftPicks.registrationId, registrationId));
+        if (Number(pickCount?.count ?? 0) > 0) {
+          throw new AppError(
+            ErrorCode.VALIDATION_FAILED,
+            "该选手已被选秀选中，无法撤回审批",
+          );
+        }
+      }
 
       if (targetStatus === "approved") {
         // 只统计已通过的，不含自身（自身是 pending/waitlisted，未算入上限）

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   matchFindManyMock,
+  proposalFindManyMock,
   txMatchFindFirstMock,
   txProposalFindFirstMock,
   txSeasonFindFirstMock,
@@ -16,6 +17,7 @@ const {
   const insertValuesCalls: unknown[] = [];
   return {
     matchFindManyMock: vi.fn(),
+    proposalFindManyMock: vi.fn(),
     txMatchFindFirstMock: vi.fn(),
     txProposalFindFirstMock: vi.fn(),
     txSeasonFindFirstMock: vi.fn(),
@@ -47,6 +49,7 @@ vi.mock("@/db/client", () => {
     db: {
       query: {
         matches: { findMany: matchFindManyMock },
+        matchTimeProposals: { findMany: proposalFindManyMock },
       },
       transaction: transactionMock.mockImplementation((callback) => callback(tx)),
     },
@@ -93,6 +96,8 @@ describe("runMatchTimeAutoAwardCron", () => {
     vi.clearAllMocks();
     updateSetCalls.length = 0;
     insertValuesCalls.length = 0;
+    // 默认没有超时提议，不影响现有测试断言
+    proposalFindManyMock.mockResolvedValue([]);
     updateMock.mockImplementation(() => ({
       set: vi.fn((values) => {
         updateSetCalls.push(values);

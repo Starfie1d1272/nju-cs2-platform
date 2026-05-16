@@ -42,7 +42,7 @@ export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
     const filtered =
       filter === FILTER_ALL
         ? players
-        : players.filter((p) => p.primaryPosition === filter);
+        : players.filter((p) => p.primaryPosition === filter || p.secondaryPosition === filter);
     return sortByRank(filtered);
   }, [players, filter]);
 
@@ -118,6 +118,9 @@ export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
                   {displayedName}
                 </Link>
                 <PosChip pos={positionLabel(p.primaryPosition)} small />
+                <span className="shrink-0 text-[10px] text-[var(--color-fg-dim)]">
+                  副{positionLabel(p.secondaryPosition)}
+                </span>
                 <span
                   className="shrink-0 text-xs tabular-nums text-[var(--color-fg-mid)]"
                   style={{ fontFamily: "var(--font-mono)" }}
@@ -150,6 +153,9 @@ export function PlayerPool({ players, seasonPositions }: PlayerPoolProps) {
                     {displayedName}
                   </Link>
                   <PosChip pos={positionLabel(p.primaryPosition)} small />
+                  <span className="shrink-0 text-[10px] text-[var(--color-fg-dim)]">
+                    副{positionLabel(p.secondaryPosition)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span

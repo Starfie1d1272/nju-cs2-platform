@@ -30,10 +30,10 @@ describe("TRANSITION_RULES", () => {
     expect(rule!.allowedSeasonStatuses).toEqual(["registration", "voting"]);
   });
 
-  it("approved→rejected 仅允许 registration", () => {
+  it("approved→rejected 允许 registration 和 voting", () => {
     const rule = TRANSITION_RULES["approved→rejected"];
     expect(rule).toBeDefined();
-    expect(rule!.allowedSeasonStatuses).toEqual(["registration"]);
+    expect(rule!.allowedSeasonStatuses).toEqual(["registration", "voting"]);
   });
 
   it("rejected→approved 仅允许 registration", () => {

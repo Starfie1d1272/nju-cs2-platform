@@ -12,6 +12,7 @@ import { ScoreInput } from "@/components/matches/ScoreInput";
 import { MapByMapInput } from "@/components/matches/MapByMapInput";
 import { ScheduledAtInput } from "@/components/matches/ScheduledAtInput";
 import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
+import { BatchDeadlineCard } from "@/components/matches/BatchDeadlineCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Panel, StatusPill } from "@/components/rivalhub";
 import { Separator } from "@/components/ui/separator";
@@ -119,6 +120,37 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
   const hasQualifier = !!qualifierStage;
   const hasPlayoff = !!playoffStage;
 
+  const batchDeadlineGroups: { label: string; stage: string; round?: number | null; entryRound?: string | null; matchCount: number }[] = [];
+  if (matchCount > 0) {
+    const activeMatches = allMatches.filter(
+      (m) => m.status === "scheduled" || m.status === "in_progress",
+    );
+    const groupMap = new Map<string, typeof batchDeadlineGroups[number]>();
+    for (const m of activeMatches) {
+      const stageConf = stagePlan.find((s) => s.key === m.stage);
+      const stageName = stageConf?.name ?? m.stage;
+      let key: string;
+      let label: string;
+      if (m.round != null) {
+        key = `${m.stage}:round:${m.round}`;
+        label = `${stageName} · 第 ${m.round} 轮`;
+      } else if (m.entryRound) {
+        key = `${m.stage}:entry:${m.entryRound}`;
+        label = `${stageName} · ${m.entryRound}`;
+      } else {
+        key = `${m.stage}:all`;
+        label = stageName;
+      }
+      const existing = groupMap.get(key);
+      if (existing) {
+        existing.matchCount += 1;
+      } else {
+        groupMap.set(key, { label, stage: m.stage, round: m.round, entryRound: m.entryRound, matchCount: 1 });
+      }
+    }
+    batchDeadlineGroups.push(...groupMap.values());
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
@@ -159,6 +191,11 @@ export default async function AdminMatchesPage({ params }: AdminMatchesPageProps
           stageName={playoffStage.name}
           standings={standings}
         />
+      )}
+
+      {/* 批量设置截止时间 */}
+      {batchDeadlineGroups.length > 0 && (
+        <BatchDeadlineCard seasonId={season.id} groups={batchDeadlineGroups} />
       )}
 
       {/* Tab 面板 */}

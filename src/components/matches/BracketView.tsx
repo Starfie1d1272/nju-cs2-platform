@@ -62,7 +62,22 @@ export function BracketView({ data, themeColor, matchNodeMap, seasonSlug }: Brac
         { selector: "#bracket-container", clear: true }
       )
       .then(() => {
-        if (!containerRef.current || !matchNodeMap || !seasonSlug) return;
+        if (!containerRef.current) return;
+
+        // 将 brackets-viewer 默认的 "BYE" 文本替换为 "TBD"
+        const walker = document.createTreeWalker(
+          containerRef.current,
+          NodeFilter.SHOW_TEXT,
+          null,
+        );
+        let node: Text | null;
+        while ((node = walker.nextNode() as Text | null)) {
+          if (node.textContent === "BYE") {
+            node.textContent = "TBD";
+          }
+        }
+
+        if (!matchNodeMap || !seasonSlug) return;
         containerRef.current.querySelectorAll<HTMLElement>("[data-match-id]").forEach((el) => {
           const bracketId = el.getAttribute("data-match-id");
           if (!bracketId) return;

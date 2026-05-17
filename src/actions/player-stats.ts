@@ -106,8 +106,9 @@ export async function extractStatsFromScreenshot(
  */
 export async function savePlayerStats(
   mapId: string,
-  stats: PlayerStatsDraft[]
+  input: { rows: PlayerStatsDraft[] }
 ) {
+  const stats = input.rows;
   try {
     const session = await requireAdmin();
     const actor = auditActorId(session);

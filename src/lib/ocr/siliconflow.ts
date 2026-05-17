@@ -1,4 +1,4 @@
-import { ocrResponseSchema, playerRowLenientSchema, type ScoreboardOCRResult, type OCRProvider, type PlayerRowOCR } from "./types";
+import { playerRowLenientSchema, type ScoreboardOCRResult, type OCRProvider, type PlayerRowOCR } from "./types";
 
 const DEFAULT_API_URL = "https://api.siliconflow.cn/v1/chat/completions";
 const DEFAULT_MODEL = "PaddlePaddle/PaddleOCR-VL-1.5";
@@ -134,17 +134,35 @@ async function extract(base64Image: string, mimeType: string): Promise<Scoreboar
   }
 
   const parsed = extractJson(result.content);
-  const structure = ocrResponseSchema.safeParse(parsed);
-  if (!structure.success) {
-    // 顶层结构不对（players 不是数组或为空），直接报错
-    const issues = structure.error.issues.map((i) => i.message).join("; ");
-    throw new Error(`OCR 结果格式校验失败: ${issues}`);
+
+  // 兼容 LLM 可能的外层包装：{ players } / { data: { players } } / 直接数组
+  let rawPlayers: unknown[];
+  if (Array.isArray(parsed)) {
+    rawPlayers = parsed;
+  } else if (parsed && typeof parsed === "object") {
+    const obj = parsed as Record<string, unknown>;
+    if (Array.isArray(obj.players)) {
+      rawPlayers = obj.players;
+    } else if (obj.data && typeof obj.data === "object" && Array.isArray((obj.data as Record<string, unknown>).players)) {
+      rawPlayers = (obj.data as Record<string, unknown>).players as unknown[];
+    } else {
+      throw new Error("OCR 结果格式校验失败：未找到 players 数组，请确认截图清晰可读");
+    }
+  } else {
+    throw new Error("OCR 结果格式校验失败：模型返回格式异常，请重试");
+  }
+
+  if (rawPlayers.length === 0) {
+    throw new Error("OCR 结果格式校验失败：players 数组为空");
+  }
+  if (rawPlayers.length > 20) {
+    rawPlayers = rawPlayers.slice(0, 20);
   }
 
   // 逐行校验：仅丢弃无法识别玩家名称的行，数值字段尽力转换
   const validPlayers: PlayerRowOCR[] = [];
   let idx = 0;
-  for (const row of structure.data.players) {
+  for (const row of rawPlayers) {
     const r = playerRowLenientSchema.safeParse(row);
     if (!r.success) {
       console.warn(`[OCR] 第 ${idx + 1} 行无有效玩家名称，已丢弃`, r.error.issues);

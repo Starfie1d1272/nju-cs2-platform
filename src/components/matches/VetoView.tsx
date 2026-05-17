@@ -1,6 +1,7 @@
 import { db } from "@/db/client";
 import { matchVetoSteps } from "@/db/schema/match-veto-steps";
 import { eq } from "drizzle-orm";
+import { SIDE_LABELS } from "@/types/match";
 import { mapLabel } from "@/lib/maps";
 import { Panel } from "@/components/rivalhub";
 
@@ -25,8 +26,6 @@ const ACTION_COLORS: Record<string, string> = {
   side_pick: "#a78bfa",
   decider: "#eab308",
 };
-
-const SIDE_LABELS: Record<string, string> = { t: "T", ct: "CT" };
 
 export async function VetoView({
   matchId,
@@ -63,12 +62,10 @@ export async function VetoView({
                 key={step.id}
                 className="flex items-center gap-3 text-sm"
               >
-                {/* 序号 */}
                 <span className="text-xs text-[var(--color-fg-mid)] w-5 text-right tabular-nums">
                   {step.stepOrder}.
                 </span>
 
-                {/* 操作徽章 */}
                 <span
                   className="text-xs font-mono uppercase px-1.5 py-0.5 rounded-sm shrink-0"
                   style={{ background: `${color}20`, color }}
@@ -76,7 +73,6 @@ export async function VetoView({
                   {step.actionType}
                 </span>
 
-                {/* 队伍名称 */}
                 {team ? (
                   <span
                     className="font-semibold text-[var(--color-fg)] shrink-0"
@@ -86,18 +82,15 @@ export async function VetoView({
                   </span>
                 ) : null}
 
-                {/* 操作动词 */}
                 <span className="text-[var(--color-fg-mid)]">{verb}</span>
 
-                {/* 地图名称 */}
                 <span className="font-medium text-[var(--color-fg)]">
                   {mapLabel(step.mapName)}
                 </span>
 
-                {/* 选边信息 */}
                 {step.side && (
                   <span className="text-xs text-[var(--color-fg-mid)]">
-                    ({SIDE_LABELS[step.side] ?? step.side} 方)
+                    ({SIDE_LABELS[step.side] ?? step.side})
                   </span>
                 )}
               </div>

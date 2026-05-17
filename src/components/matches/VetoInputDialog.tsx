@@ -21,6 +21,7 @@ import {
 import { saveVetoSteps, type VetoStepInput } from "@/actions/matches/veto";
 import { mapLabel } from "@/lib/maps";
 import type { VetoActionType } from "@/types/match";
+import { SIDE_LABELS } from "@/types/match";
 
 interface Props {
   matchId: string;
@@ -38,8 +39,6 @@ interface StepEdit {
   teamId: string | null;
   side: "t" | "ct" | null;
 }
-
-const SIDE_LABELS: Record<"t" | "ct", string> = { t: "T 方", ct: "CT 方" };
 
 const ACTION_LABELS: Record<VetoActionType, string> = {
   ban: "ban",

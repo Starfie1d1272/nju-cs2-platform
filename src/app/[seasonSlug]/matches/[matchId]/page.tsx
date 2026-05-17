@@ -11,7 +11,7 @@ import { MatchMvpVote } from "@/components/matches/MatchMvpVote";
 import { Panel, PosChip, TeamBadge } from "@/components/rivalhub";
 import { mapLabel } from "@/lib/maps";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MATCH_FORMAT_LABELS, MATCH_STAGE_LABELS } from "@/types/match";
+import { MATCH_FORMAT_LABELS, MATCH_STAGE_LABELS, SIDE_LABELS } from "@/types/match";
 import { PlayerStatsTable } from "@/components/matches/PlayerStatsTable";
 import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
 import { TimeProposalHistory } from "@/components/matches/TimeProposalHistory";
@@ -27,8 +27,6 @@ import { getUserSession } from "@/lib/auth/session";
 interface MatchDetailPageProps {
   params: Promise<{ seasonSlug: string; matchId: string }>;
 }
-
-const SIDE_LABELS = { t: "T 方", ct: "CT 方" };
 
 const TEAM_COLORS = ["#ff6b1a", "#3aa1ff", "#a8ff3a", "#ff3a7a", "#9b6bff", "#ffd23a", "#3affc7", "#ff8a3a"];
 
@@ -57,7 +55,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
 
   const isFinished = match.status === "finished";
 
-  // ── 时间协商、名单、session（并行）────────────────────────────
   const [timeProposals, rosterA, rosterB, userSession] = await Promise.all([
     getTimeProposals(match.id),
     getMatchRoster(match.id, match.teamAId),
@@ -65,7 +62,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
     getUserSession(),
   ]);
 
-  // ── MVP 投票数据 ──────────────────────────────────────────────
   let mvpCandidates: {
     userId: string | null;
     perfectName: string;
@@ -106,7 +102,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
     }
   }
 
-  // ── 团队人员数据（一次性查询，供队长检测 + 名单视图共用）──
   const allTeamMembers = await db
     .select({
       id: teamMembers.id,
@@ -123,7 +118,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       inArray(teamMembers.teamId, [match.teamAId, match.teamBId]),
     );
 
-  // ── 队长身份与管理员检测 ─────────────────────────────────────
   let isCaptainA = false;
   let isCaptainB = false;
   let isSeasonAdmin = false;
@@ -160,7 +154,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
     }
   }
 
-  // ── 名单视图数据 ────────────────────────────────────────────
   interface RosterPlayer {
     steamName: string;
     displayName: string | null;

@@ -5,6 +5,8 @@ export type MatchStage = string;
 export type MatchFormat = "bo1" | "bo3" | "bo5";
 export type Side = "t" | "ct";
 
+export const SIDE_LABELS: Record<Side, string> = { t: "T 方", ct: "CT 方" };
+
 export interface Match {
   id: string;
   seasonId: string;
@@ -81,6 +83,15 @@ export function getWinner(match: Match): string | null {
   if (match.scoreA > match.scoreB) return match.teamAId;
   if (match.scoreB > match.scoreA) return match.teamBId;
   return null;
+}
+
+/** 该 format 最多地图数 */
+export function getMaxMaps(format: MatchFormat): number {
+  switch (format) {
+    case "bo1": return 1;
+    case "bo3": return 3;
+    case "bo5": return 5;
+  }
 }
 
 /** 该 format 系列赛获胜所需的图数 */

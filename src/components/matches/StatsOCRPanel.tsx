@@ -126,7 +126,7 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
   async function handleSave() {
     setSaving(true);
     setError(null);
-    const result = await savePlayerStats(mapId, drafts);
+    const result = await savePlayerStats(mapId, { rows: drafts });
     setSaving(false);
 
     if (!result.success) {

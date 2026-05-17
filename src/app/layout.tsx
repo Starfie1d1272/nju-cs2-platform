@@ -3,6 +3,7 @@ import { Geist, JetBrains_Mono, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_BRAND } from "@/lib/branding";
 
@@ -51,6 +52,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Footer />
         <Toaster richColors position="top-right" />
+        <Analytics />
       </body>
     </html>
   );

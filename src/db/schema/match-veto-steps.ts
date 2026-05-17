@@ -1,6 +1,7 @@
 import { pgTable, uuid, integer, text, timestamp, unique } from "drizzle-orm/pg-core";
 import { matches } from "./matches";
 import { teams } from "./teams";
+import { sideEnum } from "./match-maps";
 
 /**
  * BP 选图步骤记录
@@ -20,7 +21,7 @@ export const matchVetoSteps = pgTable(
     actionType: text("action_type").notNull(),
     mapName: text("map_name").notNull(),
     teamId: uuid("team_id").references(() => teams.id),
-    side: text("side"),
+    side: sideEnum("side"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({

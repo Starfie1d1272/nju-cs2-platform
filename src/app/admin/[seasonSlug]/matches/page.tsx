@@ -13,6 +13,7 @@ import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
 import { ScoreInput } from "@/components/matches/ScoreInput";
 import { MapByMapInput } from "@/components/matches/MapByMapInput";
 import { ScheduledAtInput } from "@/components/matches/ScheduledAtInput";
+import { VetoInputDialog } from "@/components/matches/VetoInputDialog";
 import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
 import { BatchDeadlineCard } from "@/components/matches/BatchDeadlineCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -276,6 +277,17 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                               currentScheduledAt={m.scheduledAt}
                               currentCompletionDeadline={m.completionDeadline}
                             />
+                            {m.status === "scheduled" && (
+                              <VetoInputDialog
+                                matchId={m.id}
+                                format={m.format as "bo1" | "bo3" | "bo5"}
+                                teamAName={teamAName}
+                                teamBName={teamBName}
+                                teamAId={m.teamAId}
+                                teamBId={m.teamBId}
+                                mapPool={mapPool}
+                              />
+                            )}
                             <ScoreInput
                               matchId={m.id}
                               teamAName={teamAName}
@@ -358,13 +370,26 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                                 mapPool={mapPool}
                               />
                             ) : (
-                              <ScoreInput
-                                matchId={m.id}
-                                teamAName={teamAName}
-                                teamBName={teamBName}
-                                currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                                format={m.format as "bo1" | "bo3" | "bo5"}
-                              />
+                              <>
+                                {m.status === "scheduled" && (
+                                  <VetoInputDialog
+                                    matchId={m.id}
+                                    format={m.format as "bo1" | "bo3" | "bo5"}
+                                    teamAName={teamAName}
+                                    teamBName={teamBName}
+                                    teamAId={m.teamAId}
+                                    teamBId={m.teamBId}
+                                    mapPool={mapPool}
+                                  />
+                                )}
+                                <ScoreInput
+                                  matchId={m.id}
+                                  teamAName={teamAName}
+                                  teamBName={teamBName}
+                                  currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
+                                  format={m.format as "bo1" | "bo3" | "bo5"}
+                                />
+                              </>
                             )}
                           </>
                         )}

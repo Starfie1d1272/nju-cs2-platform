@@ -9,6 +9,8 @@ import { matchMvpVotes } from "@/db/schema/mvp-votes";
 import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
 import { MatchMvpVote } from "@/components/matches/MatchMvpVote";
 import { Panel, PosChip, TeamBadge } from "@/components/rivalhub";
+import { mapLabel } from "@/lib/maps";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MATCH_FORMAT_LABELS, MATCH_STAGE_LABELS } from "@/types/match";
 import { PlayerStatsTable } from "@/components/matches/PlayerStatsTable";
 import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
@@ -347,53 +349,72 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         teamBId={match.teamBId}
       />
 
-      {/* 单图结果 */}
+      {/* 地图结果 — 有 maps 时用 Tab 切换，无 maps 时 fallback */}
       {maps.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-[var(--color-fg)]">地图结果</h2>
-          <div className="space-y-2">
+          <Tabs defaultValue={maps[0].id}>
+            <TabsList>
+              {maps.map((map) => (
+                <TabsTrigger key={map.id} value={map.id} className="text-xs">
+                  {mapLabel(map.mapName)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
             {maps.map((map) => (
-              <Panel key={map.id} pad={16}>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-[var(--color-fg-mid)] w-5">
-                      #{map.mapOrder}
-                    </span>
-                    <span className="font-medium text-[var(--color-fg)]">{map.mapName}</span>
-                    {map.pickedByTeamId === match.teamAId && (
-                      <PosChip pos={`${teamA?.name} Pick`} />
-                    )}
-                    {map.pickedByTeamId === match.teamBId && (
-                      <PosChip pos={`${teamB?.name} Pick`} />
-                    )}
-                    {map.pickedByTeamId === null && (
-                      <PosChip pos="决胜图" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    {map.teamAStartSide && (
-                      <span className="text-[var(--color-fg-mid)]">
-                        {teamA?.name} {SIDE_LABELS[map.teamAStartSide]}先
+              <TabsContent key={map.id} value={map.id}>
+                <Panel pad={16} className="space-y-3">
+                  {/* 地图 info bar */}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-[var(--color-fg-mid)] w-5">
+                        #{map.mapOrder}
                       </span>
-                    )}
-                    {map.scoreA !== null && map.scoreB !== null && (
-                      <span className="font-mono font-bold text-[var(--color-fg)]">
-                        {map.scoreA}&nbsp;:&nbsp;{map.scoreB}
+                      <span className="font-medium text-[var(--color-fg)]">
+                        {mapLabel(map.mapName)}
                       </span>
-                    )}
+                      {map.pickedByTeamId === match.teamAId && (
+                        <PosChip pos={`${teamA?.name} Pick`} />
+                      )}
+                      {map.pickedByTeamId === match.teamBId && (
+                        <PosChip pos={`${teamB?.name} Pick`} />
+                      )}
+                      {map.pickedByTeamId === null && (
+                        <PosChip pos="决胜图" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      {map.teamAStartSide && (
+                        <span className="text-[var(--color-fg-mid)]">
+                          {teamA?.name} {SIDE_LABELS[map.teamAStartSide]}先
+                        </span>
+                      )}
+                      {map.scoreA !== null && map.scoreB !== null && (
+                        <span className="font-mono font-bold text-[var(--color-fg)]">
+                          {map.scoreA}&nbsp;:&nbsp;{map.scoreB}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {isFinished && (
-                  <PlayerStatsTable matchId={match.id} mapId={map.id} />
-                )}
-                {isFinished && isSeasonAdmin && (
-                  <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
-                )}
-              </Panel>
+                  {/* 玩家数据 / OCR */}
+                  {isFinished && (
+                    <PlayerStatsTable matchId={match.id} mapId={map.id} />
+                  )}
+                  {!isFinished && map.scoreA == null && (
+                    <p className="text-xs text-[var(--color-fg-dim)] py-2">
+                      比赛未开始
+                    </p>
+                  )}
+                  {isFinished && isSeasonAdmin && (
+                    <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
+                  )}
+                </Panel>
+              </TabsContent>
             ))}
-          </div>
+          </Tabs>
         </section>
       ) : isFinished && match.scoreA != null && match.scoreB != null ? (
+        // BO1 fallback (from Phase 1)
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-[var(--color-fg)]">比赛结果</h2>
           <Panel pad={16}>

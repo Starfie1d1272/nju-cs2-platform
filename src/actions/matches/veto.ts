@@ -26,10 +26,10 @@ export async function saveVetoSteps(
     const match = await getMatchOrThrow(matchId);
     const session = await requireSeasonAdmin(match.seasonId);
 
-    if (match.status !== "scheduled") {
+    if (match.status !== "scheduled" && match.status !== "in_progress") {
       throw new AppError(
         ErrorCode.MATCH_INVALID_TRANSITION,
-        "仅 scheduled 状态的比赛可录入 BP",
+        "仅「待进行」或「进行中」状态的比赛可录入 BP",
       );
     }
 

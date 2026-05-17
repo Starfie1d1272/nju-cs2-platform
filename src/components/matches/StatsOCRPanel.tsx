@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -129,6 +129,19 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
     setSaved(true);
   }
 
+  const assignedUserIdsByRow = useMemo(
+    () =>
+      drafts.map((_, excludeIdx) =>
+        new Set(
+          drafts
+            .filter((_, di) => di !== excludeIdx)
+            .map((d) => d.userId)
+            .filter(Boolean),
+        ),
+      ),
+    [drafts],
+  );
+
   return (
     <div className="mt-4 space-y-4">
       <h4 className="font-semibold text-sm">
@@ -191,9 +204,8 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">— 未匹配 —</SelectItem>
-                          {/* 排除已被其他行匹配的玩家 */}
                           {playerOptions
-                            .filter((p) => !drafts.some((d, di) => di !== idx && d.userId === p.userId))
+                            .filter((p) => !assignedUserIdsByRow[idx].has(p.userId))
                             .map((p) => (
                               <SelectItem key={p.userId} value={p.userId}>
                                 {p.perfectName}

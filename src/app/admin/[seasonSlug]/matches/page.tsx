@@ -374,41 +374,41 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                         {m.status !== "finished" && m.status !== "cancelled" && (
                           <>
                             <div className="flex flex-wrap items-center gap-2">
-                              <AdminRosterDialog
-                                matchId={m.id}
-                                teamAName={teamAName}
-                                teamBName={teamBName}
-                                teamAId={m.teamAId}
-                                teamBId={m.teamBId}
-                                teamAMembers={allTeamMembers.filter((t) => t.teamId === m.teamAId)}
-                                teamBMembers={allTeamMembers.filter((t) => t.teamId === m.teamBId)}
-                                teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
-                                teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
-                              />
-                              {m.status === "scheduled" && (
-                                <VetoInputDialog
-                                  matchId={m.id}
-                                  format={m.format as "bo1" | "bo3" | "bo5"}
-                                  teamAName={teamAName}
-                                  teamBName={teamBName}
-                                  teamAId={m.teamAId}
-                                  teamBId={m.teamBId}
-                                  mapPool={mapPool}
-                                />
-                              )}
-                            </div>
-                            <ScheduledAtInput
+                          <AdminRosterDialog
+                            matchId={m.id}
+                            teamAName={teamAName}
+                            teamBName={teamBName}
+                            teamAId={m.teamAId}
+                            teamBId={m.teamBId}
+                            teamAMembers={allTeamMembers.filter((t) => t.teamId === m.teamAId)}
+                            teamBMembers={allTeamMembers.filter((t) => t.teamId === m.teamBId)}
+                            teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
+                            teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
+                          />
+                          {(m.status === "scheduled" || m.status === "in_progress") && (
+                            <VetoInputDialog
                               matchId={m.id}
-                              currentScheduledAt={m.scheduledAt}
-                              currentCompletionDeadline={m.completionDeadline}
-                            />
-                            <ScoreInput
-                              matchId={m.id}
+                              format={m.format as "bo1" | "bo3" | "bo5"}
                               teamAName={teamAName}
                               teamBName={teamBName}
-                              currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                              format={m.format as "bo1" | "bo3" | "bo5"}
+                              teamAId={m.teamAId}
+                              teamBId={m.teamBId}
+                              mapPool={mapPool}
                             />
+                          )}
+                        </div>
+                        <ScheduledAtInput
+                          matchId={m.id}
+                          currentScheduledAt={m.scheduledAt}
+                          currentCompletionDeadline={m.completionDeadline}
+                        />
+                        <ScoreInput
+                          matchId={m.id}
+                          teamAName={teamAName}
+                          teamBName={teamBName}
+                          currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
+                          format={m.format as "bo1" | "bo3" | "bo5"}
+                        />
                           </>
                         )}
                         {m.status === "finished" && (mapsByMatch.get(m.id) ?? []).map((map) => (
@@ -483,7 +483,7 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                                 teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
                                 teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
                               />
-                              {m.status === "scheduled" && (
+                              {(m.status === "scheduled" || m.status === "in_progress") && (
                                 <VetoInputDialog
                                   matchId={m.id}
                                   format={m.format as "bo1" | "bo3" | "bo5"}

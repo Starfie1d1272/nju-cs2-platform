@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matchMaps } from "@/db/schema/match-maps";
 import { matches } from "@/db/schema/matches";
@@ -9,6 +9,7 @@ import { matchMvpVotes } from "@/db/schema/mvp-votes";
 import { auditLogs } from "@/db/schema/audit";
 import { users } from "@/db/schema/users";
 import { seasonRegistrations } from "@/db/schema/registrations";
+import { teamMembers } from "@/db/schema/teams";
 import { ok, fail } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { actionError } from "@/lib/action-utils";
@@ -48,20 +49,24 @@ export async function extractStatsFromScreenshot(
     });
     if (!match) throw new AppError(ErrorCode.NOT_FOUND, "比赛记录不存在");
 
-    // 赛季中所有 approved 选手（用于精确昵称匹配 + 下拉选择）
-    const seasonPlayers = await db
-      .select({
-        userId: users.id,
-        perfectName: users.perfectName,
-      })
-      .from(users)
-      .innerJoin(seasonRegistrations, eq(seasonRegistrations.userId, users.id))
-      .where(
-        and(
-          eq(seasonRegistrations.seasonId, match.seasonId),
-          eq(seasonRegistrations.status, "approved")
-        )
-      );
+    // 仅查询本场比赛两队队员（用于昵称匹配 + 下拉选择）
+    const teamMemberRows = await db
+      .select({ registrationId: teamMembers.registrationId })
+      .from(teamMembers)
+      .where(inArray(teamMembers.teamId, [match.teamAId, match.teamBId]));
+
+    const teamRegistrationIds = teamMemberRows.map((r) => r.registrationId);
+
+    const seasonPlayers = teamRegistrationIds.length
+      ? await db
+          .select({
+            userId: users.id,
+            perfectName: users.perfectName,
+          })
+          .from(users)
+          .innerJoin(seasonRegistrations, eq(seasonRegistrations.userId, users.id))
+          .where(inArray(seasonRegistrations.id, teamRegistrationIds))
+      : [];
 
     const nameToUserId = new Map<string, string>();
     for (const p of seasonPlayers) {

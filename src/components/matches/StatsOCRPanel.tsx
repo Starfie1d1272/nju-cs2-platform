@@ -191,11 +191,14 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__none__">— 未匹配 —</SelectItem>
-                          {playerOptions.map((p) => (
-                            <SelectItem key={p.userId} value={p.userId}>
-                              {p.perfectName}
-                            </SelectItem>
-                          ))}
+                          {/* 排除已被其他行匹配的玩家 */}
+                          {playerOptions
+                            .filter((p) => !drafts.some((d, di) => di !== idx && d.userId === p.userId))
+                            .map((p) => (
+                              <SelectItem key={p.userId} value={p.userId}>
+                                {p.perfectName}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </TableCell>

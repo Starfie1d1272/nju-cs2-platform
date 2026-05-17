@@ -7,19 +7,26 @@ export function OnlineCounter() {
   const [count, setCount] = useState<number | null>(null);
 
   const fetchCount = useCallback(async () => {
-    const res = await fetch("/api/online-count", { cache: "no-store" });
-    if (res.ok) {
-      const data = await res.json();
-      setCount(data.count);
+    try {
+      const res = await fetch("/api/online-count", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setCount(data.count);
+      }
+    } catch {
+      // API 不可用时静默跳过
     }
   }, []);
 
   useEffect(() => {
     let mounted = true;
-    touchSession().then(() => { if (mounted) fetchCount(); });
-    const id = setInterval(() => {
-      touchSession().then(() => { if (mounted) fetchCount(); });
-    }, 120_000); // 每 2 分钟心跳
+    const tick = () => {
+      touchSession()
+        .then(() => { if (mounted) fetchCount(); })
+        .catch(() => {}); // user_sessions 表不存在时静默跳过
+    };
+    tick();
+    const id = setInterval(tick, 120_000); // 每 2 分钟心跳
     return () => { clearInterval(id); mounted = false; };
   }, [fetchCount]);
 

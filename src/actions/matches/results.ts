@@ -210,7 +210,10 @@ export async function recordMapResult(
     const match = await getMatchOrThrow(matchId);
     const session = await requireSeasonAdmin(match.seasonId);
 
-    if (match.status !== "in_progress" && match.status !== "scheduled") {
+    const isStatusAllowed = match.format === "bo1"
+      ? match.status === "in_progress" || match.status === "scheduled"
+      : match.status === "in_progress";
+    if (!isStatusAllowed) {
       throw new AppError(ErrorCode.MATCH_INVALID_TRANSITION, "比赛状态不允许录入地图结果");
     }
 

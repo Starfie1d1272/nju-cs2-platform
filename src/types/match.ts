@@ -67,9 +67,9 @@ export type VetoActionType = "ban" | "pick" | "side_pick" | "decider";
 
 /** 每种 format 的 BP 步骤数（用于 UI 进度条 / 校验）*/
 export const VETO_STEP_COUNT: Record<MatchFormat, number> = {
-  bo1: 4,   // ban×3 + side_pick×1
-  bo3: 7,   // ban×2 + pick×2 + side_pick×2 + ban×2 + decider 起始边
-  bo5: 9,   // ban×2 (Team A 优势) + pick×4 + side_pick×4 + decider 刀赛
+  bo1: 7,   // ban×6 + decider
+  bo3: 7,   // ban×2 + pick×2 + ban×2 + decider
+  bo5: 7,   // ban×2 + pick×4 + decider（knife round）
 };
 
 // ── 工具函数 ─────────────────────────────────────────────────────────────

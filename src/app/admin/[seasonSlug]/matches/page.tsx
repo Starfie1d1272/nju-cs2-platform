@@ -17,6 +17,7 @@ import { ScheduledAtInput } from "@/components/matches/ScheduledAtInput";
 import { VetoInputDialog } from "@/components/matches/VetoInputDialog";
 import { AdminRosterDialog } from "@/components/matches/AdminRosterDialog";
 import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
+import { DeleteMatchButton } from "@/components/matches/DeleteMatchButton";
 import { BatchDeadlineCard } from "@/components/matches/BatchDeadlineCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Panel, StatusPill } from "@/components/rivalhub";
@@ -388,6 +389,9 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                               currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
                               format={m.format as "bo1" | "bo3" | "bo5"}
                             />
+                            {m.status === "scheduled" && (
+                              <DeleteMatchButton matchId={m.id} />
+                            )}
                           </>
                         )}
                         {m.status === "finished" && (mapsByMatch.get(m.id) ?? []).map((map) => (
@@ -493,6 +497,9 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                                   currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
                                   format={m.format as "bo1" | "bo3" | "bo5"}
                                 />
+                                {m.status === "scheduled" && (
+                                  <DeleteMatchButton matchId={m.id} />
+                                )}
                               </>
                             )}
                           </>

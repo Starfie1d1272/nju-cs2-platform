@@ -2,11 +2,11 @@
 
 import { eq, asc, and, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons, matches, matchMaps, teams, auditLogs } from "@/db/schema";
+import { seasons, matches, matchMaps, matchVetoSteps, matchRosters, matchRosterPlayers, teams, auditLogs } from "@/db/schema";
 import { ok } from "@/types/action";
 import type { ActionResult } from "@/types/action";
 import { AppError, ErrorCode } from "@/lib/errors";
-import { requireSeasonAdmin } from "@/lib/auth/session";
+import { requireSeasonAdmin, auditActorId } from "@/lib/auth/session";
 import { advanceMatch as bracketAdvance, type BracketStageRef, type ResolvedBracketMatch } from "@/lib/bracket";
 import type { Database } from "brackets-manager";
 import {
@@ -490,5 +490,66 @@ export async function batchSetCompletionDeadline(input: {
     return ok({ updated: matchIds.length });
   } catch (e) {
     return actionError("batchSetCompletionDeadline", e);
+  }
+}
+
+// ── 删除比赛 ──────────────────────────────────────────────────────────────
+
+/**
+ * 删除一场「已排期」状态的比赛，级联删除相关地图记录、BP 数据及人员名单。
+ * 已开始的比赛、由 Bracket 自动生成的比赛不允许删除。
+ */
+export async function deleteMatch(matchId: string): Promise<ActionResult<void>> {
+  try {
+    const match = await getMatchOrThrow(matchId);
+    const session = await requireSeasonAdmin(match.seasonId);
+
+    if (match.status !== "scheduled") {
+      throw new AppError(ErrorCode.MATCH_INVALID_TRANSITION, "仅可删除「已排期」状态的比赛");
+    }
+
+    if (match.bracketNodeId) {
+      throw new AppError(ErrorCode.MATCH_INVALID_TRANSITION, "无法删除 Bracket 自动生成的比赛");
+    }
+
+    const season = await getSeasonOrThrow(match.seasonId);
+
+    await db.transaction(async (tx) => {
+      // 级联删除相关数据
+      await tx.delete(matchVetoSteps).where(eq(matchVetoSteps.matchId, matchId));
+      await tx.delete(matchMaps).where(eq(matchMaps.matchId, matchId));
+
+      // matchRosterPlayers 需先查询 rosterIds
+      const rosterIds = await tx
+        .select({ id: matchRosters.id })
+        .from(matchRosters)
+        .where(eq(matchRosters.matchId, matchId));
+      if (rosterIds.length > 0) {
+        await tx.delete(matchRosterPlayers).where(
+          inArray(
+            matchRosterPlayers.rosterId,
+            rosterIds.map((r) => r.id),
+          ),
+        );
+      }
+      await tx.delete(matchRosters).where(eq(matchRosters.matchId, matchId));
+
+      // 最后删除比赛本身
+      await tx.delete(matches).where(eq(matches.id, matchId));
+
+      await tx.insert(auditLogs).values({
+        seasonId: match.seasonId,
+        action: "match.delete",
+        actorId: auditActorId(session),
+        targetId: matchId,
+        targetType: "match",
+        meta: { stage: match.stage, format: match.format, teamAId: match.teamAId, teamBId: match.teamBId },
+      });
+    });
+
+    revalidateMatchPaths(season.slug, matchId);
+    return ok(undefined);
+  } catch (e) {
+    return actionError("deleteMatch", e);
   }
 }

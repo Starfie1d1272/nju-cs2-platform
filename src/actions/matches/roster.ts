@@ -71,10 +71,6 @@ export async function submitMatchRoster(
           eq(matchRosters.teamId, teamId),
         ),
       });
-      if (existing && existing.status === "submitted") {
-        throw new AppError(ErrorCode.VALIDATION_FAILED, "名单已锁定，联系管理员解锁");
-      }
-
       let rosterId: string;
       if (existing) {
         rosterId = existing.id;

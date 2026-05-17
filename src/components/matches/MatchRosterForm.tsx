@@ -127,7 +127,8 @@ export function MatchRosterForm({
               key={m.id}
               type="button"
               onClick={() => toggleStarter(m.id)}
-              className={playerBtnClass(selectedStarterIds.includes(m.id))}
+              disabled={isWithin2Hours || isMatchStarted}
+              className={playerBtnClass(selectedStarterIds.includes(m.id), isWithin2Hours || isMatchStarted)}
             >
               <span className="text-sm font-medium">{getDisplayName(m)}</span>
               <PosChip pos={m.primaryPosition} />
@@ -147,10 +148,10 @@ export function MatchRosterForm({
               key={m.id}
               type="button"
               onClick={() => toggleSubstitute(m.id)}
-              disabled={selectedStarterIds.includes(m.id)}
+              disabled={selectedStarterIds.includes(m.id) || isWithin2Hours || isMatchStarted}
               className={playerBtnClass(
                 selectedSubstituteIds.includes(m.id),
-                selectedStarterIds.includes(m.id),
+                selectedStarterIds.includes(m.id) || isWithin2Hours || isMatchStarted,
               )}
             >
               <span className="text-sm font-medium">{getDisplayName(m)}</span>
@@ -163,7 +164,7 @@ export function MatchRosterForm({
         </p>
       </div>
 
-      {!hasExistingRoster && !isWithin2Hours && !isMatchStarted && (
+      {!isWithin2Hours && !isMatchStarted && (
         <Button
           onClick={handleSubmit}
           disabled={isPending || selectedStarterIds.length !== 5}
@@ -172,9 +173,9 @@ export function MatchRosterForm({
           提交名单
         </Button>
       )}
-      {hasExistingRoster && (
+      {isWithin2Hours && hasExistingRoster && (
         <p className="text-xs text-[var(--color-fg-dim)]">
-          名单已提交，如需修改请联系管理员
+          名单已锁定，距开赛不足 2 小时
         </p>
       )}
     </div>

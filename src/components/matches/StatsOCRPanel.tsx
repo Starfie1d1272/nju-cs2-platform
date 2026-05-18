@@ -23,9 +23,14 @@ import {
   savePlayerStats,
   getPlayerStatsByMap,
   getMatchPlayerOptions,
+  deletePlayerStatsByMap,
   type PlayerStatsDraft,
   type PlayerOption,
 } from "@/actions/player-stats";
+import { isStatOutOfRange } from "@/lib/config/stat-ranges";
+import { InlineConfirm } from "@/components/rivalhub";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils/cn";
 
 interface Props {
   mapId: string;
@@ -60,6 +65,7 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
   // viewMode=true：只读展示；false：编辑录入
   const [viewMode, setViewMode] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // 挂载时加载已保存数据
   useEffect(() => {
@@ -192,6 +198,31 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
     [drafts],
   );
 
+  const errorCount = useMemo(() => {
+    let count = 0;
+    for (const row of drafts) {
+      for (const f of NUM_FIELDS) {
+        const val = row[f.key] as number | null;
+        if (val !== null && isStatOutOfRange(f.key, val)) count++;
+      }
+    }
+    return count;
+  }, [drafts]);
+
+  async function handleClear() {
+    setSaving(true);
+    const result = await deletePlayerStatsByMap(mapId);
+    setSaving(false);
+    if (!result.success) {
+      toast.error(result.error.message);
+    } else {
+      setDrafts([]);
+      setViewMode(false);
+      setShowClearConfirm(false);
+      toast.success("数据已清除");
+    }
+  }
+
   if (initialLoading) {
     return (
       <div className="mt-4">
@@ -207,9 +238,28 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
           {mapName} — 玩家数据
         </h4>
         {viewMode && drafts.length > 0 && (
-          <Button size="sm" variant="outline" onClick={enterEditMode}>
-            重新录入
-          </Button>
+          <div className="flex gap-2 items-center">
+            {showClearConfirm ? (
+              <InlineConfirm
+                title="确认清除所有数据？"
+                sub="此操作不可撤销"
+                onConfirm={handleClear}
+                onCancel={() => setShowClearConfirm(false)}
+              />
+            ) : (
+              <Button size="sm" variant="outline" onClick={enterEditMode}>重新录入</Button>
+            )}
+            {!showClearConfirm && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-[var(--color-danger)]"
+                onClick={() => setShowClearConfirm(true)}
+              >
+                清除数据
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -318,7 +368,12 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
                         {NUM_FIELDS.map((f) => (
                           <TableCell key={f.key} className="text-center p-1">
                             <Input
-                              className="h-7 text-xs text-center w-14"
+                              className={cn(
+                                "h-7 text-xs text-center w-14",
+                                (row[f.key] as number | null) !== null &&
+                                  isStatOutOfRange(f.key, row[f.key] as number) &&
+                                  "border-[var(--color-danger)] text-[var(--color-danger)]",
+                              )}
                               type="number"
                               value={(row[f.key] as number | null) ?? ""}
                               onChange={(e) =>
@@ -344,15 +399,20 @@ export function StatsOCRPanel({ mapId, mapName }: Props) {
                 </Table>
               </div>
 
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center flex-wrap">
                 <Button
                   size="sm"
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || errorCount > 0}
                 >
                   {saving ? "保存中…" : "确认保存"}
                 </Button>
-                {drafts.length > 0 && viewMode === false && (
+                {errorCount > 0 && (
+                  <p className="text-xs text-[var(--color-danger)]">
+                    ⚠ {errorCount} 处数据超出合法范围，请修正后再保存
+                  </p>
+                )}
+                {drafts.length > 0 && !viewMode && (
                   <Button
                     size="sm"
                     variant="ghost"

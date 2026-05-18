@@ -10,7 +10,7 @@ import { auditLogs } from "@/db/schema/audit";
 import { users } from "@/db/schema/users";
 import { seasonRegistrations } from "@/db/schema/registrations";
 import { teamMembers } from "@/db/schema/teams";
-import { ok, fail } from "@/types/action";
+import { ok, fail, type ActionResult } from "@/types/action";
 import { AppError, ErrorCode, ERROR_MESSAGES } from "@/lib/errors";
 import { actionError } from "@/lib/action-utils";
 import { MVP_DEADLINE_MS } from "@/lib/utils/date";
@@ -18,6 +18,7 @@ import { extractScoreboardFromBase64 } from "@/lib/ocr";
 import type { PlayerRowOCR } from "@/lib/ocr";
 import { requireAdmin, auditActorId, requireAuth } from "@/lib/auth/session";
 import { revalidatePath } from "next/cache";
+import { isStatOutOfRange } from "@/lib/config/stat-ranges";
 
 export type PlayerStatsDraft = PlayerRowOCR & {
   userId: string | null;
@@ -126,6 +127,22 @@ export async function savePlayerStats(
       where: eq(matches.id, map.matchId),
     });
     if (!match) throw new AppError(ErrorCode.NOT_FOUND, "比赛记录不存在");
+
+    const violations: string[] = [];
+    for (const s of stats) {
+      const name = s.perfectName as string;
+      for (const [key, val] of Object.entries(s)) {
+        if (typeof val === "number" && isStatOutOfRange(key, val)) {
+          violations.push(`${name}.${key}=${val}`);
+        }
+      }
+    }
+    if (violations.length > 0) {
+      throw new AppError(
+        ErrorCode.VALIDATION_FAILED,
+        `数据超出合法范围：${violations.slice(0, 5).join("，")}${violations.length > 5 ? `…（共 ${violations.length} 处）` : ""}`,
+      );
+    }
 
     await db.transaction(async (tx) => {
       await tx.delete(matchPlayerStats).where(eq(matchPlayerStats.mapId, mapId));
@@ -284,6 +301,35 @@ export async function ensureMvpWinner(matchId: string): Promise<string | null> {
   } catch (e) {
     console.error("[ensureMvpWinner]", e);
     return null;
+  }
+}
+
+/**
+ * 清除某张地图的所有玩家数据（管理员操作，写 audit log）。
+ */
+export async function deletePlayerStatsByMap(mapId: string): Promise<ActionResult<void>> {
+  try {
+    const session = await requireAdmin();
+    const map = await db.query.matchMaps.findFirst({ where: eq(matchMaps.id, mapId) });
+    if (!map) throw new AppError(ErrorCode.NOT_FOUND, "地图记录不存在");
+    const match = await db.query.matches.findFirst({ where: eq(matches.id, map.matchId) });
+    if (!match) throw new AppError(ErrorCode.NOT_FOUND, "比赛记录不存在");
+
+    await db.transaction(async (tx) => {
+      await tx.delete(matchPlayerStats).where(eq(matchPlayerStats.mapId, mapId));
+      await tx.insert(auditLogs).values({
+        seasonId: match.seasonId,
+        action: "match.delete_player_stats",
+        actorId: auditActorId(session),
+        targetId: mapId,
+        targetType: "match_map",
+        meta: { mapId },
+      });
+    });
+
+    return ok(undefined);
+  } catch (e) {
+    return actionError("deletePlayerStatsByMap", e);
   }
 }
 

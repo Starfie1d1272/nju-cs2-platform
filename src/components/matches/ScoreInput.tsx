@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InlineConfirm } from "@/components/rivalhub";
-import { recordMatchResult, updateMatchStatus } from "@/actions/matches";
+import { recordMatchResult, updateMatchStatus, correctMatchScore } from "@/actions/matches";
 
 interface ScoreInputProps {
   matchId: string;
@@ -14,6 +14,8 @@ interface ScoreInputProps {
   teamBName: string;
   currentStatus: "scheduled" | "in_progress" | "finished" | "cancelled";
   format: "bo1" | "bo3" | "bo5";
+  currentScoreA?: number | null;
+  currentScoreB?: number | null;
 }
 
 const MAX_WINS: Record<string, number | null> = { bo1: null, bo3: 2, bo5: 3 };
@@ -33,10 +35,13 @@ function validateSeriesScore(format: string, a: number, b: number): string | nul
   return null;
 }
 
-export function ScoreInput({ matchId, teamAName, teamBName, currentStatus, format }: ScoreInputProps) {
+export function ScoreInput({ matchId, teamAName, teamBName, currentStatus, format, currentScoreA, currentScoreB }: ScoreInputProps) {
   const [scoreA, setScoreA] = useState("");
   const [scoreB, setScoreB] = useState("");
   const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const [showCorrect, setShowCorrect] = useState(false);
+  const [correctA, setCorrectA] = useState("");
+  const [correctB, setCorrectB] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleStart() {
@@ -82,7 +87,97 @@ export function ScoreInput({ matchId, teamAName, teamBName, currentStatus, forma
     });
   }
 
-  if (currentStatus === "finished" || currentStatus === "cancelled") {
+  function handleCorrect(e: React.FormEvent) {
+    e.preventDefault();
+    const a = parseInt(correctA, 10);
+    const b = parseInt(correctB, 10);
+    if (isNaN(a) || isNaN(b) || a < 0 || b < 0) {
+      toast.error("请输入有效的非负整数");
+      return;
+    }
+    if (a === b) {
+      toast.error("系列赛不能平局");
+      return;
+    }
+    startTransition(async () => {
+      const result = await correctMatchScore(matchId, a, b);
+      if (result.success) {
+        toast.success("比分已修正");
+        setShowCorrect(false);
+        setCorrectA("");
+        setCorrectB("");
+      } else {
+        toast.error(result.error.message);
+      }
+    });
+  }
+
+  if (currentStatus === "finished") {
+    return (
+      <div className="space-y-2">
+        {!showCorrect ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setCorrectA(currentScoreA != null ? String(currentScoreA) : "");
+              setCorrectB(currentScoreB != null ? String(currentScoreB) : "");
+              setShowCorrect(true);
+            }}
+          >
+            修改比分
+          </Button>
+        ) : (
+          <form onSubmit={handleCorrect} className="space-y-3">
+            <p className="text-xs text-[var(--color-fg-mid)]">
+              {format === "bo1" ? "回合数（MR12：13 / 16 / 19 / 22）" : SCORE_LABELS[format]}
+            </p>
+            <p className="text-xs text-[var(--color-accent)]">仅修正比分数字，不影响胜负判定和晋级结果</p>
+            <div className="flex items-end gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-[var(--color-fg-mid)]">{teamAName}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={correctA}
+                  onChange={(e) => setCorrectA(e.target.value)}
+                  className="w-20 text-center"
+                  placeholder="0"
+                />
+              </div>
+              <span className="text-[var(--color-fg-mid)] mb-2">:</span>
+              <div className="space-y-1">
+                <Label className="text-xs text-[var(--color-fg-mid)]">{teamBName}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={correctB}
+                  onChange={(e) => setCorrectB(e.target.value)}
+                  className="w-20 text-center"
+                  placeholder="0"
+                />
+              </div>
+              <Button type="submit" size="sm" disabled={isPending} className="mb-0.5">
+                确认修改
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={isPending}
+                className="mb-0.5"
+                onClick={() => setShowCorrect(false)}
+              >
+                取消
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    );
+  }
+
+  if (currentStatus === "cancelled") {
     return null;
   }
 

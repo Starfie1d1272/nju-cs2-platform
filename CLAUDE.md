@@ -238,11 +238,12 @@ src/
 │   ├── validators/   # Zod schema（registration / vote / match）
 │   └── utils/        # date（UTC/CST）+ season（capability 工具）+ password（scrypt）+ cn
 ├── components/
-│   ├── layout/       # Header / Footer / AdminShortcut / header-client / season-nav / breadcrumb / OnlineCounter
+│   ├── layout/       # Header / Footer / AdminShortcut / HeaderClient / SeasonNav / Breadcrumb / OnlineCounter
 │   ├── ui/           # shadcn 组件（按需 add，已覆盖 button/input/badge/card/skeleton/select/dialog/tabs/table/textarea）
 │   ├── rivalhub/     # Tactical Grid 组件（16 个：Panel/Btn/Field/Marker/Stat/
 │   │                 #   StatusBanner/InlineConfirm/EmptyState/ErrorState/Skeleton/
 │   │                 #   TeamBadge/PosChip/StatusPill/ScrollHint/PhaseStep/MapPreferenceChips）
+│   ├── auth/         # 登录/邀请组件（2 个：LoginForm / ClaimInviteForm）
 │   ├── settings/     # 用户设置组件（ProfileForm / ChangePasswordForm）
 │   ├── register/     # 报名组件（RegistrationForm）
 │   ├── admin/        # 管理后台组件（14 个：AdminLoginForm / AdminRegisterForm / AdminSidebar /
@@ -253,8 +254,8 @@ src/
 │   │                 #   DraftLiveRoom / PlayerInfoPopover / PlayerPool / TeamDraftGrid）
 │   ├── captains/     # 队长投票组件（2 个：CaptainConfirmPanel / CaptainVotingPanel）
 │   ├── teams/        # 队伍组件（5 个：TeamCard / TeamGrid / TeamLogoUpload / TeamNameForm / TeamRosterCard）
-│   └── matches/      # 赛程组件（27 个：MatchCard / MatchTeamFilter / CreateMatchForm /
-│                     #   AdminMatchFilter / AdminRosterDialog / BatchDeadlineCard / BracketView /
+│   └── matches/      # 赛程组件（28 个：MatchCard / MatchTeamFilter / CreateMatchForm /
+│                     #   AdminMatchFilter / AdminMatchRow / AdminRosterDialog / BatchDeadlineCard / BracketView /
 │                     #   DeleteMatchButton / GeneratePlayoffCard / GenerateScheduleCard /
 │                     #   MapByMapInput / MatchMvpVote / MatchRosterForm / MatchRosterView /
 │                     #   MatchStatusBadge / MatchTabsSection / MatchTimeNegotiation /
@@ -291,6 +292,7 @@ pnpm seed              # 运行种子脚本（阶段2+ 有真实 DB 后使用）
 - **禁止物化计数字段**：如 `position_count`、`vote_count` 等字段不在 schema 里，靠查询聚合。
 - **禁止在 Server Action 外写 DB 逻辑**：页面文件只做数据读取（RSC fetch），写操作必须是 Server Action。
 - **shadcn 组件按需 add**：`pnpm dlx shadcn@latest add button`，不要手工写 shadcn 组件。
+- **组件文件统一 PascalCase 命名**：`src/components/` 下所有 `.tsx` 文件名与其 export 名保持一致（如 `MatchCard.tsx` export `MatchCard`）。`ui/` 目录（shadcn）除外。新增后运行 `zsh scripts/check-claude-md.sh` 确认 CLAUDE.md 已记录。
 
 ---
 

@@ -42,16 +42,22 @@ function mapFinishedMaps(records: { id: string; mapName: string }[]) {
   return records.map((r) => ({ id: r.id, mapName: r.mapName }));
 }
 
-function sortMatches<T extends { status: string; scheduledAt: Date | null }>(list: T[]): T[] {
+function sortMatches<T extends { status: string; scheduledAt: Date | null; completedAt: Date | null }>(list: T[]): T[] {
   return [...list].sort((a, b) => {
     const diff = (STATUS_SORT_ORDER[a.status] ?? 9) - (STATUS_SORT_ORDER[b.status] ?? 9);
     if (diff !== 0) return diff;
-    // 同状态：有排期的按时间升序，null 排最后
     if (a.status === "scheduled" || a.status === "in_progress") {
       if (!a.scheduledAt && !b.scheduledAt) return 0;
       if (!a.scheduledAt) return 1;
       if (!b.scheduledAt) return -1;
       return a.scheduledAt.getTime() - b.scheduledAt.getTime();
+    }
+    if (a.status === "finished") {
+      if (!a.completedAt && !b.completedAt) return 0;
+      if (!a.completedAt) return 1;
+      if (!b.completedAt) return -1;
+      // 最近完成的排最前
+      return b.completedAt.getTime() - a.completedAt.getTime();
     }
     return 0;
   });
@@ -138,21 +144,25 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
 
   const matchCount = allMatches.length;
   const qualifierCount = qualifierMatches.length;
-  const playoffCount = playoffMatches.length;
+
+  // 不受界面筛选影响，用于判断正赛是否已生成
+  const allPlayoffCount = allMatches.filter((m) => m.stage === playoffKey).length;
+  // 不受界面筛选影响，用于判断排位赛是否全部结束
+  const allQualifierMatches = allMatches.filter((m) => m.stage === qualifierKey);
 
   const canGenerate = season.status === "playing" && matchCount === 0 && allTeams.length >= 2;
 
-  // 是否所有排位赛已结束
+  // 是否所有排位赛已结束（基于全量数据，不受筛选影响）
   const allQualifierFinished =
-    qualifierCount > 0 &&
-    qualifierMatches.every((m) => m.status === "finished" || m.status === "cancelled");
+    allQualifierMatches.length > 0 &&
+    allQualifierMatches.every((m) => m.status === "finished" || m.status === "cancelled");
 
   // 是否可以生成正赛
   const canGeneratePlayoff =
     !!qualifierStage &&
     !!playoffStage &&
     allQualifierFinished &&
-    playoffCount === 0;
+    allPlayoffCount === 0;
 
   // 积分榜（有排位赛时计算）
   const finishedQualifierMatches = qualifierMatches.filter((m) => m.status === "finished");

@@ -62,8 +62,8 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
   const qualifierMatches = qualifierMatchesAll.filter(matchFilter);
   const playoffMatches = playoffMatchesAll.filter(matchFilter);
 
-  // 排序：已排期（由近及远）→ 未排期
-  const sortMatchList = (list: typeof allMatches) =>
+  // 待进行：已排期（由近及远）→ 未排期
+  const sortActiveMatches = (list: typeof allMatches) =>
     [...list].sort((a, b) => {
       const aTime = a.scheduledAt?.getTime() ?? Infinity;
       const bTime = b.scheduledAt?.getTime() ?? Infinity;
@@ -71,9 +71,18 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
       return a.createdAt.getTime() - b.createdAt.getTime();
     });
 
+  // 已结束：按结束时间从近到远
+  const sortDoneMatches = (list: typeof allMatches) =>
+    [...list].sort((a, b) => {
+      const aTime = (a.completedAt ?? a.scheduledAt)?.getTime() ?? 0;
+      const bTime = (b.completedAt ?? b.scheduledAt)?.getTime() ?? 0;
+      if (aTime !== bTime) return bTime - aTime;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+
   const splitMatches = (list: typeof allMatches) => ({
-    active: sortMatchList(list.filter((m) => m.status !== "finished" && m.status !== "cancelled")),
-    done: sortMatchList(list.filter((m) => m.status === "finished" || m.status === "cancelled")),
+    active: sortActiveMatches(list.filter((m) => m.status !== "finished" && m.status !== "cancelled")),
+    done: sortDoneMatches(list.filter((m) => m.status === "finished" || m.status === "cancelled")),
   });
 
   const { active: qualifierActive, done: qualifierDone } = splitMatches(qualifierMatches);

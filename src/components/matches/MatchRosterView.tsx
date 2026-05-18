@@ -15,6 +15,53 @@ interface MatchRosterViewProps {
   teamBRoster: RosterPlayer[] | null;
 }
 
+function RosterColumn({ teamName, roster }: { teamName: string; roster: RosterPlayer[] | null }) {
+  const starters = roster?.filter((p) => p.isStarter) ?? [];
+  const subs = roster?.filter((p) => !p.isStarter) ?? [];
+
+  return (
+    <div>
+      <div
+        className="mb-2 text-xs font-bold uppercase"
+        style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.12em", color: "var(--color-fg-dim)" }}
+      >
+        {teamName}
+      </div>
+      {roster && roster.length > 0 ? (
+        <div className="space-y-1">
+          {starters.map((p, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between text-sm"
+              style={{ color: "var(--color-fg)" }}
+            >
+              <span>{getDisplayName(p)}</span>
+              <span
+                className="text-xs"
+                style={{ fontFamily: "var(--font-mono)", color: "var(--color-fg-dim)", letterSpacing: "0.06em" }}
+              >
+                {p.primaryPosition}
+              </span>
+            </div>
+          ))}
+          {subs.length > 0 && (
+            <div
+              className="pt-1 mt-1 text-xs"
+              style={{ borderTop: "1px solid var(--color-border)", color: "var(--color-fg-mid)" }}
+            >
+              替补：{subs.map((p) => getDisplayName(p)).join("、")}
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm" style={{ color: "var(--color-fg-dim)" }}>
+          未提交
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function MatchRosterView({
   teamAName,
   teamARoster,
@@ -23,56 +70,8 @@ export function MatchRosterView({
 }: MatchRosterViewProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <h4 className="font-medium">{teamAName}</h4>
-        {teamARoster && teamARoster.length > 0 ? (
-          <ul className="mt-1 space-y-1 text-sm">
-            {teamARoster
-              .filter((p) => p.isStarter)
-              .map((p, i) => (
-                <li key={i}>
-                  {getDisplayName(p)} — {p.primaryPosition}
-                </li>
-              ))}
-            {teamARoster.filter((p) => !p.isStarter).length > 0 && (
-              <li className="text-muted-foreground">
-                替补：
-                {teamARoster
-                  .filter((p) => !p.isStarter)
-                  .map((p) => getDisplayName(p))
-                  .join("、")}
-              </li>
-            )}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">未提交</p>
-        )}
-      </div>
-      <div>
-        <h4 className="font-medium">{teamBName}</h4>
-        {teamBRoster && teamBRoster.length > 0 ? (
-          <ul className="mt-1 space-y-1 text-sm">
-            {teamBRoster
-              .filter((p) => p.isStarter)
-              .map((p, i) => (
-                <li key={i}>
-                  {getDisplayName(p)} — {p.primaryPosition}
-                </li>
-              ))}
-            {teamBRoster.filter((p) => !p.isStarter).length > 0 && (
-              <li className="text-muted-foreground">
-                替补：
-                {teamBRoster
-                  .filter((p) => !p.isStarter)
-                  .map((p) => getDisplayName(p))
-                  .join("、")}
-              </li>
-            )}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">未提交</p>
-        )}
-      </div>
+      <RosterColumn teamName={teamAName} roster={teamARoster} />
+      <RosterColumn teamName={teamBName} roster={teamBRoster} />
     </div>
   );
 }

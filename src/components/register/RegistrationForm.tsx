@@ -201,7 +201,7 @@ export function RegistrationForm({
   if (submitted) {
     return (
       <div className="flex flex-col items-center text-center py-16 gap-4">
-        <CheckCircle2 size={48} className="text-emerald-400" />
+        <CheckCircle2 size={48} className="text-[var(--color-ok)]" />
         <h2 className="text-2xl font-bold text-[var(--color-fg)]">报名成功！</h2>
         <p className="text-[var(--color-fg-mid)] max-w-sm">
           已收到你的 <span className="font-medium text-[var(--color-fg)]">{seasonName}</span> 报名。
@@ -228,7 +228,7 @@ export function RegistrationForm({
         ? String((err as { message?: unknown }).message)
         : "";
     return message ? (
-      <p className="text-xs text-red-400 mt-1">{message}</p>
+      <p className="text-xs text-[var(--color-danger)] mt-1">{message}</p>
     ) : null;
   };
 
@@ -249,7 +249,7 @@ export function RegistrationForm({
     </h2>
   );
 
-  const Required = () => <span className="text-red-400">*</span>;
+  const Required = () => <span className="text-[var(--color-danger)]">*</span>;
 
   const inputCls = "bg-[var(--color-panel-hi)] border-[var(--color-border)]";
 
@@ -809,7 +809,7 @@ export function RegistrationForm({
       </section>
 
       {/* ═══════════════════════════════════════ 反作弊承诺 ═══ */}
-      <section className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+      <section className="rounded-lg border p-4" style={{ borderColor: "rgba(255,196,77,0.4)", background: "rgba(255,196,77,0.05)" }}>
         <div className="flex items-start gap-3">
           <input
             id="antiCheatPledge"

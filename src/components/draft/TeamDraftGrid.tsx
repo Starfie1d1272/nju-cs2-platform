@@ -98,7 +98,7 @@ export function TeamDraftGrid({
                       <span className="text-xs text-[var(--color-fg)]">
                         {getDisplayName(m)}
                         {m.autoPicked && (
-                          <span className="text-amber-400 ml-0.5">⚡</span>
+                          <span className="text-[var(--color-warn)] ml-0.5">⚡</span>
                         )}
                       </span>
                       <span className="font-mono text-[10px] text-[var(--color-fg-dim)] uppercase">
@@ -115,7 +115,7 @@ export function TeamDraftGrid({
                     </div>
                   ))}
                   {emptySlots === 0 && (
-                    <div className="py-1 text-xs text-emerald-400">
+                    <div className="py-1 text-xs text-[var(--color-ok)]">
                       阵容已满
                     </div>
                   )}
@@ -180,7 +180,7 @@ export function TeamDraftGrid({
                     {positionLabel(m.primaryPosition)}
                   </span>
                   {m.autoPicked && (
-                    <span className="text-amber-400 ml-0.5">⚡</span>
+                    <span className="text-[var(--color-warn)] ml-0.5">⚡</span>
                   )}
                 </div>
               ))}
@@ -197,7 +197,7 @@ export function TeamDraftGrid({
 
               {/* 满员标记 */}
               {emptySlots === 0 && (
-                <div className="text-xs text-emerald-400 mt-1">阵容已满</div>
+                <div className="text-xs text-[var(--color-ok)] mt-1">阵容已满</div>
               )}
 
               {isCurrent && (

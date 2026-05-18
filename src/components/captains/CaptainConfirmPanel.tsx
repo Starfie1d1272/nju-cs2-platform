@@ -146,7 +146,7 @@ export function CaptainConfirmPanel({
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-amber-500" />
+              <AlertTriangle className="size-5 text-[var(--color-warn)]" />
               确认队长
             </DialogTitle>
             <DialogDescription className="space-y-3 pt-2">
@@ -154,8 +154,8 @@ export function CaptainConfirmPanel({
                 即将确认前 <strong>{CAPTAIN_TEAM_COUNT}</strong> 名队长并生成队伍，
                 赛季将从 <strong>voting</strong> 推进到 <strong>drafting</strong>。
               </p>
-              <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-                <p className="font-medium text-amber-600 dark:text-amber-400">
+              <div className="rounded-md border p-3 text-sm" style={{ borderColor: "rgba(255,196,77,0.4)", background: "rgba(255,196,77,0.08)" }}>
+                <p className="font-medium text-[var(--color-warn)]">
                   此操作不可撤销
                 </p>
                 <ul className="mt-1 list-inside list-disc space-y-0.5 text-[var(--color-fg-mid)]">

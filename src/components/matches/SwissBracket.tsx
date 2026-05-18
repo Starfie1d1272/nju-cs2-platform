@@ -66,7 +66,7 @@ function SwissColumn({
             : `第 ${round.round} 轮`}
         </span>
         {round.status === "active" && (
-          <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-ok)]" />
         )}
       </div>
 
@@ -105,9 +105,9 @@ function SwissMatchupGroup({
       <div
         className={`text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center ${
           isEliminatedRecord(group.record)
-            ? "bg-red-500/10 text-red-400"
+            ? "bg-[rgba(255,84,112,0.08)] text-[var(--color-danger)]"
             : isAdvancedRecord(group.record)
-              ? "bg-emerald-500/10 text-emerald-400"
+              ? "bg-[rgba(77,212,122,0.10)] text-[var(--color-ok)]"
               : "bg-[var(--color-panel-hi)] text-[var(--color-fg-mid)]"
         }`}
       >
@@ -161,7 +161,7 @@ function SwissMatchupRow({
           <span
             className={`tabular shrink-0 ${
               winA
-                ? "text-emerald-400 font-semibold"
+                ? "text-[var(--color-ok)] font-semibold"
                 : "text-[var(--color-fg-dim)]"
             }`}
           >
@@ -187,7 +187,7 @@ function SwissMatchupRow({
           <span
             className={`tabular shrink-0 ${
               winB
-                ? "text-emerald-400 font-semibold"
+                ? "text-[var(--color-ok)] font-semibold"
                 : "text-[var(--color-fg-dim)]"
             }`}
           >
@@ -200,9 +200,9 @@ function SwissMatchupRow({
       {!isFinished && (
         <div className="mt-1 text-[10px] text-[var(--color-fg-dim)]">
           {match.status === "in_progress" ? (
-            <span className="text-amber-400">进行中</span>
+            <span className="text-[var(--color-info)]">进行中</span>
           ) : match.status === "cancelled" ? (
-            <span className="text-red-400">已取消</span>
+            <span className="text-[var(--color-danger)]">已取消</span>
           ) : (
             <span className="text-[var(--color-fg-dim)]">{match.format.toUpperCase()}</span>
           )}
@@ -231,7 +231,7 @@ function AdvancementColumn({
       {/* 晋级 */}
       {advanced.length > 0 && (
         <div>
-          <div className="text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center bg-emerald-500/10 text-emerald-400">
+          <div className="text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center bg-[rgba(77,212,122,0.10)] text-[var(--color-ok)]">
             晋级 ({advanced.length}/{advanceCount})
           </div>
           <div className="space-y-1">
@@ -255,7 +255,7 @@ function AdvancementColumn({
       {/* 淘汰 */}
       {eliminated.length > 0 && (
         <div>
-          <div className="text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center bg-red-500/10 text-red-400">
+          <div className="text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center bg-[rgba(255,84,112,0.08)] text-[var(--color-danger)]">
             淘汰 ({eliminated.length})
           </div>
           <div className="space-y-1">

@@ -157,8 +157,8 @@ export function CaptainDraftPanel({
             <div
               className={`mt-3 rounded-md border px-3 py-2 text-sm ${
                 message.type === "success"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                  : "border-red-500/30 bg-red-500/10 text-red-300"
+                  ? "border-[rgba(77,212,122,0.3)] bg-[rgba(77,212,122,0.10)] text-[var(--color-ok)]"
+                  : "border-[rgba(255,84,112,0.3)] bg-[rgba(255,84,112,0.08)] text-[var(--color-danger)]"
               }`}
               role="status"
             >
@@ -193,7 +193,7 @@ export function CaptainDraftPanel({
                   return (
                     <span
                       key={pos}
-                      className={full ? "text-red-400" : ""}
+                      className={full ? "text-[var(--color-danger)]" : ""}
                     >
                       {positionLabel(pos)} {count}/2
                     </span>
@@ -221,14 +221,14 @@ export function CaptainDraftPanel({
       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
         {/* Auto-pick candidate hint */}
         {!isReadonly && autoPickCandidate && isCurrentCaptainTurn && (
-          <div className="mb-4 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          <div className="mb-4 rounded-md border px-3 py-2 text-xs" style={{ borderColor: "rgba(255,196,77,0.4)", background: "rgba(255,196,77,0.08)", color: "var(--color-warn)" }}>
             <div className="flex items-center gap-2">
-              <Zap className="size-3.5 shrink-0" aria-hidden="true" />
+              <Zap className="size-3.5 shrink-0" aria-hidden="true" style={{ color: "var(--color-warn)" }} />
               <span>
                 超时自动选人：<strong>{getDisplayName(autoPickCandidate)}</strong>（{positionLabel(autoPickCandidate.primaryPosition)}，{autoPickCandidate.peakRank}）
               </span>
             </div>
-            <p className="mt-1.5 pl-5.5 text-[10px] text-amber-400/70 leading-relaxed">
+            <p className="mt-1.5 pl-5.5 text-[10px] leading-relaxed" style={{ color: "rgba(255,196,77,0.7)" }}>
               规则：历史最高段位 → 巅峰Rating → 当前段位 → 当前Rating；优先填空位，同位置不超过2人
             </p>
           </div>

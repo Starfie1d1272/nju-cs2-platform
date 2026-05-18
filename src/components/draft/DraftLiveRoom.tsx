@@ -259,7 +259,7 @@ export function DraftLiveRoom({
                     {getDisplayName(pick)}
                   </span>
                   {pick.autoPicked && (
-                    <span className="text-amber-400 ml-0.5">{"⚡"}</span>
+                    <span className="text-[var(--color-warn)] ml-0.5">{"⚡"}</span>
                   )}
                 </div>
               );

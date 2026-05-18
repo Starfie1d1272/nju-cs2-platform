@@ -7,12 +7,12 @@ import { calculateStandings } from "@/lib/standings";
 import { Panel, Marker } from "@/components/rivalhub";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BracketView } from "@/components/matches/BracketView";
-import { MatchCard } from "@/components/matches/MatchCard";
 import { MatchTeamFilter } from "@/components/matches/MatchTeamFilter";
 import { StandingsTable } from "@/components/matches/StandingsTable";
 import { SwissBracket } from "@/components/matches/SwissBracket";
 import { getSwissViewData } from "@/lib/swiss/data";
 import { getFirstStageOfType, normalizeStagePlan } from "@/types/season";
+import { MatchTabsSection } from "@/components/matches/MatchTabsSection";
 import { checkAdminSession } from "@/lib/auth/session";
 import { AdminShortcut } from "@/components/layout/AdminShortcut";
 import type { Database } from "brackets-manager";
@@ -192,34 +192,13 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
                 {/* 赛程列表 */}
                 {qualifierMatchesAll.length > 0 && (
                   <section className="space-y-3">
-                    <Tabs defaultValue="active" className="w-full">
-                      <TabsList className="bg-[var(--color-panel)] border border-[var(--color-border)] p-1">
-                        <TabsTrigger value="active" className="text-xs data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">待进行</TabsTrigger>
-                        <TabsTrigger value="done" className="text-xs data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">已结束</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="active" className="mt-4 space-y-2">
-                        {qualifierActive.length > 0 ? qualifierActive.map((m) => (
-                          <MatchCard key={m.id} matchId={m.id} seasonSlug={seasonSlug}
-                            teamAName={teamMap.get(m.teamAId) ?? "未知队伍"} teamBName={teamMap.get(m.teamBId) ?? "未知队伍"}
-                            scoreA={m.scoreA} scoreB={m.scoreB} stage={qualifierKey}
-                            format={m.format as "bo1" | "bo3" | "bo5"} status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                            scheduledAt={m.scheduledAt} />
-                        )) : (
-                          <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无待进行比赛</div>
-                        )}
-                      </TabsContent>
-                      <TabsContent value="done" className="mt-4 space-y-2">
-                        {qualifierDone.length > 0 ? qualifierDone.map((m) => (
-                          <MatchCard key={m.id} matchId={m.id} seasonSlug={seasonSlug}
-                            teamAName={teamMap.get(m.teamAId) ?? "未知队伍"} teamBName={teamMap.get(m.teamBId) ?? "未知队伍"}
-                            scoreA={m.scoreA} scoreB={m.scoreB} stage={qualifierKey}
-                            format={m.format as "bo1" | "bo3" | "bo5"} status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                            scheduledAt={m.scheduledAt} />
-                        )) : (
-                          <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无已结束比赛</div>
-                        )}
-                      </TabsContent>
-                    </Tabs>
+                    <MatchTabsSection
+                      activeMatches={qualifierActive}
+                      doneMatches={qualifierDone}
+                      stage={qualifierKey}
+                      seasonSlug={seasonSlug}
+                      teamMap={teamMap}
+                    />
                   </section>
                 )}
 
@@ -252,34 +231,14 @@ export default async function MatchesPage({ params, searchParams }: MatchesPageP
             {/* 正赛赛程列表 */}
             {playoffMatchesAll.length > 0 && (
               <section className="space-y-3">
-                <Tabs defaultValue="active" className="w-full">
-                  <TabsList className="bg-[var(--color-panel)] border border-[var(--color-border)] p-1">
-                    <TabsTrigger value="active" className="text-xs data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">待进行</TabsTrigger>
-                    <TabsTrigger value="done" className="text-xs data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">已结束</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="active" className="mt-4 space-y-2">
-                    {playoffActive.length > 0 ? playoffActive.map((m) => (
-                      <MatchCard key={m.id} matchId={m.id} seasonSlug={seasonSlug}
-                        teamAName={teamMap.get(m.teamAId) ?? "TBD"} teamBName={teamMap.get(m.teamBId) ?? "TBD"}
-                        scoreA={m.scoreA} scoreB={m.scoreB} stage={playoffKey}
-                        format={m.format as "bo1" | "bo3" | "bo5"} status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                        scheduledAt={m.scheduledAt} />
-                    )) : (
-                      <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无待进行比赛</div>
-                    )}
-                  </TabsContent>
-                  <TabsContent value="done" className="mt-4 space-y-2">
-                    {playoffDone.length > 0 ? playoffDone.map((m) => (
-                      <MatchCard key={m.id} matchId={m.id} seasonSlug={seasonSlug}
-                        teamAName={teamMap.get(m.teamAId) ?? "TBD"} teamBName={teamMap.get(m.teamBId) ?? "TBD"}
-                        scoreA={m.scoreA} scoreB={m.scoreB} stage={playoffKey}
-                        format={m.format as "bo1" | "bo3" | "bo5"} status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                        scheduledAt={m.scheduledAt} />
-                    )) : (
-                      <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无已结束比赛</div>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                <MatchTabsSection
+                  activeMatches={playoffActive}
+                  doneMatches={playoffDone}
+                  stage={playoffKey}
+                  seasonSlug={seasonSlug}
+                  teamMap={teamMap}
+                  unknownTeamName="TBD"
+                />
               </section>
             )}
 

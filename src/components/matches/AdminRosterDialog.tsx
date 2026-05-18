@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { getDisplayName } from "@/lib/utils/display-name";
 import { updateMatchRoster } from "@/actions/matches/roster";
+import type { RosterData } from "@/components/matches/AdminMatchRow";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -24,12 +25,6 @@ interface TeamMember {
   displayName: string | null;
   perfectName: string | null;
   primaryPosition: string;
-}
-
-interface RosterData {
-  starters: string[];
-  substitutes: string[];
-  status: string | null;
 }
 
 interface AdminRosterDialogProps {

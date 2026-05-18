@@ -86,7 +86,7 @@ export function MapByMapInput({
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <span className="text-xs text-[var(--color-fg-mid)]">{format.toUpperCase()} 进度</span>
-        <span className="font-mono font-bold text-[var(--primary)]">{mapWinsA} : {mapWinsB}</span>
+        <span className="font-mono font-bold text-[var(--color-accent)]">{mapWinsA} : {mapWinsB}</span>
         <span className="text-xs text-[var(--color-fg-mid)]">（先赢 {maxWins} 图胜）</span>
       </div>
 

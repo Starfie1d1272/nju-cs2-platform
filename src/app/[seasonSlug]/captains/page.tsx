@@ -57,7 +57,7 @@ export default async function CaptainsPage({ params }: CaptainsPageProps) {
   }
 
   return (
-    <main className="container mx-auto max-w-6xl px-4 py-10">
+    <main className="container mx-auto max-w-6xl px-4 py-10 space-y-8">
       <div className="mb-8">
         <p className="font-mono text-[11px] tracking-[0.18em] text-[var(--color-accent)] uppercase mb-1">
           {season.name} · CAPTAINS
@@ -69,7 +69,7 @@ export default async function CaptainsPage({ params }: CaptainsPageProps) {
       </div>
 
       {season.status === "voting" && (
-        <div className="mb-6 rounded-sm border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5 p-4 text-sm text-[var(--color-fg-mid)]">
+        <div className="rounded-sm border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5 p-4 text-sm text-[var(--color-fg-mid)]">
           <p className="font-medium text-[var(--color-fg)] mb-1">关于选秀顺序</p>
           <p>
             第一轮选秀将<strong className="text-[var(--color-fg)]">逆向进行</strong>

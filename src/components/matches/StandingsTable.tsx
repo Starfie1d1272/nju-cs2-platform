@@ -30,7 +30,7 @@ export function StandingsTable({ standings, seasonSlug, isFinal }: StandingsTabl
             >
               <td className="py-3 px-3 text-[var(--color-fg-mid)] tabular-nums">
                 {isFinal ? (
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] font-bold text-xs">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-bold text-xs">
                     {s.seed}
                   </span>
                 ) : (
@@ -40,7 +40,7 @@ export function StandingsTable({ standings, seasonSlug, isFinal }: StandingsTabl
               <td className="py-3 px-3">
                 <Link
                   href={`/${seasonSlug}/teams/${s.teamId}`}
-                  className="font-semibold text-[var(--color-fg)] hover:text-[var(--primary)] transition-colors"
+                  className="font-semibold text-[var(--color-fg)] hover:text-[var(--color-accent)] transition-colors"
                 >
                   {s.teamName}
                 </Link>

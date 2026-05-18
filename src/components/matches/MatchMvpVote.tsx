@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { Panel } from "@/components/rivalhub";
 import { castMatchMvpVote } from "@/actions/player-stats";
 import { isDeadlinePassed, MVP_DEADLINE_MS } from "@/lib/utils/date";
 
@@ -88,11 +89,17 @@ export function MatchMvpVote({
   // ── 投票截止：展示 MVP 结果 ──
   if (votingClosed) {
     return (
-      <Card className="p-6 space-y-5 border-[var(--color-border)]">
+      <Panel pad={24} className="space-y-5">
         <div className="text-center space-y-1">
           <p className="text-sm text-[var(--color-fg-mid)]">本场 MVP</p>
           <p className="text-2xl font-bold text-[var(--color-accent)]">
-            {mvp?.playerName ?? "—"}
+            {mvp?.playerUserId ? (
+              <Link href={`/players/${mvp.playerUserId}`} className="hover:underline">
+                {mvp?.playerName ?? "—"}
+              </Link>
+            ) : (
+              mvp?.playerName ?? "—"
+            )}
           </p>
           <p className="text-sm text-[var(--color-fg-mid)]">
             {mvp?.count ?? 0} 票
@@ -136,26 +143,34 @@ export function MatchMvpVote({
               .sort((a, b) => b.count - a.count)
               .map((v) => (
                 <div key={v.playerName} className="flex justify-between text-[var(--color-fg-mid)]">
-                  <span>{v.playerName}</span>
+                  <span>
+                    {v.playerUserId ? (
+                      <Link href={`/players/${v.playerUserId}`} className="hover:text-[var(--color-accent)] transition-colors">
+                        {v.playerName}
+                      </Link>
+                    ) : (
+                      v.playerName
+                    )}
+                  </span>
                   <span className="tabular-nums">{v.count} 票</span>
                 </div>
               ))}
           </div>
         )}
-      </Card>
+      </Panel>
     );
   }
 
   // ── 投票中 ──
   function cardStyle(isVoted: boolean, hasVoted: boolean): string {
-    const base = "rounded-lg p-4 text-left transition-colors";
+    const base = "rounded-sm p-4 text-left transition-colors";
     if (isVoted) return `${base} bg-[rgba(255,107,26,0.12)] ring-1 ring-inset ring-[var(--color-accent)]`;
     if (hasVoted) return `${base} bg-[var(--color-panel-hi)] cursor-not-allowed opacity-60`;
     return `${base} bg-[var(--color-panel-hi)] hover:bg-[var(--color-panel)] cursor-pointer`;
   }
 
   return (
-    <Card className="p-5 space-y-4 border-[var(--color-border)]">
+    <Panel pad={20} className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-base font-semibold text-[var(--color-fg)]">
           本场 MVP 投票
@@ -223,7 +238,7 @@ export function MatchMvpVote({
           );
         })}
       </div>
-    </Card>
+    </Panel>
   );
 }
 

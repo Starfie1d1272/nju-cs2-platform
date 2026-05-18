@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { eq, count, asc, and, inArray } from "drizzle-orm";
+import { eq, asc, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons, matches, teams, matchMaps, teamMembers, matchRosters, matchRosterPlayers } from "@/db/schema";
 import { users, seasonRegistrations } from "@/db/schema";
@@ -10,21 +10,12 @@ import { GeneratePlayoffCard } from "@/components/matches/GeneratePlayoffCard";
 import { CreateMatchForm } from "@/components/matches/CreateMatchForm";
 import { AdminMatchFilter } from "@/components/matches/AdminMatchFilter";
 import { StandingsTable } from "@/components/matches/StandingsTable";
-import { MatchStatusBadge } from "@/components/matches/MatchStatusBadge";
-import { ScoreInput } from "@/components/matches/ScoreInput";
-import { MapByMapInput } from "@/components/matches/MapByMapInput";
-import { ScheduledAtInput } from "@/components/matches/ScheduledAtInput";
-import { VetoInputDialog } from "@/components/matches/VetoInputDialog";
-import { AdminRosterDialog } from "@/components/matches/AdminRosterDialog";
-import { StatsOCRPanel } from "@/components/matches/StatsOCRPanel";
-import { DeleteMatchButton } from "@/components/matches/DeleteMatchButton";
+import { AdminMatchRow } from "@/components/matches/AdminMatchRow";
+import type { TeamMemberData, RosterData } from "@/components/matches/AdminMatchRow";
 import { BatchDeadlineCard } from "@/components/matches/BatchDeadlineCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Panel, StatusPill } from "@/components/rivalhub";
-import { cn } from "@/lib/utils/cn";
-import { Separator } from "@/components/ui/separator";
+import { Panel } from "@/components/rivalhub";
 import { getFirstStageOfType, normalizeRegistrationConfig, normalizeStagePlan } from "@/types/season";
-import { MATCH_FORMAT_LABELS } from "@/types/match";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +26,21 @@ const STATUS_SORT_ORDER: Record<string, number> = {
   finished: 2,
   cancelled: 3,
 };
+
+function mapCompletedMaps(records: { mapOrder: number; mapName: string; scoreA: number | null; scoreB: number | null; pickedByTeamId: string | null; teamAStartSide: string | null }[]) {
+  return records.map((r) => ({
+    mapOrder: r.mapOrder,
+    mapName: r.mapName,
+    scoreA: r.scoreA ?? 0,
+    scoreB: r.scoreB ?? 0,
+    pickedByTeamId: r.pickedByTeamId,
+    teamAStartSide: r.teamAStartSide as "t" | "ct" | null,
+  }));
+}
+
+function mapFinishedMaps(records: { id: string; mapName: string }[]) {
+  return records.map((r) => ({ id: r.id, mapName: r.mapName }));
+}
 
 function sortMatches<T extends { status: string; scheduledAt: Date | null }>(list: T[]): T[] {
   return [...list].sort((a, b) => {
@@ -190,19 +196,6 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
   }
 
   // ── 人员名单查询（供 AdminRosterDialog 用）───────────────────
-  interface TeamMemberData {
-    id: string;
-    teamId: string;
-    steamName: string;
-    displayName: string | null;
-    perfectName: string | null;
-    primaryPosition: string;
-  }
-  interface RosterData {
-    starters: string[];
-    substitutes: string[];
-    status: string | null;
-  }
   let allTeamMembers: TeamMemberData[] = [];
   const rosterByMatch = new Map<string, Map<string, RosterData>>();
   const teamMembersByTeam = new Map<string, TeamMemberData[]>();
@@ -391,92 +384,20 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                     const teamAName = teamMap.get(m.teamAId) ?? "未知队伍";
                     const teamBName = teamMap.get(m.teamBId) ?? "未知队伍";
                     return (
-                      <Panel key={m.id} pad={16} className={cn("space-y-3", m.status === "in_progress" && "border-l-[3px] border-[var(--color-accent)]")}>
-                        <div className="flex items-center justify-between gap-4 flex-wrap">
-                          <div className="flex items-center gap-3">
-                            <span className="font-semibold">{teamAName}</span>
-                            <span className="text-[var(--color-fg-mid)]">
-                              {m.status === "finished"
-                                ? `${m.scoreA ?? 0} : ${m.scoreB ?? 0}`
-                                : "vs"}
-                            </span>
-                            <span className="font-semibold">{teamBName}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <StatusPill status={MATCH_FORMAT_LABELS[m.format as keyof typeof MATCH_FORMAT_LABELS]} />
-                            <MatchStatusBadge
-                              status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                            />
-                          </div>
-                        </div>
-                        {m.status !== "cancelled" && (
-                          <details open={m.status === "in_progress" ? true : undefined}>
-                            <summary className="cursor-pointer select-none list-none text-[11px] font-mono text-[var(--color-fg-dim)] hover:text-[var(--color-fg)] py-1 transition-colors">
-                              {m.status === "finished" ? "▸ 数据录入" : "▸ 操作"}
-                            </summary>
-                            <div className="space-y-3 pt-2">
-                              <Separator />
-                              {m.status !== "finished" && (
-                                <>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <AdminRosterDialog
-                                      matchId={m.id}
-                                      teamAName={teamAName}
-                                      teamBName={teamBName}
-                                      teamAId={m.teamAId}
-                                      teamBId={m.teamBId}
-                                      teamAMembers={teamMembersByTeam.get(m.teamAId) ?? []}
-                                      teamBMembers={teamMembersByTeam.get(m.teamBId) ?? []}
-                                      teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
-                                      teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
-                                    />
-                                    {m.status === "in_progress" && (
-                                      <VetoInputDialog
-                                        matchId={m.id}
-                                        format={m.format as "bo1" | "bo3" | "bo5"}
-                                        teamAName={teamAName}
-                                        teamBName={teamBName}
-                                        teamAId={m.teamAId}
-                                        teamBId={m.teamBId}
-                                        mapPool={mapPool}
-                                      />
-                                    )}
-                                  </div>
-                                  <ScheduledAtInput
-                                    matchId={m.id}
-                                    currentScheduledAt={m.scheduledAt}
-                                    currentCompletionDeadline={m.completionDeadline}
-                                  />
-                                  <ScoreInput
-                                    matchId={m.id}
-                                    teamAName={teamAName}
-                                    teamBName={teamBName}
-                                    currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                                    format={m.format as "bo1" | "bo3" | "bo5"}
-                                  />
-                                </>
-                              )}
-                              {m.status === "finished" && (mapsByMatch.get(m.id) ?? []).map((map) => (
-                                <div key={map.id}>
-                                  <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
-                                </div>
-                              ))}
-                            </div>
-                          </details>
-                        )}
-                        <div className="flex items-center justify-between gap-2">
-                          <Link
-                            href={`/${seasonSlug}/matches/${m.id}`}
-                            className="text-xs text-[var(--color-fg-dim)] hover:text-[var(--color-fg)] transition-colors"
-                            target="_blank"
-                          >
-                            查看公开页 ↗
-                          </Link>
-                          {m.bracketNodeId == null && (
-                            <DeleteMatchButton matchId={m.id} />
-                          )}
-                        </div>
-                      </Panel>
+                      <AdminMatchRow
+                        key={m.id}
+                        match={m}
+                        teamAName={teamAName}
+                        teamBName={teamBName}
+                        seasonSlug={seasonSlug}
+                        mapPool={mapPool}
+                        teamAMembers={teamMembersByTeam.get(m.teamAId) ?? []}
+                        teamBMembers={teamMembersByTeam.get(m.teamBId) ?? []}
+                        teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
+                        teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
+                        completedMaps={mapCompletedMaps(mapsByMatchId.get(m.id) ?? [])}
+                        finishedMaps={mapFinishedMaps(mapsByMatch.get(m.id) ?? [])}
+                      />
                     );
                   })}
                 </div>
@@ -498,112 +419,21 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                     const teamAName = teamMap.get(m.teamAId) ?? "TBD";
                     const teamBName = teamMap.get(m.teamBId) ?? "TBD";
                     return (
-                      <Panel key={m.id} pad={16} className={cn("space-y-3", m.status === "in_progress" && "border-l-[3px] border-[var(--color-accent)]")}>
-                        <div className="flex items-center justify-between gap-4 flex-wrap">
-                          <div className="flex items-center gap-3">
-                            <span className="font-semibold">{teamAName}</span>
-                            <span className="text-[var(--color-fg-mid)]">
-                              {m.status === "finished"
-                                ? `${m.scoreA ?? 0} : ${m.scoreB ?? 0}`
-                                : "vs"}
-                            </span>
-                            <span className="font-semibold">{teamBName}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <StatusPill status={MATCH_FORMAT_LABELS[m.format as keyof typeof MATCH_FORMAT_LABELS]} />
-                            <MatchStatusBadge
-                              status={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                            />
-                          </div>
-                        </div>
-                        {m.status !== "cancelled" && (
-                          <details open={m.status === "in_progress" ? true : undefined}>
-                            <summary className="cursor-pointer select-none list-none text-[11px] font-mono text-[var(--color-fg-dim)] hover:text-[var(--color-fg)] py-1 transition-colors">
-                              {m.status === "finished" ? "▸ 数据录入" : "▸ 操作"}
-                            </summary>
-                            <div className="space-y-3 pt-2">
-                              <Separator />
-                              {m.status !== "finished" && (
-                                <>
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <AdminRosterDialog
-                                      matchId={m.id}
-                                      teamAName={teamAName}
-                                      teamBName={teamBName}
-                                      teamAId={m.teamAId}
-                                      teamBId={m.teamBId}
-                                      teamAMembers={teamMembersByTeam.get(m.teamAId) ?? []}
-                                      teamBMembers={teamMembersByTeam.get(m.teamBId) ?? []}
-                                      teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
-                                      teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
-                                    />
-                                    {(m.status === "scheduled" || m.status === "in_progress") && (
-                                      <VetoInputDialog
-                                        matchId={m.id}
-                                        format={m.format as "bo1" | "bo3" | "bo5"}
-                                        teamAName={teamAName}
-                                        teamBName={teamBName}
-                                        teamAId={m.teamAId}
-                                        teamBId={m.teamBId}
-                                        mapPool={mapPool}
-                                      />
-                                    )}
-                                  </div>
-                                  <ScheduledAtInput
-                                    matchId={m.id}
-                                    currentScheduledAt={m.scheduledAt}
-                                    currentCompletionDeadline={m.completionDeadline}
-                                  />
-                                  {m.status === "in_progress" ? (
-                                    <MapByMapInput
-                                      matchId={m.id}
-                                      format={m.format as "bo1" | "bo3" | "bo5"}
-                                      teamAName={teamAName}
-                                      teamBName={teamBName}
-                                      teamAId={m.teamAId}
-                                      teamBId={m.teamBId}
-                                      completedMaps={(mapsByMatchId.get(m.id) ?? []).map((r) => ({
-                                        mapOrder: r.mapOrder,
-                                        mapName: r.mapName,
-                                        scoreA: r.scoreA ?? 0,
-                                        scoreB: r.scoreB ?? 0,
-                                        pickedByTeamId: r.pickedByTeamId,
-                                        teamAStartSide: r.teamAStartSide as "t" | "ct" | null,
-                                      }))}
-                                      mapPool={mapPool}
-                                    />
-                                  ) : (
-                                    <ScoreInput
-                                      matchId={m.id}
-                                      teamAName={teamAName}
-                                      teamBName={teamBName}
-                                      currentStatus={m.status as "scheduled" | "in_progress" | "finished" | "cancelled"}
-                                      format={m.format as "bo1" | "bo3" | "bo5"}
-                                    />
-                                  )}
-                                </>
-                              )}
-                              {m.status === "finished" && (mapsByMatch.get(m.id) ?? []).map((map) => (
-                                <div key={map.id}>
-                                  <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
-                                </div>
-                              ))}
-                            </div>
-                          </details>
-                        )}
-                        <div className="flex items-center justify-between gap-2">
-                          <Link
-                            href={`/${seasonSlug}/matches/${m.id}`}
-                            className="text-xs text-[var(--color-fg-dim)] hover:text-[var(--color-fg)] transition-colors"
-                            target="_blank"
-                          >
-                            查看公开页 ↗
-                          </Link>
-                          {m.bracketNodeId == null && (
-                            <DeleteMatchButton matchId={m.id} />
-                          )}
-                        </div>
-                      </Panel>
+                      <AdminMatchRow
+                        key={m.id}
+                        match={m}
+                        teamAName={teamAName}
+                        teamBName={teamBName}
+                        seasonSlug={seasonSlug}
+                        mapPool={mapPool}
+                        isPlayoff
+                        teamAMembers={teamMembersByTeam.get(m.teamAId) ?? []}
+                        teamBMembers={teamMembersByTeam.get(m.teamBId) ?? []}
+                        teamARoster={rosterByMatch.get(m.id)?.get(m.teamAId) ?? null}
+                        teamBRoster={rosterByMatch.get(m.id)?.get(m.teamBId) ?? null}
+                        completedMaps={mapCompletedMaps(mapsByMatchId.get(m.id) ?? [])}
+                        finishedMaps={mapFinishedMaps(mapsByMatch.get(m.id) ?? [])}
+                      />
                     );
                   })}
                 </div>

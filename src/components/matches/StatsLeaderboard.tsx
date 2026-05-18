@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import { Panel, Btn } from "@/components/rivalhub";
 import { POSITION_LABELS } from "@/lib/validators/registration";
 
 interface LeaderboardRow {
@@ -60,9 +60,9 @@ export function StatsLeaderboard({
 }: StatsLeaderboardProps) {
   if (rows.length === 0) {
     return (
-      <Card className="p-8 text-center text-[var(--color-fg-mid)]">
+      <Panel pad={32} className="text-center text-[var(--color-fg-mid)]">
         该赛季暂无已确认的玩家数据
-      </Card>
+      </Panel>
     );
   }
 
@@ -74,39 +74,27 @@ export function StatsLeaderboard({
       {/* 排序 Tab */}
       <div className="flex gap-1 flex-wrap mb-2">
         {SORT_OPTIONS.map(({ key, label }) => (
-          <a
-            key={key}
-            href={`/${seasonSlug}/stats?sort=${key}${position ? `&position=${position}` : ""}`}
-            className={`inline-block font-mono text-[10px] px-2.5 py-1 uppercase tracking-wider rounded transition-colors ${
-              sort === key
-                ? "bg-[var(--color-accent)] text-[var(--color-accent-fg)]"
-                : "border border-[var(--color-border)] text-[var(--color-fg-mid)] hover:text-[var(--color-fg)]"
-            }`}
-          >
-            {label}
-          </a>
+          <Btn key={key} small ghost={sort !== key} asChild>
+            <a href={`/${seasonSlug}/stats?sort=${key}${position ? `&position=${position}` : ""}`}>
+              {label}
+            </a>
+          </Btn>
         ))}
       </div>
 
       {/* 位置筛选 */}
       <div className="flex gap-1 flex-wrap mb-4">
         {POSITIONS.map(({ key, label }) => (
-          <a
-            key={key}
-            href={`/${seasonSlug}/stats?sort=${sort}${key ? `&position=${key}` : ""}`}
-            className={`inline-block font-mono text-[10px] px-2.5 py-1 uppercase tracking-wider rounded transition-colors ${
-              position === key
-                ? "bg-[var(--color-accent)] text-[var(--color-accent-fg)]"
-                : "border border-[var(--color-border)] text-[var(--color-fg-mid)] hover:text-[var(--color-fg)]"
-            }`}
-          >
-            {label}
-          </a>
+          <Btn key={key} small ghost={position !== key} asChild>
+            <a href={`/${seasonSlug}/stats?sort=${sort}${key ? `&position=${key}` : ""}`}>
+              {label}
+            </a>
+          </Btn>
         ))}
       </div>
 
       {/* 表格 */}
-      <Card className="p-0 overflow-hidden">
+      <Panel pad={0} className="overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[480px]">
           <thead>
@@ -156,7 +144,7 @@ export function StatsLeaderboard({
                   {r.userId ? (
                     <Link
                       href={`/players/${r.userId}`}
-                      className="hover:text-[var(--primary)] transition-colors"
+                      className="hover:text-[var(--color-accent)] transition-colors"
                     >
                       {r.perfectName}
                     </Link>
@@ -173,7 +161,7 @@ export function StatsLeaderboard({
                   {r.teamId ? (
                     <Link
                       href={`/${seasonSlug}/teams/${r.teamId}`}
-                      className="hover:text-[var(--primary)] transition-colors"
+                      className="hover:text-[var(--color-accent)] transition-colors"
                     >
                       {r.teamName ?? "—"}
                     </Link>
@@ -234,7 +222,7 @@ export function StatsLeaderboard({
           </tbody>
         </table>
         </div>
-      </Card>
+      </Panel>
     </div>
   );
 }

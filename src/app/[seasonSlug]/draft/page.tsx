@@ -31,7 +31,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
 
   if (!season.hasDraft) {
     return (
-      <main className="container mx-auto max-w-5xl px-4 py-10">
+      <main className="container mx-auto max-w-5xl px-4 py-10 space-y-8">
         <Panel pad={32}>
           <h1 className="text-2xl font-bold">选秀直播间 · {season.name}</h1>
           <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
@@ -46,7 +46,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
     const stageLabel = SEASON_STATUS_LABELS[season.status] ?? season.status;
     const draftFinished = season.status === "playing" || season.status === "finished";
     return (
-      <main className="container mx-auto max-w-5xl px-4 py-10">
+      <main className="container mx-auto max-w-5xl px-4 py-10 space-y-8">
         <Panel pad={32}>
           <h1 className="text-2xl font-bold">选秀直播间 · {season.name}</h1>
           <p className="mt-2 text-sm text-[var(--color-fg-mid)]">
@@ -63,7 +63,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
 
   if (!data.state) {
     return (
-      <main className="container mx-auto max-w-7xl px-4 py-10">
+      <main className="container mx-auto max-w-7xl px-4 py-10 space-y-8">
         <Marker sub="队伍已组建，选秀尚未启动。队长可提前查看选手池研究阵容。">
           选秀预览 · {season.name}
         </Marker>
@@ -97,7 +97,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
   }
 
   return (
-    <main className="container mx-auto max-w-7xl px-4 py-10">
+    <main className="container mx-auto max-w-7xl px-4 py-10 space-y-8">
       <div className="flex items-center justify-between">
         <Marker sub="实时更新选秀进度，队伍阵容与选手池自动刷新。">
           选秀直播间 · {season.name}
@@ -108,7 +108,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
       </div>
 
       {data.state.isActive && (
-        <div className="mt-4">
+        <div>
           <a
             href={`/${seasonSlug}/draft/captain`}
             className="inline-flex items-center gap-2 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent)]/10 px-4 py-2 text-sm font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors"

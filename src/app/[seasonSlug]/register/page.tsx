@@ -122,7 +122,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
   });
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-2xl">
+    <div className="container mx-auto px-4 py-10 max-w-2xl space-y-6">
       <div className="mb-8">
         <p className="font-mono text-[11px] tracking-[0.18em] text-[var(--color-accent)] uppercase mb-1">
           {season.name} · REGISTER
@@ -131,7 +131,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
       </div>
 
       {/* 位置实时容量 */}
-      <div className="mb-6">
+      <div>
         <StatusBanner
           tone={getWindowTone(registrationWindow.phase, registrationWindow.canSubmit)}
           title={registrationWindow.message}
@@ -142,7 +142,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
         />
       </div>
 
-      <div className="mb-6">
+      <div>
         <Panel label="实时容量">
           <div className="grid gap-2.5">
             {capacityEntries.map(({ pos, label, cur, max }) => {
@@ -188,7 +188,7 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
       </div>
 
       {currentRegistration && (
-        <div className="mb-6">
+        <div>
           <StatusBanner
             tone={currentRegistration.status === "approved" ? "success" : currentRegistration.status === "rejected" ? "warn" : "info"}
             title={`你的报名状态：${existingStatusLabel}`}

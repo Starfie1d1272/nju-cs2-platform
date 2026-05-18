@@ -2,20 +2,20 @@
 
 RivalHub 是一个面向高校电竞赛事的开源赛事管理平台，覆盖报名、审核、队长投票、蛇形选秀、队伍展示、赛程管理、Bracket、比分录入、数据统计与上线部署。
 
-当前 `1.11.0` 版本服务于 **2026 NJU Rivals 春季赛**：8 支队伍、队长投票、蛇形选秀、排位赛 + 双败淘汰，生产站点部署在 [match.starfie1d.top](https://match.starfie1d.top)。
+当前 `1.16.1` 版本服务于 **2026 NJU Rivals 春季赛**：8 支队伍、队长投票、蛇形选秀、排位赛 + 双败淘汰，生产站点部署在 [match.starfie1d.top](https://match.starfie1d.top)。
 
 ## 功能状态
 
-| 模块 | 1.7.0 能力 |
+| 模块 | 1.16.1 能力 |
 |---|----|
 | 赛季管理 | capability 驱动的多赛事模型，`/[seasonSlug]` 路由，动态 PhaseTracker 阶段追踪，NEXT MATCHES 面板 + Stat 四格（playing 阶段）；SeasonNav / PhaseTracker 应用 ScrollHint 横滚提示 |
 | 报名 | 邮箱密码账号、自动草稿恢复、Zod 校验、位置/人数上限（仅统计 approved）、NJUBox 截图链接 |
 | 审核 | 管理员审核、候补名单、邀请码提权、审批通过自动推进赛季状态、操作审计 |
-| 选手 | `/[seasonSlug]/players` 选手名单页，按主/副位置 OR 筛选，卡片展示段位/Rating/副位置/所属队伍 |
+| 选手 | `/[seasonSlug]/players` 选手名单页，按主/副位置 OR 筛选，卡片展示段位/Rating/副位置/所属队伍；全站选手名可点击跳转个人主页 |
 | 队长投票 | 每人最多 3 票，Realtime 刷新票数；移动端切换卡片列表（`CaptainVotingPanel` 双模式） |
 | 选秀 | 队长面板按段位+Rt 排序统一列表、满员位置灰显禁用、可折叠阵容摘要；围观直播间 pick 通知 Banner 3 秒淡出；事务行锁、幂等 pick、超时自动递补 |
-| 队伍 | 阵容展示、首发/替补、队长标识、队伍图标上传；同队成员可见 QQ/邮箱联系方式 |
-| 比赛 | 赛程、Bracket（Tactical Grid 暗色主题）、地图结果、比分录入 |
+| 队伍 | 阵容展示、首发/替补、队长标识、队伍图标上传、管理员下载头像；同队成员可见 QQ/邮箱联系方式；队伍名可点击跳转详情 |
+| 比赛 | 赛程、Bracket（Tactical Grid 暗色主题）、地图结果、比分录入；赛前名单/MVP 结果/赛后数据表选手名可点击跳转个人主页 |
 | 协商 | 比赛时间提议/接受/拒绝（双方队长均可随时提议）、24h 未回应自动采纳、管理员强制设定、协商截止自动裁定、管理员批量设置截止时间（按阶段/轮次） |
 | 账号 | 邮箱+密码注册/登录、个人信息自助修改（perfectName/steamName/steam64/steamProfileUrl/QQ/学号）、修改密码、`getDisplayName()` 统一展示名派生 |
 | 数据 | 完美平台截图 OCR、比赛数据表、MVP 投票、选手/队伍统计、后台操作日志 |

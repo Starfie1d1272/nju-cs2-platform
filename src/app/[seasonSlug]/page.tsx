@@ -5,7 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { UserPlus, Vote, Users, Swords, Shuffle, BarChart3, UserRoundSearch } from "lucide-react";
 import { db } from "@/db/client";
 import { seasons, matches, teams, seasonRegistrations } from "@/db/schema";
-import { formatCSTShortDate } from "@/lib/utils/date";
+import { formatCSTDateTime } from "@/lib/utils/date";
 import { normalizeStagePlan } from "@/types/season";
 import type { SeasonStatus } from "@/types/season";
 import { showStats } from "@/lib/utils/season";
@@ -204,7 +204,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
   ].filter((l) => l.show);
 
   return (
-    <div className="container mx-auto px-4 py-10">
+    <div className="container mx-auto px-4 py-10 space-y-8">
       <div className="relative mb-12 pt-6">
         <div className="flex items-center gap-3 mb-4 text-xs uppercase tracking-wider">
           <StatusPill status={season.status} />
@@ -280,7 +280,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
                             <span className="font-mono text-[11px] text-[var(--color-ok)]">● LIVE</span>
                           ) : match.scheduledAt ? (
                             <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">
-                              {formatCSTShortDate(match.scheduledAt)}
+                              {formatCSTDateTime(match.scheduledAt)}
                             </span>
                           ) : (
                             <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">待定</span>
@@ -299,18 +299,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
 
           {/* Right: 积分榜 TOP 4 */}
           {standings.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3
-                  className="font-semibold text-sm"
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    color: "var(--color-fg)",
-                  }}
-                >
-                  STANDINGS · TOP 4
-                </h3>
-              </div>
+            <Panel label="STANDINGS · TOP 4">
               <StandingsTable
                 standings={standings.slice(0, 4)}
                 seasonSlug={seasonSlug}
@@ -323,7 +312,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
                   </Link>
                 </Btn>
               </div>
-            </div>
+            </Panel>
           )}
         </div>
       )}
@@ -353,7 +342,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       </div>
 
       {/* Stat 四格 */}
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Stat label="TEAMS" value={teamCountRow?.value ?? 0} />
         <Stat label="PLAYERS" value={approvedCountRow?.value ?? 0} />
         <Stat

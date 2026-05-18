@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { eq, and, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matchPlayerStats } from "@/db/schema/player-stats";
@@ -120,7 +121,13 @@ function PlayerStatRow({ stat }: { stat: StatRow }) {
   return (
     <>
       <span className="text-[var(--color-fg)] truncate">
-        {stat.perfectName}
+        {stat.userId ? (
+          <Link href={`/players/${stat.userId}`} className="hover:text-[var(--color-accent)] transition-colors">
+            {stat.perfectName}
+          </Link>
+        ) : (
+          stat.perfectName
+        )}
       </span>
       <span className="tabular-nums text-[var(--color-fg)]">
         {stat.kills ?? "—"}

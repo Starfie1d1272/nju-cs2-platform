@@ -8,6 +8,7 @@ interface PlayerPreview {
   primaryPosition: string;
   isStarter: boolean;
   isCaptain: boolean;
+  userId?: string | null;
 }
 
 interface TeamCardProps {
@@ -31,7 +32,7 @@ export function TeamCard({ teamId, teamName, seasonSlug, draftOrder, logoUrl, pl
           {/* 队名 + logo */}
           <div className="flex items-center gap-3">
             {/* 小 logo：40×40 */}
-            <div className="relative w-10 h-10 rounded-md overflow-hidden shrink-0 border border-[var(--color-border)] bg-[var(--color-bg-subtle)] flex items-center justify-center">
+            <div className="relative w-10 h-10 rounded-md overflow-hidden shrink-0 border border-[var(--color-border)] bg-[var(--color-panel-low)] flex items-center justify-center">
               {logoUrl ? (
                 <Image src={logoUrl} alt={`${teamName} logo`} fill className="object-cover" />
               ) : (
@@ -50,7 +51,13 @@ export function TeamCard({ teamId, teamName, seasonSlug, draftOrder, logoUrl, pl
               <div key={p.name} className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   {p.isCaptain && <PosChip pos="C" small />}
-                  <span className="text-sm text-[var(--color-fg)]">{p.name}</span>
+                  {p.userId ? (
+                    <Link href={`/players/${p.userId}`} className="text-sm text-[var(--color-fg)] hover:text-[var(--color-accent)] transition-colors">
+                      {p.name}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-[var(--color-fg)]">{p.name}</span>
+                  )}
                 </div>
                 <span className="text-xs text-[var(--color-fg-mid)]">
                   {POSITION_LABELS[p.primaryPosition as keyof typeof POSITION_LABELS]?.cn ?? p.primaryPosition}
@@ -64,7 +71,13 @@ export function TeamCard({ teamId, teamName, seasonSlug, draftOrder, logoUrl, pl
             <div className="border-t border-[var(--color-border)] pt-2 space-y-1">
               {subs.map((p) => (
                 <div key={p.name} className="flex items-center justify-between gap-2 opacity-60">
-                  <span className="text-xs text-[var(--color-fg-mid)]">{p.name}</span>
+                  {p.userId ? (
+                    <Link href={`/players/${p.userId}`} className="text-xs text-[var(--color-fg-mid)] hover:text-[var(--color-accent)] transition-colors">
+                      {p.name}
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-[var(--color-fg-mid)]">{p.name}</span>
+                  )}
                   <span className="text-[10px] text-[var(--color-fg-mid)]">替补</span>
                 </div>
               ))}

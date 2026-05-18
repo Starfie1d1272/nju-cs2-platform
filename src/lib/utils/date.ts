@@ -49,3 +49,15 @@ export function formatCSTShortDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString(CST_LOCALE, { timeZone: CST_TZ, month: "short", day: "numeric" });
 }
+
+/** CST 月日+时间，例如 "5月18日 19:30" */
+export function formatCSTDateTime(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleString(CST_LOCALE, {
+    timeZone: CST_TZ,
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

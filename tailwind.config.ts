@@ -12,17 +12,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-geist)", "var(--font-noto-sans-sc)", "sans-serif"],
       },
-      colors: {
-        // Design tokens — see docs/ui-tokens.md for full specification
-        // Background layers
-        "bg-base": "var(--bg-base)",
-        "bg-elevated": "var(--bg-elevated)",
-        "bg-overlay": "var(--bg-overlay)",
-        // Text layers
-        "text-primary": "var(--text-primary)",
-        "text-secondary": "var(--text-secondary)",
-        "text-muted": "var(--text-muted)",
-      },
+      // Design tokens are defined in globals.css via @theme block — no additional color mappings needed.
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

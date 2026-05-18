@@ -5,6 +5,33 @@ All notable changes to RivalHub are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.1] - 2026-05-18
+
+### Added
+- **选手名全站可点击**：队伍列表（TeamCard 首发/替补名）、队伍详情（阵容首发/替补/队内联系方式、每位置最佳）、比赛赛前名单（MatchRosterView 两队首发/替补）、比赛赛后数据表（PlayerStatsTable）、MVP 投票结果页，选手名均链接到 `/players/[userId]`
+- **比赛详情页队伍名可点击**：Hero 区双方队伍名链接到队伍详情页
+- **管理员下载队伍头像**：队伍详情页 Logo 下方显示「下载头像」按钮，仅 admin 可见且有 logo 时出现
+- `formatCSTDateTime()` 格式化函数（CST 月日+时间，如 "5月18日 19:30"）
+
+### Changed
+- **比赛时间显示日期+具体时间**：MatchCard 和赛季首页 NEXT MATCHES 从仅日期（"5月18日"）改为日期+时间（"5月18日 19:30"）
+- **赛季子页面统一垂直间距**：4 个页面（赛季首页 / draft / captains / register）父容器改为 `space-y-*` 统一间距，消除各区块 ad-hoc `mb-*`/`mt-*`
+- **赛季首页 STANDINGS 视觉对齐**：右侧积分榜从裸 div 改为 `<Panel label="STANDINGS · TOP 4">` 包裹，与左侧 NEXT MATCHES 视觉对称
+- **StatsLeaderboard 筛选改用 `Btn` 组件**：排序 Tab 和位置筛选从手动 `<a>` 改为 `<Btn small ghost asChild>`，全站按钮风格统一
+- **3 组件 shadcn Card → rivalhub Panel**：MatchMvpVote / CaptainVotingPanel / StatsLeaderboard 统一使用 Panel 组件
+- **admin matches 页提取 `AdminMatchRow` 组件**：消除排位赛/正赛 ~200 行重复 JSX，净减 153 行；统一 VetoInputDialog 可见性（scheduled + in_progress 均显示）；清理 10+ 不再使用的 import
+
+### Fixed
+- `tailwind.config.ts` 删除 6 个无效 token 映射（`bg-base` / `bg-elevated` / `bg-overlay` / `text-primary` / `text-secondary` / `text-muted`），均无代码引用
+- `TeamCard` 未定义 token `--color-bg-subtle` → `--color-panel-low`
+- 3 处 `var(--primary)` → `var(--color-accent)`（StandingsTable / MapByMapInput / StatsLeaderboard），token 一致性
+- `MatchMvpVote` 圆角 `rounded-lg` → `rounded-sm`，与全站 `--radius: 3px` 一致
+- `Btn` / `Panel` 补显式 `import React`，修复 vitest 环境 `React is not defined`
+- 队伍详情页 `checkAdminSession()` 重复解密 iron-session cookie，改为复用 `getUserSession()` 结果
+- `TeamMemberData` / `RosterData` 类型三处重复定义 → 统一从 `AdminMatchRow` 导出
+- `AdminMatchRow` match.status/format 从 `string` 改为联合类型，移除 6 处类型断言
+- `completedMaps`/`finishedMaps` 映射逻辑在 admin matches 页两处复制粘贴 → 提取 `mapCompletedMaps()`/`mapFinishedMaps()` 辅助函数
+
 ## [1.16.0] - 2026-05-18
 
 ### Added
@@ -459,6 +486,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions Cron（选秀超时 + 报名截止自动推进）
 - Vercel + Supabase 生产部署
 
+[1.16.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.15.1...v1.16.0
 [1.15.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.15.0...v1.15.1
 [1.15.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.14.3...v1.15.0

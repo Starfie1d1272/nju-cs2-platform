@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { castVote, retractVote } from "@/actions/captains";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Panel } from "@/components/rivalhub";
 import { createBrowserClient } from "@/lib/auth/supabase";
 import { MAX_CAPTAIN_VOTES } from "@/lib/captains/rules";
 import { positionLabel } from "@/lib/validators/registration";
@@ -214,7 +214,7 @@ export function CaptainVotingPanel({
       {/* ── 桌面端布局（≥ md）──────────────────────────── */}
       <div className="hidden md:grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="space-y-4">
-          <Card className="p-4">
+          <Panel pad={16}>
             <div className="space-y-3">
               <div>
                 <h2 className="text-base font-semibold">我的投票</h2>
@@ -263,7 +263,7 @@ export function CaptainVotingPanel({
                 刷新票数
               </Button>
             </div>
-          </Card>
+          </Panel>
         </aside>
 
         <section className="space-y-3">
@@ -280,9 +280,9 @@ export function CaptainVotingPanel({
           </div>
 
           {candidates.length === 0 ? (
-            <Card className="p-8 text-center text-sm text-[var(--color-fg-mid)]">
+            <Panel pad={32} className="text-center text-sm text-[var(--color-fg-mid)]">
               暂无符合条件的队长候选人
-            </Card>
+            </Panel>
           ) : (
             <div className="space-y-3">
               {candidates.map((candidate, index) => {
@@ -295,7 +295,7 @@ export function CaptainVotingPanel({
                   (!hasVoted && votes.length >= MAX_CAPTAIN_VOTES);
 
                 return (
-                  <Card key={candidate.id} className="p-4">
+                  <Panel key={candidate.id} pad={16}>
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -348,7 +348,7 @@ export function CaptainVotingPanel({
                         )}
                       </div>
                     </div>
-                  </Card>
+                  </Panel>
                 );
               })}
             </div>

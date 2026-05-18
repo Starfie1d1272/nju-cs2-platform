@@ -45,6 +45,7 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
       steamName: users.steamName,
       perfectName: users.perfectName,
       email: users.email,
+      userId: users.id,
     })
     .from(teamMembers)
     .innerJoin(teams, eq(teamMembers.teamId, teams.id))
@@ -76,6 +77,7 @@ export default async function TeamsPage({ params }: TeamsPageProps) {
               primaryPosition: m.primaryPosition,
               isStarter: m.isStarter,
               isCaptain: m.registrationId === m.captainRegId,
+              userId: m.userId,
             }))
             .sort((a, b) => {
               if (a.isStarter !== b.isStarter) return a.isStarter ? -1 : 1;

@@ -138,6 +138,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
       displayName: users.displayName,
       perfectName: users.perfectName,
       primaryPosition: seasonRegistrations.primaryPosition,
+      userId: users.id,
     })
     .from(teamMembers)
     .innerJoin(seasonRegistrations, eq(teamMembers.registrationId, seasonRegistrations.id))
@@ -188,6 +189,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
     perfectName: string | null;
     primaryPosition: string;
     isStarter: boolean;
+    userId?: string | null;
   }
 
   function buildRoster(
@@ -205,6 +207,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         perfectName: m.perfectName ?? null,
         primaryPosition: m.primaryPosition,
         isStarter: playerMap.get(m.id) ?? false,
+        userId: m.userId ?? null,
       }));
   }
 
@@ -251,8 +254,9 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         {/* Team A */}
         <div className="flex items-center gap-4 justify-end">
           <div className="text-right min-w-0">
-            <div
-              className="font-bold text-lg sm:text-[28px]"
+            <Link
+              href={`/${seasonSlug}/teams/${match.teamAId}`}
+              className="font-bold text-lg sm:text-[28px] hover:text-[var(--color-accent)] transition-colors"
               style={{
                 fontFamily: "var(--font-display)",
                 color: "var(--color-fg)",
@@ -260,7 +264,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               }}
             >
               {teamA?.name ?? "未知队伍"}
-            </div>
+            </Link>
           </div>
           {teamA && (
             <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
@@ -347,8 +351,9 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             </div>
           )}
           <div className="min-w-0">
-            <div
-              className="font-bold text-lg sm:text-[28px]"
+            <Link
+              href={`/${seasonSlug}/teams/${match.teamBId}`}
+              className="font-bold text-lg sm:text-[28px] hover:text-[var(--color-accent)] transition-colors"
               style={{
                 fontFamily: "var(--font-display)",
                 color: "var(--color-fg)",
@@ -356,7 +361,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
               }}
             >
               {teamB?.name ?? "未知队伍"}
-            </div>
+            </Link>
           </div>
         </div>
       </div>

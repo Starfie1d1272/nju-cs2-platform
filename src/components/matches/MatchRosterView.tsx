@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getDisplayName } from "@/lib/utils/display-name";
 
 interface RosterPlayer {
@@ -6,6 +7,7 @@ interface RosterPlayer {
   perfectName: string | null;
   primaryPosition: string;
   isStarter: boolean;
+  userId?: string | null;
 }
 
 interface MatchRosterViewProps {
@@ -35,7 +37,13 @@ function RosterColumn({ teamName, roster }: { teamName: string; roster: RosterPl
               className="flex items-center justify-between text-sm"
               style={{ color: "var(--color-fg)" }}
             >
-              <span>{getDisplayName(p)}</span>
+              {p.userId ? (
+                <Link href={`/players/${p.userId}`} className="hover:text-[var(--color-accent)] transition-colors">
+                  {getDisplayName(p)}
+                </Link>
+              ) : (
+                <span>{getDisplayName(p)}</span>
+              )}
               <span
                 className="text-xs"
                 style={{ fontFamily: "var(--font-mono)", color: "var(--color-fg-dim)", letterSpacing: "0.06em" }}
@@ -49,7 +57,18 @@ function RosterColumn({ teamName, roster }: { teamName: string; roster: RosterPl
               className="pt-1 mt-1 text-xs"
               style={{ borderTop: "1px solid var(--color-border)", color: "var(--color-fg-mid)" }}
             >
-              替补：{subs.map((p) => getDisplayName(p)).join("、")}
+              替补：{subs.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && "、"}
+                  {p.userId ? (
+                    <Link href={`/players/${p.userId}`} className="hover:text-[var(--color-accent)] transition-colors">
+                      {getDisplayName(p)}
+                    </Link>
+                  ) : (
+                    <>{getDisplayName(p)}</>
+                  )}
+                </span>
+              ))}
             </div>
           )}
         </div>

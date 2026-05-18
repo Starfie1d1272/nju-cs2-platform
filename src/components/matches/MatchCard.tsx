@@ -3,7 +3,7 @@ import { Panel } from "@/components/rivalhub";
 import { Badge } from "@/components/ui/badge";
 import { MatchStatusBadge } from "./MatchStatusBadge";
 import { MATCH_FORMAT_LABELS, MATCH_STAGE_LABELS } from "@/types/match";
-import { formatCSTShortDate } from "@/lib/utils/date";
+import { formatCSTDateTime } from "@/lib/utils/date";
 import type { MatchFormat } from "@/types/match";
 
 interface MatchCardProps {
@@ -33,7 +33,7 @@ export function MatchCard({
 }: MatchCardProps) {
   const timeText =
     status === "scheduled" && scheduledAt
-      ? formatCSTShortDate(scheduledAt)
+      ? formatCSTDateTime(scheduledAt)
       : status === "scheduled" && !scheduledAt
         ? "未排期"
         : null;

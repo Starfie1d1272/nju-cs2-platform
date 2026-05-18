@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Panel } from "@/components/rivalhub";
 import { Badge } from "@/components/ui/badge";
 import { MatchStatusBadge } from "./MatchStatusBadge";
 import { MATCH_FORMAT_LABELS, MATCH_STAGE_LABELS } from "@/types/match";
@@ -44,32 +43,31 @@ export function MatchCard({
           : null;
 
   return (
-    <Link href={`/${seasonSlug}/matches/${matchId}`} className="cursor-pointer">
-      <Panel hoverable pad={16}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <span className="font-semibold truncate text-[var(--color-fg)] text-sm sm:text-base">{teamAName}</span>
-            <span className="text-[var(--color-fg-mid)] text-sm shrink-0">
-              {status === "finished"
-                ? `${scoreA ?? 0} : ${scoreB ?? 0}`
-                : "vs"}
-            </span>
-            <span className="font-semibold truncate text-[var(--color-fg)] text-sm sm:text-base">{teamBName}</span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {timeText && (
-              <span className="text-xs text-[var(--color-fg-mid)]">{timeText}</span>
-            )}
-            <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
-              {MATCH_STAGE_LABELS[stage] ?? stage}
-            </Badge>
-            <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
-              {MATCH_FORMAT_LABELS[format]}
-            </Badge>
-            <MatchStatusBadge status={status} />
-          </div>
-        </div>
-      </Panel>
+    <Link
+      href={`/${seasonSlug}/matches/${matchId}`}
+      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-panel-hi)] transition-colors duration-150"
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <span className="font-semibold truncate text-[var(--color-fg)] text-sm sm:text-base">{teamAName}</span>
+        <span className="text-[var(--color-fg-mid)] text-sm shrink-0">
+          {status === "finished"
+            ? `${scoreA ?? 0} : ${scoreB ?? 0}`
+            : "vs"}
+        </span>
+        <span className="font-semibold truncate text-[var(--color-fg)] text-sm sm:text-base">{teamBName}</span>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {timeText && (
+          <span className="text-xs text-[var(--color-fg-mid)]">{timeText}</span>
+        )}
+        <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
+          {MATCH_STAGE_LABELS[stage] ?? stage}
+        </Badge>
+        <Badge variant="outline" className="text-xs text-[var(--color-fg-mid)]">
+          {MATCH_FORMAT_LABELS[format]}
+        </Badge>
+        <MatchStatusBadge status={status} />
+      </div>
     </Link>
   );
 }

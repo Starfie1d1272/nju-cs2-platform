@@ -38,42 +38,50 @@ export function MatchTabsSection({
         <TabsTrigger value="active" className="text-xs data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">待进行</TabsTrigger>
         <TabsTrigger value="done" className="text-xs data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-[var(--color-accent-fg)]">已结束</TabsTrigger>
       </TabsList>
-      <TabsContent value="active" className="mt-4 space-y-3">
-        {activeMatches.length > 0 ? activeMatches.map((m) => (
-          <MatchCard
-            key={m.id}
-            matchId={m.id}
-            seasonSlug={seasonSlug}
-            teamAName={teamMap.get(m.teamAId) ?? unknownTeamName}
-            teamBName={teamMap.get(m.teamBId) ?? unknownTeamName}
-            scoreA={m.scoreA}
-            scoreB={m.scoreB}
-            stage={stage}
-            format={isMatchFormat(m.format) ? m.format : "bo1"}
-            status={isMatchStatus(m.status) ? m.status : "scheduled"}
-            scheduledAt={m.scheduledAt}
-          />
-        )) : (
+      <TabsContent value="active" className="mt-4">
+        {activeMatches.length > 0 ? (
+          <div className="border border-[var(--color-border)] rounded overflow-hidden">
+            {activeMatches.map((m) => (
+              <MatchCard
+                key={m.id}
+                matchId={m.id}
+                seasonSlug={seasonSlug}
+                teamAName={teamMap.get(m.teamAId) ?? unknownTeamName}
+                teamBName={teamMap.get(m.teamBId) ?? unknownTeamName}
+                scoreA={m.scoreA}
+                scoreB={m.scoreB}
+                stage={stage}
+                format={isMatchFormat(m.format) ? m.format : "bo1"}
+                status={isMatchStatus(m.status) ? m.status : "scheduled"}
+                scheduledAt={m.scheduledAt}
+              />
+            ))}
+          </div>
+        ) : (
           <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无待进行比赛</div>
         )}
       </TabsContent>
-      <TabsContent value="done" className="mt-4 space-y-3">
-        {doneMatches.length > 0 ? doneMatches.map((m) => (
-          <MatchCard
-            key={m.id}
-            matchId={m.id}
-            seasonSlug={seasonSlug}
-            teamAName={teamMap.get(m.teamAId) ?? unknownTeamName}
-            teamBName={teamMap.get(m.teamBId) ?? unknownTeamName}
-            scoreA={m.scoreA}
-            scoreB={m.scoreB}
-            stage={stage}
-            format={isMatchFormat(m.format) ? m.format : "bo1"}
-            status={isMatchStatus(m.status) ? m.status : "scheduled"}
-            scheduledAt={m.scheduledAt}
-            completedAt={m.completedAt}
-          />
-        )) : (
+      <TabsContent value="done" className="mt-4">
+        {doneMatches.length > 0 ? (
+          <div className="border border-[var(--color-border)] rounded overflow-hidden">
+            {doneMatches.map((m) => (
+              <MatchCard
+                key={m.id}
+                matchId={m.id}
+                seasonSlug={seasonSlug}
+                teamAName={teamMap.get(m.teamAId) ?? unknownTeamName}
+                teamBName={teamMap.get(m.teamBId) ?? unknownTeamName}
+                scoreA={m.scoreA}
+                scoreB={m.scoreB}
+                stage={stage}
+                format={isMatchFormat(m.format) ? m.format : "bo1"}
+                status={isMatchStatus(m.status) ? m.status : "scheduled"}
+                scheduledAt={m.scheduledAt}
+                completedAt={m.completedAt}
+              />
+            ))}
+          </div>
+        ) : (
           <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无已结束比赛</div>
         )}
       </TabsContent>

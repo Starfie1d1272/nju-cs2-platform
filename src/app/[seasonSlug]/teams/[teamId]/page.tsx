@@ -10,7 +10,7 @@ import { TeamNameForm } from "@/components/teams/TeamNameForm";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import Link from "next/link";
 import { POSITION_LABELS } from "@/lib/validators/registration";
-import { CS2_POSITIONS, DEFAULT_CS2_MAP_POOL } from "@/types/season";
+import { CS2_POSITIONS, normalizeRegistrationConfig } from "@/types/season";
 import { getUserSession, checkAdminSession } from "@/lib/auth/session";
 import { getDisplayName } from "@/lib/utils/display-name";
 import { getTeamMapWinStats, getTeamBanStats } from "@/lib/teams/data";
@@ -123,6 +123,8 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
     if (myScore > oppScore) totalWins++;
     else totalLosses++;
   }
+
+  const seasonMapPool = normalizeRegistrationConfig(season.registrationConfig).mapPool;
 
   // ── 地图表现统计 ──────────────────────────────────────────────────────────
   const matchIds = teamMatches.map((m) => m.id);
@@ -457,7 +459,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
-                {DEFAULT_CS2_MAP_POOL.map((mapName) => {
+                {seasonMapPool.map((mapName) => {
                   const stat = mapStats.get(mapName);
                   const bans = banCount.get(mapName) ?? 0;
                   return (

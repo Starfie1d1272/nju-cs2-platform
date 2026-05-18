@@ -21,7 +21,7 @@ interface TeamDetailPageProps {
 }
 
 function pct(n: number, d: number) {
-  if (d === 0) return { text: "—", color: "var(--color-fg-muted)" as string };
+  if (d === 0) return { text: "—", color: "var(--color-fg-dim)" };
   const v = Math.round((n / d) * 100);
   const color = v >= 60 ? "var(--color-ok)" : v <= 40 ? "var(--color-danger)" : "var(--color-fg)";
   return { text: `${v}%`, color };
@@ -423,17 +423,20 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                         {mapLabel(mapName)}
                       </td>
                       <td className="px-5 py-3 text-center">
-                        {stat !== undefined ? (
-                          <>
-                            <div
-                              className="font-semibold"
-                              style={{ color: pct(stat.wins, stat.played).color }}
-                            >
-                              {pct(stat.wins, stat.played).text}
-                            </div>
-                            <div className="text-xs text-[var(--color-fg-mid)]">{stat.played} 场</div>
-                          </>
-                        ) : (
+                        {stat !== undefined ? (() => {
+                          const { text, color } = pct(stat.wins, stat.played);
+                          return (
+                            <>
+                              <div
+                                className="font-semibold"
+                                style={{ color }}
+                              >
+                                {text}
+                              </div>
+                              <div className="text-xs text-[var(--color-fg-mid)]">{stat.played} 场</div>
+                            </>
+                          );
+                        })() : (
                           <span className="text-[var(--color-fg-muted)]">—</span>
                         )}
                       </td>

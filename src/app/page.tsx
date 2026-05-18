@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import Link from "next/link";
 import { and, eq, not, count, or, desc, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
@@ -26,13 +24,6 @@ export default async function HomePage() {
   const featured = activeSeasons[0];
   const others = activeSeasons.slice(1);
 
-  const archivedSeasons = await db
-    .select()
-    .from(seasons)
-    .where(eq(seasons.status, "archived"))
-    .orderBy(desc(seasons.createdAt))
-    .limit(6);
-
   if (!featured) {
     return (
       <div className="mx-auto px-4 lg:px-9 py-8 max-w-[1240px]">
@@ -45,6 +36,14 @@ export default async function HomePage() {
       </div>
     );
   }
+
+  // 历届已归档赛季
+  const archivedSeasons = await db
+    .select({ id: seasons.id, name: seasons.name, slug: seasons.slug, kind: seasons.kind, status: seasons.status })
+    .from(seasons)
+    .where(eq(seasons.status, "archived"))
+    .orderBy(desc(seasons.createdAt))
+    .limit(6);
 
   // 并行查询：基础统计 + 按状态的动态数据
   const [
@@ -101,7 +100,12 @@ export default async function HomePage() {
     // 仅 playing 状态时查询 LIVE + 下一场
     featured.status === "playing"
       ? db
-          .select()
+          .select({
+            id: matches.id,
+            status: matches.status,
+            scheduledAt: matches.scheduledAt,
+            format: matches.format,
+          })
           .from(matches)
           .where(
             and(
@@ -114,7 +118,7 @@ export default async function HomePage() {
           )
           .orderBy(matches.scheduledAt)
           .limit(2)
-      : Promise.resolve([] as (typeof matches.$inferSelect)[]),
+      : Promise.resolve([] as { id: string; status: string; scheduledAt: Date | null; format: string }[]),
   ]);
 
   // voting 状态：查询候选人名字

@@ -69,7 +69,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
         .limit(4)
     : null;
 
-  const [[teamCountRow], [approvedCountRow], [matchCountRow], upcomingMatches] =
+  const [[teamCountRow], [approvedCountRow], [matchCountRow], upcomingMatches, standings] =
     await Promise.all([
       db.select({ value: count() }).from(teams).where(eq(teams.seasonId, season.id)),
       db.select({ value: count() }).from(seasonRegistrations).where(
@@ -80,13 +80,8 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
         finished: sql<number>`count(*) filter (where ${matches.status} = 'finished')`,
       }).from(matches).where(eq(matches.seasonId, season.id)),
       upcomingMatchesQuery ?? Promise.resolve([] as { id: string; status: string; scheduledAt: Date | null; stage: string; teamAName: string | null; teamBName: string | null }[]),
+      season.status === "playing" ? getStandings(season.id) : Promise.resolve([]),
     ]);
-
-  // 积分榜（仅 playing 状态有实际数据）
-  const standings =
-    season.status === "playing"
-      ? await getStandings(season.id)
-      : [];
 
   // ── 动态阶段列表 ──────────────────────────────────────────
   interface Phase {
@@ -262,18 +257,10 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
                 {upcomingMatches.map((match) => (
                   <Link key={match.id} href={`/${seasonSlug}/matches/${match.id}` as never}>
                     <div
-                      className="flex items-center gap-2.5 p-2.5 rounded-sm transition-colors"
+                      className="flex items-center gap-2.5 p-2.5 rounded-sm transition-colors hover:bg-[var(--color-panel-hi)] hover:border-[var(--color-border-hi)]"
                       style={{
                         background: "var(--color-panel-low)",
                         border: "1px solid var(--color-border)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "var(--color-border-hi)";
-                        e.currentTarget.style.background = "var(--color-panel-hi)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "var(--color-border)";
-                        e.currentTarget.style.background = "var(--color-panel-low)";
                       }}
                     >
                       <div className="flex items-center gap-8">

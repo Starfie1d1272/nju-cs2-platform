@@ -66,7 +66,7 @@ function SwissColumn({
             : `第 ${round.round} 轮`}
         </span>
         {round.status === "active" && (
-          <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[var(--color-ok)]" />
         )}
       </div>
 
@@ -161,7 +161,7 @@ function SwissMatchupRow({
           <span
             className={`tabular shrink-0 ${
               winA
-                ? "text-emerald-400 font-semibold"
+                ? "text-[var(--color-ok)] font-semibold"
                 : "text-[var(--color-fg-dim)]"
             }`}
           >
@@ -187,7 +187,7 @@ function SwissMatchupRow({
           <span
             className={`tabular shrink-0 ${
               winB
-                ? "text-emerald-400 font-semibold"
+                ? "text-[var(--color-ok)] font-semibold"
                 : "text-[var(--color-fg-dim)]"
             }`}
           >
@@ -231,7 +231,7 @@ function AdvancementColumn({
       {/* 晋级 */}
       {advanced.length > 0 && (
         <div>
-          <div className="text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center bg-emerald-500/10 text-emerald-400">
+          <div className="text-xs font-medium mb-1.5 px-1.5 py-0.5 rounded text-center bg-[rgba(77,212,122,0.10)] text-[var(--color-ok)]">
             晋级 ({advanced.length}/{advanceCount})
           </div>
           <div className="space-y-1">

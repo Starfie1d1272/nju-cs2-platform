@@ -11,6 +11,7 @@ interface MatchRow {
   format: string;
   status: string;
   scheduledAt: Date | null;
+  completedAt: Date | null;
 }
 
 interface MatchTabsSectionProps {
@@ -70,6 +71,7 @@ export function MatchTabsSection({
             format={isMatchFormat(m.format) ? m.format : "bo1"}
             status={isMatchStatus(m.status) ? m.status : "scheduled"}
             scheduledAt={m.scheduledAt}
+            completedAt={m.completedAt}
           />
         )) : (
           <div className="text-center py-8 text-[var(--color-fg-mid)] text-sm">暂无已结束比赛</div>

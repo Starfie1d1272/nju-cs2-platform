@@ -17,6 +17,7 @@ interface MatchCardProps {
   format: MatchFormat;
   status: "scheduled" | "in_progress" | "finished" | "cancelled";
   scheduledAt?: Date | string | null;
+  completedAt?: Date | string | null;
 }
 
 export function MatchCard({
@@ -30,13 +31,17 @@ export function MatchCard({
   format,
   status,
   scheduledAt,
+  completedAt,
 }: MatchCardProps) {
+  const finishedTime = completedAt ?? scheduledAt ?? null;
   const timeText =
-    status === "scheduled" && scheduledAt
-      ? formatCSTDateTime(scheduledAt)
-      : status === "scheduled" && !scheduledAt
-        ? "未排期"
-        : null;
+    status === "finished"
+      ? finishedTime ? formatCSTDateTime(finishedTime) : null
+      : status === "scheduled" && scheduledAt
+        ? formatCSTDateTime(scheduledAt)
+        : status === "scheduled" && !scheduledAt
+          ? "未排期"
+          : null;
 
   return (
     <Link href={`/${seasonSlug}/matches/${matchId}`} className="cursor-pointer">

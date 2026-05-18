@@ -46,7 +46,7 @@ function validData(overrides?: Record<string, any>) {
       { map: "de_ancient", level: "basic" },
       { map: "de_dust2", level: "basic" },
       { map: "de_anubis", level: "basic" },
-      { map: "de_train", level: "none" },
+      { map: "de_overpass", level: "none" },
     ],
     gameplayStyle: "激进突破",
     antiCheatPledge: true,
@@ -134,7 +134,7 @@ describe("buildRegistrationSchema", () => {
           { map: "de_ancient", level: "basic" },
           { map: "de_dust2", level: "basic" },
           { map: "de_anubis", level: "basic" },
-          { map: "de_train", level: "none" },
+          { map: "de_overpass", level: "none" },
         ],
       }),
     );

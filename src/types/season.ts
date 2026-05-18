@@ -158,7 +158,7 @@ export const DEFAULT_CS2_MAP_POOL = [
   "de_ancient",
   "de_dust2",
   "de_anubis",
-  "de_train",
+  "de_overpass",
 ] as const;
 
 export const MAP_LABELS: Record<string, string> = {

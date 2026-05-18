@@ -258,11 +258,15 @@ export default async function HomePage() {
           </div>
           <div
             aria-hidden
-            className="absolute inset-0 opacity-50"
+            className="absolute inset-0 opacity-50 pointer-events-none"
             style={{
               background: `
-                radial-gradient(circle at 90% 10%, #ff6b1a22 0, transparent 40%),
-                repeating-linear-gradient(0deg, transparent 0 32px, #1f253040 32px 33px)
+                radial-gradient(circle at 90% 10%, ${
+                  featured.status === "registration" ? "rgba(77,212,122,0.09)"
+                    : featured.status === "voting" ? "rgba(255,196,77,0.09)"
+                    : "rgba(255,107,26,0.13)"
+                } 0, transparent 40%),
+                repeating-linear-gradient(0deg, transparent 0 32px, rgba(31,37,48,0.25) 32px 33px)
               `,
             }}
           />
@@ -326,73 +330,59 @@ export default async function HomePage() {
             </div>
           </Panel>
         ) : featured.status === "voting" ? (
-          <Panel label="CAPTAIN VOTING">
-            <div className="grid gap-3.5">
-              <div>
-                <div
-                  className="uppercase"
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 10,
-                    color: "var(--color-fg-dim)",
-                    letterSpacing: "var(--tracking-label)",
-                  }}
-                >
-                  {SEASON_STATUS_LABELS[featured.status]}
-                </div>
-                <div
-                  className="mt-1 font-semibold"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 20,
-                    color: "var(--color-fg)",
-                  }}
-                >
-                  {featured.name}
-                </div>
-              </div>
-              <div className="grid gap-2 py-3 border-y border-[var(--color-border)]">
-                {topCandidatesWithNames.length > 0 ? (
-                  topCandidatesWithNames.map((c, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: 11,
-                            color: i === 0 ? "var(--color-accent)" : "var(--color-fg-dim)",
-                            minWidth: 20,
-                          }}
-                        >
-                          #{i + 1}
-                        </span>
-                        <span style={{ fontFamily: "var(--font-sans)", fontSize: 14, color: "var(--color-fg)" }}>
-                          {c.name}
-                        </span>
-                      </div>
-                      <span
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: 12,
-                          color: "var(--color-fg-mid)",
-                        }}
-                      >
-                        {c.voteCount} 票
-                      </span>
+          <Panel label="投票排行 · TOP 3">
+            <div className="grid gap-3">
+              {topCandidatesWithNames.length > 0 ? (
+                topCandidatesWithNames.map((c, i) => (
+                  <div
+                    key={i}
+                    className="grid items-center gap-3"
+                    style={{
+                      gridTemplateColumns: "auto 1fr auto",
+                      padding: "10px 12px",
+                      background: i === 0 ? "rgba(255,107,26,0.04)" : "var(--color-panel-low)",
+                      border: `1px solid ${i === 0 ? "rgba(255,107,26,0.27)" : "var(--color-border)"}`,
+                      borderRadius: "var(--radius-sm, 2px)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: i === 0 ? "var(--color-accent)" : "var(--color-fg-mid)",
+                      }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
                     </div>
-                  ))
-                ) : (
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-dim)" }}>
-                    暂无投票数据
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: "var(--color-fg)" }}>
+                        {c.name}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: "var(--color-fg)",
+                      }}
+                    >
+                      {c.voteCount}
+                    </div>
                   </div>
-                )}
-              </div>
-              <Btn full asChild>
-                <Link href={`/${featured.slug}/captains`} className="w-full">
-                  前往投票 →
-                </Link>
-              </Btn>
+                ))
+              ) : (
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-dim)" }}>
+                  暂无投票数据
+                </div>
+              )}
             </div>
+            <Btn full asChild style={{ marginTop: 14 }}>
+              <Link href={`/${featured.slug}/captains`} className="w-full">
+                查看全部候选人 →
+              </Link>
+            </Btn>
           </Panel>
         ) : featured.status === "playing" ? (
           <Panel label="LIVE MATCHES">

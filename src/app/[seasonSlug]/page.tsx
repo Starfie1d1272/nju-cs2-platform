@@ -221,9 +221,9 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       </div>
 
       {/* Phase tracker */}
-      <Panel pad={0}>
+      <Panel pad={24}>
         <ScrollHint fromColor="var(--color-panel)">
-          <div className="flex">
+          <div className="flex items-start">
             {phases.map((phase, i) => (
               <PhaseStep
                 key={phase.key}

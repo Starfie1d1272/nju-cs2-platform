@@ -162,12 +162,24 @@ export function AdminMatchRow({
                 )}
               </>
             )}
-            {match.status === "finished" &&
-              finishedMaps.map((map) => (
-                <div key={map.id}>
-                  <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
-                </div>
-              ))}
+            {match.status === "finished" && (
+              <>
+                <ScoreInput
+                  matchId={match.id}
+                  teamAName={teamAName}
+                  teamBName={teamBName}
+                  currentStatus="finished"
+                  format={match.format}
+                  currentScoreA={match.scoreA}
+                  currentScoreB={match.scoreB}
+                />
+                {finishedMaps.map((map) => (
+                  <div key={map.id}>
+                    <StatsOCRPanel mapId={map.id} mapName={map.mapName} />
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </details>
       )}

@@ -246,6 +246,14 @@ export async function recordMapResult(
     if (scoreA === scoreB) {
       throw new AppError(ErrorCode.MATCH_INVALID_SCORE, "单图不能平局");
     }
+    const mapWinner = Math.max(scoreA, scoreB);
+    const mapLoser = Math.min(scoreA, scoreB);
+    if (!isValidCS2RoundScore(mapWinner, mapLoser)) {
+      throw new AppError(
+        ErrorCode.MATCH_INVALID_SCORE,
+        "单图比分不合法，胜者回合数须满足 13 + 3k（如 13、16、19、22…）"
+      );
+    }
 
     const match = await getMatchOrThrow(matchId);
     const session = await requireSeasonAdmin(match.seasonId);
@@ -523,6 +531,84 @@ export async function batchSetCompletionDeadline(input: {
     return ok({ updated: matchIds.length });
   } catch (e) {
     return actionError("batchSetCompletionDeadline", e);
+  }
+}
+
+// ── 修正已完成比赛的比分 ──────────────────────────────────────────────────
+
+// CS2 MR12：胜者回合数合法条件：winner >= 13 且 (winner - 13) % 3 === 0
+function isValidCS2RoundScore(winner: number, loser: number): boolean {
+  return winner >= 13 && (winner - 13) % 3 === 0 && loser < winner;
+}
+
+/**
+ * 修正已完成比赛的比分（仅更新分数，不改变胜负判定和 bracket 晋级结果）。
+ * BO1 合法胜者回合数：13、16、19、22、…（MR12 公式：13 + 3k，k ≥ 0）。
+ */
+export async function correctMatchScore(
+  matchId: string,
+  scoreA: number,
+  scoreB: number
+): Promise<ActionResult<void>> {
+  try {
+    if (!Number.isInteger(scoreA) || !Number.isInteger(scoreB) || scoreA < 0 || scoreB < 0) {
+      throw new AppError(ErrorCode.MATCH_INVALID_SCORE, "比分必须为非负整数");
+    }
+    if (scoreA === scoreB) {
+      throw new AppError(ErrorCode.MATCH_INVALID_SCORE, "系列赛不能平局，必须分出胜负");
+    }
+
+    const match = await getMatchOrThrow(matchId);
+    if (match.status !== "finished") {
+      throw new AppError(ErrorCode.MATCH_INVALID_TRANSITION, "只能修正已完成比赛的比分");
+    }
+
+    if (match.format === "bo1") {
+      const winner = Math.max(scoreA, scoreB);
+      const loser = Math.min(scoreA, scoreB);
+      if (!isValidCS2RoundScore(winner, loser)) {
+        throw new AppError(
+          ErrorCode.MATCH_INVALID_SCORE,
+          "BO1 比分不合法，胜者回合数须满足 13 + 3k（如 13、16、19、22…）"
+        );
+      }
+    } else {
+      const maxWins = getWinThreshold(match.format);
+      const winner = Math.max(scoreA, scoreB);
+      const loser = Math.min(scoreA, scoreB);
+      if (winner !== maxWins || loser >= maxWins) {
+        throw new AppError(
+          ErrorCode.MATCH_INVALID_SCORE,
+          `${match.format.toUpperCase()} 系列赛比分不合法（胜者须恰好赢 ${maxWins} 图）`
+        );
+      }
+    }
+
+    const session = await requireSeasonAdmin(match.seasonId);
+    const season = await getSeasonOrThrow(match.seasonId);
+    const prevScoreA = match.scoreA;
+    const prevScoreB = match.scoreB;
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(matches)
+        .set({ scoreA, scoreB, updatedAt: new Date() })
+        .where(eq(matches.id, matchId));
+
+      await tx.insert(auditLogs).values({
+        seasonId: match.seasonId,
+        action: "match.correct_score",
+        actorId: session.email,
+        targetId: matchId,
+        targetType: "match",
+        meta: { prevScoreA, prevScoreB, scoreA, scoreB },
+      });
+    });
+
+    revalidateMatchPaths(season.slug, matchId);
+    return ok(undefined);
+  } catch (e) {
+    return actionError("correctMatchScore", e);
   }
 }
 

@@ -99,7 +99,7 @@ export function MatchTimeNegotiation({
   return (
     <div className="space-y-4">
       {isCaptain && !hasSubmittedRoster && (
-        <div className="rounded border border-[var(--color-yellow)]/30 bg-[var(--color-yellow)]/5 p-3">
+        <div className="rounded border p-3" style={{ borderColor: "rgba(255,196,77,0.4)", background: "rgba(255,196,77,0.06)" }}>
           <p className="text-sm text-[var(--color-fg)]">请先提交赛前名单</p>
           <p className="text-xs text-[var(--color-fg-dim)] mt-1">
             在确认比赛时间之前，请先在「提交名单」中选择 5 名首发队员。裁判在正式开赛时会检查队员信息，队员不正确将无法进行比赛。
@@ -134,11 +134,11 @@ export function MatchTimeNegotiation({
             return (
               <div
                 key={proposal.id}
-                className={`rounded border p-3 ${
-                  isMyProposal
-                    ? "border-[var(--color-border)] bg-[var(--color-panel)]"
-                    : "border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20"
-                }`}
+                className="rounded border p-3"
+              style={isMyProposal
+                ? { borderColor: "var(--color-border)", background: "var(--color-panel)" }
+                : { borderColor: "rgba(255,196,77,0.4)", background: "rgba(255,196,77,0.06)" }
+              }
               >
                 <div className="flex items-center justify-between gap-2">
                   <div>
@@ -223,7 +223,7 @@ export function MatchTimeNegotiation({
       )}
 
       {/* 时间信息摘要 */}
-      <div className="rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 text-xs text-[var(--color-fg-mid)] space-y-0.5">
+      <div className="rounded border border-[var(--color-border)] bg-[var(--color-panel)] p-3 text-xs text-[var(--color-fg-mid)] space-y-0.5">
         <div>
           最晚完成时间：{completionDeadline ? formatCST(completionDeadline) : "管理员暂未设置"}
         </div>
@@ -242,8 +242,8 @@ export function MatchTimeNegotiation({
 
       {/* 管理员强制指定 */}
       {isAdmin && (
-        <div className="rounded border border-red-200 p-3 dark:bg-red-950/20">
-          <p className="text-sm font-medium text-red-700 dark:text-red-400">
+        <div className="rounded border p-3" style={{ borderColor: "rgba(255,84,112,0.35)", background: "rgba(255,84,112,0.06)" }}>
+          <p className="text-sm font-medium text-[var(--color-danger)]">
             管理员强制指定
           </p>
           <div className="mt-2 flex gap-2">

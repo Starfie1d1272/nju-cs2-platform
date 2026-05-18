@@ -26,20 +26,16 @@ export function Panel({ children, className, hi, label, pad = 16, hoverable, tea
       {label && (
         <CardHeader
           className="flex flex-row items-center justify-between px-4 py-2.5 border-b border-[var(--color-border)]"
-          style={
-            typeof label === "string"
-              ? {
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "var(--tracking-label)",
-                  color: "var(--color-fg-mid)",
-                  textTransform: "uppercase",
-                }
-              : undefined
-          }
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "var(--tracking-label)",
+            color: "var(--color-fg-mid)",
+            textTransform: "uppercase",
+          }}
         >
-          {label}
+          {typeof label === "string" ? <span>{label}</span> : label}
         </CardHeader>
       )}
       <div style={{ padding: pad }}>{children}</div>

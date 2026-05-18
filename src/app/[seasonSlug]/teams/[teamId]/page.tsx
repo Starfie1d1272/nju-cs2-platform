@@ -424,20 +424,20 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                       </td>
                       <td className="px-5 py-3 text-center">
                         {stat !== undefined ? (() => {
-                          const { text, color } = pct(stat.wins, stat.played);
+                          const wr = pct(stat.wins, stat.played);
                           return (
                             <>
                               <div
                                 className="font-semibold"
-                                style={{ color }}
+                                style={{ color: wr.color }}
                               >
-                                {text}
+                                {wr.text}
                               </div>
                               <div className="text-xs text-[var(--color-fg-mid)]">{stat.played} 场</div>
                             </>
                           );
                         })() : (
-                          <span className="text-[var(--color-fg-muted)]">—</span>
+                          <span className="text-[var(--color-fg-dim)]">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3 text-center">
@@ -449,7 +449,7 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
                             <div className="text-xs text-[var(--color-fg-mid)]">{bpMatchCount} 对局</div>
                           </>
                         ) : (
-                          <span className="text-[var(--color-fg-muted)]">—</span>
+                          <span className="text-[var(--color-fg-dim)]">—</span>
                         )}
                       </td>
                     </tr>

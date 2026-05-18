@@ -21,6 +21,7 @@ import { DeleteMatchButton } from "@/components/matches/DeleteMatchButton";
 import { BatchDeadlineCard } from "@/components/matches/BatchDeadlineCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Panel, StatusPill } from "@/components/rivalhub";
+import { cn } from "@/lib/utils/cn";
 import { Separator } from "@/components/ui/separator";
 import { getFirstStageOfType, normalizeRegistrationConfig, normalizeStagePlan } from "@/types/season";
 import { MATCH_FORMAT_LABELS } from "@/types/match";
@@ -390,7 +391,7 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                     const teamAName = teamMap.get(m.teamAId) ?? "未知队伍";
                     const teamBName = teamMap.get(m.teamBId) ?? "未知队伍";
                     return (
-                      <Panel key={m.id} pad={16} className={`space-y-3${m.status === "in_progress" ? " border-l-[3px] border-[var(--color-accent)]" : ""}`}>
+                      <Panel key={m.id} pad={16} className={cn("space-y-3", m.status === "in_progress" && "border-l-[3px] border-[var(--color-accent)]")}>
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3">
                             <span className="font-semibold">{teamAName}</span>
@@ -497,7 +498,7 @@ export default async function AdminMatchesPage({ params, searchParams }: AdminMa
                     const teamAName = teamMap.get(m.teamAId) ?? "TBD";
                     const teamBName = teamMap.get(m.teamBId) ?? "TBD";
                     return (
-                      <Panel key={m.id} pad={16} className={`space-y-3${m.status === "in_progress" ? " border-l-[3px] border-[var(--color-accent)]" : ""}`}>
+                      <Panel key={m.id} pad={16} className={cn("space-y-3", m.status === "in_progress" && "border-l-[3px] border-[var(--color-accent)]")}>
                         <div className="flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3">
                             <span className="font-semibold">{teamAName}</span>

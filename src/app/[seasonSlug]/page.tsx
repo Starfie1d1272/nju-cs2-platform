@@ -9,9 +9,11 @@ import { formatCSTShortDate } from "@/lib/utils/date";
 import { normalizeStagePlan } from "@/types/season";
 import type { SeasonStatus } from "@/types/season";
 import { showStats } from "@/lib/utils/season";
-import { StatusPill, Panel, Marker, ScrollHint, Stat, PhaseStep } from "@/components/rivalhub";
+import { StatusPill, Panel, Marker, ScrollHint, Stat, PhaseStep, Btn } from "@/components/rivalhub";
 import { checkAdminSession } from "@/lib/auth/session";
 import { AdminShortcut } from "@/components/layout/AdminShortcut";
+import { StandingsTable } from "@/components/matches/StandingsTable";
+import { getStandings } from "@/lib/data/standings";
 
 const STATUS_IDX: Record<SeasonStatus, number> = {
   draft: 0, registration: 1, voting: 2, drafting: 3,
@@ -79,6 +81,12 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       }).from(matches).where(eq(matches.seasonId, season.id)),
       upcomingMatchesQuery ?? Promise.resolve([] as { id: string; status: string; scheduledAt: Date | null; stage: string; teamAName: string | null; teamBName: string | null }[]),
     ]);
+
+  // 积分榜（仅 playing 状态有实际数据）
+  const standings =
+    season.status === "playing"
+      ? await getStandings(season.id)
+      : [];
 
   // ── 动态阶段列表 ──────────────────────────────────────────
   interface Phase {
@@ -235,44 +243,102 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
         </ScrollHint>
       </Panel>
 
-      {/* NEXT MATCHES */}
-      {upcomingMatches.length > 0 && (
-        <>
-          <Marker sub="已安排的比赛">近期对决</Marker>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {upcomingMatches.map((match) => (
-              <Link key={match.id} href={`/${seasonSlug}/matches/${match.id}` as never}>
-                <Panel className="transition-colors hover:border-[var(--color-border-hi)]">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="text-sm font-semibold text-[var(--color-fg)] truncate">
-                        {match.teamAName ?? "TBD"}
-                      </span>
-                      <span className="font-mono text-xs text-[var(--color-fg-dim)] shrink-0">VS</span>
-                      <span className="text-sm font-semibold text-[var(--color-fg)] truncate">
-                        {match.teamBName ?? "TBD"}
-                      </span>
+      {/* NEXT MATCHES + STANDINGS — dual column layout */}
+      {(upcomingMatches.length > 0 || standings.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
+          {/* Left: 近期比赛 */}
+          {upcomingMatches.length > 0 && (
+            <Panel
+              label={
+                <div className="flex items-center justify-between w-full">
+                  <span>NEXT MATCHES</span>
+                  <Btn small ghost asChild>
+                    <Link href={`/${seasonSlug}/matches`}>VIEW ALL →</Link>
+                  </Btn>
+                </div>
+              }
+            >
+              <div className="grid gap-2">
+                {upcomingMatches.map((match) => (
+                  <Link key={match.id} href={`/${seasonSlug}/matches/${match.id}` as never}>
+                    <div
+                      className="flex items-center gap-2.5 p-2.5 rounded-sm transition-colors"
+                      style={{
+                        background: "var(--color-panel-low)",
+                        border: "1px solid var(--color-border)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-border-hi)";
+                        e.currentTarget.style.background = "var(--color-panel-hi)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-border)";
+                        e.currentTarget.style.background = "var(--color-panel-low)";
+                      }}
+                    >
+                      <div className="flex items-center gap-8">
+                        <div className="min-w-0 flex-1 flex items-center justify-end gap-2">
+                          <span className="text-sm font-semibold text-[var(--color-fg)] truncate">
+                            {match.teamAName ?? "TBD"}
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs text-[var(--color-fg-dim)] shrink-0">vs</span>
+                        <div className="min-w-0 flex-1 flex items-center gap-2">
+                          <span className="text-sm font-semibold text-[var(--color-fg)] truncate">
+                            {match.teamBName ?? "TBD"}
+                          </span>
+                        </div>
+                        <div className="shrink-0">
+                          {match.status === "in_progress" ? (
+                            <span className="font-mono text-[11px] text-[var(--color-ok)]">● LIVE</span>
+                          ) : match.scheduledAt ? (
+                            <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">
+                              {formatCSTShortDate(match.scheduledAt)}
+                            </span>
+                          ) : (
+                            <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">待定</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-1.5 font-mono text-[10px] text-[var(--color-fg-dim)] uppercase tracking-wider">
+                        {match.stage}
+                      </div>
                     </div>
-                    <div className="shrink-0 text-right">
-                      {match.status === "in_progress" ? (
-                        <span className="font-mono text-[11px] text-[var(--color-ok)]">● LIVE</span>
-                      ) : match.scheduledAt ? (
-                        <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">
-                          {formatCSTShortDate(match.scheduledAt)}
-                        </span>
-                      ) : (
-                        <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">待定</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-1.5 font-mono text-[10px] text-[var(--color-fg-dim)] uppercase tracking-wider">
-                    {match.stage}
-                  </div>
-                </Panel>
-              </Link>
-            ))}
-          </div>
-        </>
+                  </Link>
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          {/* Right: 积分榜 TOP 4 */}
+          {standings.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3
+                  className="font-semibold text-sm"
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    color: "var(--color-fg)",
+                  }}
+                >
+                  STANDINGS · TOP 4
+                </h3>
+              </div>
+              <StandingsTable
+                standings={standings.slice(0, 4)}
+                seasonSlug={seasonSlug}
+                isFinal={false}
+              />
+              <div className="mt-3">
+                <Btn full ghost asChild>
+                  <Link href={`/${seasonSlug}/matches`} className="w-full">
+                    查看完整排名 →
+                  </Link>
+                </Btn>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <Marker sub="快速访问各功能模块">赛季导航</Marker>

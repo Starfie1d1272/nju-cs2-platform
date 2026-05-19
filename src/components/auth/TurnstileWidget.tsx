@@ -10,7 +10,12 @@ interface TurnstileWidgetProps {
 declare global {
   interface Window {
     turnstile?: {
-      render: (el: string | HTMLElement, options: { sitekey: string; callback: (token: string) => void; "error-callback"?: () => void }) => string;
+      render: (el: string | HTMLElement, options: {
+        sitekey: string;
+        appearance?: "always" | "execute" | "interaction-only";
+        callback: (token: string) => void;
+        "error-callback"?: () => void;
+      }) => string;
       reset: (id?: string) => void;
     };
     onLoadTurnstile?: () => void;
@@ -35,6 +40,7 @@ export function TurnstileWidget({ onVerify, onError }: TurnstileWidgetProps) {
     }
     widgetId.current = window.turnstile.render(ref.current, {
       sitekey: siteKey,
+      appearance: "interaction-only",
       callback: (token: string) => onVerifyRef.current(token),
       "error-callback": () => onErrorRef.current?.(),
     });

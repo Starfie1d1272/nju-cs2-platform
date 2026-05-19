@@ -5,7 +5,34 @@ All notable changes to RivalHub are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.18.0] - 2026-05-19
+## [1.19.0] - 2026-05-20
+
+### Added
+- **六维雷达图系统（Hexagon）**：基于赛季赛事统计的 Z-score 标准化，计算六维能力评分（火力/破局/多杀/残局/协同/稳定），含完整单元测试（265 行）
+- **PlayerRadarChart 组件**：SVG 六边形雷达图，支持多人叠加对比、轴标签、单人数值标注及图例
+- **选手个人页六维卡片**：跨赛季六维能力展示
+- **队伍详情页六维对比**：队内所有成员六维雷达图叠加对比
+- **比赛详情页六维对比**：双方出场阵容六维能力雷达图（新增至赛后数据面板）
+- **排行榜六维综合评分列**：StatsLeaderboard 新增六维综合评分排序
+- **Cloudflare Turnstile 验证码**：注册页集成，`appearance=interaction-only` 仅在需要时触发验证挑战，服务端强制校验
+- **忘记密码 / 重置密码页**：`/forgot-password`、`/reset-password` 完整流程
+- **BP 赛后补录**：`finished` 比赛在管理后台"数据录入"区新增「录入 BP」入口；无 match_maps 记录时自动建立，解锁 OCR 面板
+
+### Changed
+- **BP 流程强制顺序**：`in_progress` 状态下，`recordMatchResult`（非淘汰赛）和 `recordMapResult`（淘汰赛逐图）均强制校验 BP 已存在，否则拒绝录分
+- **BO3/BO5 逐图录入重构**：BP 保存后自动创建 match_maps 预占行；`recordMapResult` 改为 UPDATE 预占行填入比分（不再 INSERT），彻底消除"地图已存在"冲突
+- **MapByMapInput BP 引导模式**：有 BP 预占序列时，地图名和 pick 方只读展示，管理员只需填起始边和回合数
+- **VetoInputDialog 交互优化**：队伍选择改为 A / B 切换按钮（告别每步下拉菜单）；finished 状态下显示赛后补录提示条
+
+### Fixed
+- **MVP 投票 createdAt 空值**：`createdAt` 为 null 时不再静默放行，明确返回"账号状态异常"错误
+- **Turnstile siteKey 缺失提示**：环境变量未配置时给出明确错误，不再静默失败
+
+### Refactored
+- **PlayerRadarChart 颜色预解析**：颜色计算从多边形渲染和图例中提取到一次 map，消除重复推导
+- **hexagon.ts n=0 判断提升**：将空数组检查提至统计循环外，避免无效迭代
+- **TurnstileWidget URL 提取**：重复脚本 URL 提取为常量
+- **比赛/队伍/选手页并发优化**：`getSeasonHexagonScores` 加入 Phase 3 `Promise.all`，消除串行等待
 
 ## [1.18.1] - 2026-05-19
 
@@ -584,6 +611,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.6.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.4.0...v1.4.1
+[1.19.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.18.1...v1.19.0
+[1.18.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.18.0...v1.18.1
+[1.18.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.17.1...v1.18.0
 [1.17.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.16.1...v1.17.0
 [1.4.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.3.2...v1.4.0

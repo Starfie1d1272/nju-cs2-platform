@@ -74,12 +74,14 @@ function clamp(v: number): number {
 
 /** Z-score 标准化：高值 → 高分 */
 function zScore(value: number, mean: number, std: number): number {
-  return clamp(50 + ((value - mean) / Math.max(std, 0.001)) * 15);
+  if (std === 0) return 50;
+  return clamp(50 + ((value - mean) / std) * 15);
 }
 
 /** Z-score 反向标准化：低值 → 高分（少死分专用） */
 function zScoreInverse(value: number, mean: number, std: number): number {
-  return clamp(50 + ((mean - value) / Math.max(std, 0.001)) * 15);
+  if (std === 0) return 50;
+  return clamp(50 + ((mean - value) / std) * 15);
 }
 
 /** 小样本收缩：回合数不足 threshold 时向 50 靠拢 */

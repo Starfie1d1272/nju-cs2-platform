@@ -33,21 +33,30 @@ function makePlayer(overrides: Partial<PlayerMetrics> = {}): PlayerMetrics {
 // ─── zScore 内部行为（通过 computeEventStats + computeDimensions 间接测试） ──
 
 describe("zScore 边界", () => {
-  it("std=0 时所有人该指标标准化分数应为 50（所有人值相同）", () => {
-    const p1 = makePlayer({ kpr: 1.0 });
-    const p2 = makePlayer({ userId: "u2", kpr: 1.0 });
+  it("std=0 时（所有选手所有指标完全相同）六维各维应为 50", () => {
+    // 两名选手所有指标完全相同 → 每个指标 std=0 → 每个 zScore 返回 50 → 六维均为 50
+    const identical = {
+      kpr: 0.8, dpr: 0.7, apr: 0.4, kd: 1.1, kda: 1.5,
+      fkpr: 0.1, mkpr: 0.15, cpr: 0.05, adr: 80,
+      rws: 0.25, we: 0.5, ratingPro: 1.0, totalRounds: 60,
+    };
+    const p1 = makePlayer({ userId: "u1", ...identical });
+    const p2 = makePlayer({ userId: "u2", ...identical });
     const stats = computeEventStats([p1, p2]);
-    // std.kpr 为 0，mean.kpr = 1.0
-    expect(stats.std.kpr).toBeCloseTo(0);
-    // 两个分数都应为 50
+
+    // 验证所有 std 确实为 0
+    for (const key of Object.keys(stats.std) as (keyof typeof stats.std)[]) {
+      expect(stats.std[key], `std.${key} 应为 0`).toBeCloseTo(0);
+    }
+
     const s1 = computeDimensions(p1, stats);
     const s2 = computeDimensions(p2, stats);
-    // firepower 包含 kpr，当 kpr std=0 kd std=0 adr std=0 mkpr std=0 时 firepower=50
-    // 这里只验证极值不超出 0-100
-    expect(s1.firepower).toBeGreaterThanOrEqual(0);
-    expect(s1.firepower).toBeLessThanOrEqual(100);
-    expect(s2.firepower).toBeGreaterThanOrEqual(0);
-    expect(s2.firepower).toBeLessThanOrEqual(100);
+
+    const dims: (keyof HexagonScores)[] = ["firepower", "opening", "multikill", "clutch", "support", "consistency"];
+    for (const dim of dims) {
+      expect(s1[dim], `s1.${dim} 应为 50`).toBeCloseTo(50);
+      expect(s2[dim], `s2.${dim} 应为 50`).toBeCloseTo(50);
+    }
   });
 
   it("极高值应 clamp 到 100（不超过 100）", () => {

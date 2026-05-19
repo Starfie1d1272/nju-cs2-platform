@@ -600,6 +600,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions Cron（选秀超时 + 报名截止自动推进）
 - Vercel + Supabase 生产部署
 
+[1.19.2]: https://github.com/Starfie1d1272/RivalHub/compare/v1.19.1...v1.19.2
+[1.19.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.19.0...v1.19.1
+[1.19.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.18.1...v1.19.0
+[1.18.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.18.0...v1.18.1
+[1.18.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.17.1...v1.18.0
+[1.17.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.17.0...v1.17.1
+[1.17.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.16.1...v1.17.0
 [1.16.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.15.1...v1.16.0
 [1.15.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.15.0...v1.15.1
@@ -625,13 +632,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.6.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.4.0...v1.4.1
-[1.19.2]: https://github.com/Starfie1d1272/RivalHub/compare/v1.19.1...v1.19.2
-[1.19.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.19.0...v1.19.1
-[1.19.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.18.1...v1.19.0
-[1.18.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.18.0...v1.18.1
-[1.18.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.17.1...v1.18.0
-[1.17.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.17.0...v1.17.1
-[1.17.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.16.1...v1.17.0
 [1.4.0]: https://github.com/Starfie1d1272/RivalHub/compare/v1.3.2...v1.4.0
 [1.3.2]: https://github.com/Starfie1d1272/RivalHub/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/Starfie1d1272/RivalHub/compare/v1.3.0...v1.3.1

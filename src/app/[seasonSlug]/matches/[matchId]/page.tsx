@@ -31,7 +31,7 @@ import { sumNums, avgNums, weightedAvgNums } from "@/lib/utils/stats";
 import { getUserSession } from "@/lib/auth/session";
 import { formatCSTDateTime } from "@/lib/utils/date";
 import { normalizeRegistrationConfig } from "@/types/season";
-import { getTeamMapWinStats, getTeamPickStats, getTeamBanStats } from "@/lib/teams/data";
+import { getTeamMapWinStats, getTeamPickStats, getTeamBanStats, type MapWinStats } from "@/lib/teams/data";
 
 interface MatchDetailPageProps {
   params: Promise<{ seasonSlug: string; matchId: string }>;
@@ -56,7 +56,7 @@ function computeRecord(
     const myScore = isA ? (m.scoreA ?? 0) : (m.scoreB ?? 0);
     const oppScore = isA ? (m.scoreB ?? 0) : (m.scoreA ?? 0);
     if (myScore > oppScore) wins++;
-    else losses++;
+    else if (myScore < oppScore) losses++;
   }
   return { wins, losses };
 }
@@ -72,7 +72,33 @@ function computeTeamAvgStats(rows: MPS[]) {
   };
 }
 
-const EMPTY_MPS: MPS[] = [];
+function buildRadarData(
+  mapPool: string[],
+  mapWin: Map<string, MapWinStats>,
+  pickStats: { pickCount: Map<string, number>; bpMatchCount: number },
+  banStats: { banCount: Map<string, number>; bpMatchCount: number },
+): Map<string, { winRate: number; pickRate: number; banRate: number }> {
+  const data = new Map<string, { winRate: number; pickRate: number; banRate: number }>();
+  for (const map of mapPool) {
+    const win = mapWin.get(map);
+    data.set(map, {
+      winRate: win && win.played > 0 ? (win.wins / win.played) * 100 : 0,
+      pickRate: pickStats.bpMatchCount > 0 ? ((pickStats.pickCount.get(map) ?? 0) / pickStats.bpMatchCount) * 100 : 0,
+      banRate: banStats.bpMatchCount > 0 ? ((banStats.banCount.get(map) ?? 0) / banStats.bpMatchCount) * 100 : 0,
+    });
+  }
+  return data;
+}
+
+async function getSeasonFinishedMatches(seasonId: string, teamId: string) {
+  return db.query.matches.findMany({
+    where: and(
+      eq(matches.seasonId, seasonId),
+      eq(matches.status, "finished"),
+      or(eq(matches.teamAId, teamId), eq(matches.teamBId, teamId)),
+    ),
+  });
+}
 
 export default async function MatchDetailPage({ params }: MatchDetailPageProps) {
   const { seasonSlug, matchId } = await params;
@@ -118,20 +144,8 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         .innerJoin(seasonRegistrations, eq(teamMembers.registrationId, seasonRegistrations.id))
         .innerJoin(users, eq(seasonRegistrations.userId, users.id))
         .where(inArray(teamMembers.teamId, [match.teamAId, match.teamBId])),
-      db.query.matches.findMany({
-        where: and(
-          eq(matches.seasonId, season.id),
-          eq(matches.status, "finished"),
-          or(eq(matches.teamAId, match.teamAId), eq(matches.teamBId, match.teamAId)),
-        ),
-      }),
-      db.query.matches.findMany({
-        where: and(
-          eq(matches.seasonId, season.id),
-          eq(matches.status, "finished"),
-          or(eq(matches.teamAId, match.teamBId), eq(matches.teamBId, match.teamBId)),
-        ),
-      }),
+      getSeasonFinishedMatches(season.id, match.teamAId),
+      getSeasonFinishedMatches(season.id, match.teamBId),
     ]);
 
   // 从赛季对局列表计算战绩、H2H
@@ -197,13 +211,12 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
     .filter((m) => m.teamId === match.teamBId && starterBMemberIds.has(m.id) && m.userId)
     .map((m) => m.userId as string);
 
-  // Phase 4: 地图胜/pick/ban 率 + 队伍赛季数据 + 首发选手数据（全部并行）
+  // Phase 4: 地图胜/pick/ban 率 + 队伍赛季数据（全部并行）
   const [
     mapWinA, mapWinB,
     pickStatsA, pickStatsB,
     banStatsA, banStatsB,
     teamRawStatsA, teamRawStatsB,
-    starterStatsA, starterStatsB,
   ] = await Promise.all([
     getTeamMapWinStats(match.teamAId, seasonMatchesA),
     getTeamMapWinStats(match.teamBId, seasonMatchesB),
@@ -219,7 +232,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             isNotNull(matchPlayerStats.verifiedByAdmin),
           ),
         )
-      : Promise.resolve(EMPTY_MPS),
+      : ([] as MPS[]),
     teamBUserIds.length > 0 && matchIdsB.length > 0
       ? db.select().from(matchPlayerStats).where(
           and(
@@ -228,48 +241,22 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
             isNotNull(matchPlayerStats.verifiedByAdmin),
           ),
         )
-      : Promise.resolve(EMPTY_MPS),
-    starterAUserIds.length > 0 && matchIdsA.length > 0
-      ? db.select().from(matchPlayerStats).where(
-          and(
-            inArray(matchPlayerStats.matchId, matchIdsA),
-            inArray(matchPlayerStats.userId as never, starterAUserIds),
-            isNotNull(matchPlayerStats.verifiedByAdmin),
-          ),
-        )
-      : Promise.resolve(EMPTY_MPS),
-    starterBUserIds.length > 0 && matchIdsB.length > 0
-      ? db.select().from(matchPlayerStats).where(
-          and(
-            inArray(matchPlayerStats.matchId, matchIdsB),
-            inArray(matchPlayerStats.userId as never, starterBUserIds),
-            isNotNull(matchPlayerStats.verifiedByAdmin),
-          ),
-        )
-      : Promise.resolve(EMPTY_MPS),
+      : ([] as MPS[]),
   ]);
+
+  // 首发选手赛季数据从 teamRawStats 内存过滤（启动者是队伍成员子集）
+  const starterAIdSet = new Set(starterAUserIds);
+  const starterBIdSet = new Set(starterBUserIds);
+  const starterStatsA = teamRawStatsA.filter((r) => r.userId && starterAIdSet.has(r.userId));
+  const starterStatsB = teamRawStatsB.filter((r) => r.userId && starterBIdSet.has(r.userId));
 
   // 队伍赛季平均数据（用于 TeamStatsCompare）
   const teamAvgA = computeTeamAvgStats(teamRawStatsA);
   const teamAvgB = computeTeamAvgStats(teamRawStatsB);
 
   // 雷达图数据
-  const radarDataA = new Map<string, { winRate: number; pickRate: number; banRate: number }>();
-  const radarDataB = new Map<string, { winRate: number; pickRate: number; banRate: number }>();
-  for (const map of mapPool) {
-    const winA = mapWinA.get(map);
-    const winB = mapWinB.get(map);
-    radarDataA.set(map, {
-      winRate: winA && winA.played > 0 ? (winA.wins / winA.played) * 100 : 0,
-      pickRate: pickStatsA.bpMatchCount > 0 ? ((pickStatsA.pickCount.get(map) ?? 0) / pickStatsA.bpMatchCount) * 100 : 0,
-      banRate: banStatsA.bpMatchCount > 0 ? ((banStatsA.banCount.get(map) ?? 0) / banStatsA.bpMatchCount) * 100 : 0,
-    });
-    radarDataB.set(map, {
-      winRate: winB && winB.played > 0 ? (winB.wins / winB.played) * 100 : 0,
-      pickRate: pickStatsB.bpMatchCount > 0 ? ((pickStatsB.pickCount.get(map) ?? 0) / pickStatsB.bpMatchCount) * 100 : 0,
-      banRate: banStatsB.bpMatchCount > 0 ? ((banStatsB.banCount.get(map) ?? 0) / banStatsB.bpMatchCount) * 100 : 0,
-    });
-  }
+  const radarDataA = buildRadarData(mapPool, mapWinA, pickStatsA, banStatsA);
+  const radarDataB = buildRadarData(mapPool, mapWinB, pickStatsB, banStatsB);
 
   // 首发选手赛季数据（用于 MatchLineupsH2H）
   function buildLineupsPlayers(rows: MPS[], starterUserIds: string[]) {

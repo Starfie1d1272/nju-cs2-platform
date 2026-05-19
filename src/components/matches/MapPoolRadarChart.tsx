@@ -17,9 +17,10 @@ interface MapPoolRadarChartProps {
   teamBData: Map<string, MapData>;
 }
 
-const A_COLOR = "rgba(255,107,26,0.25)";
+// 对应 --color-accent / --color-accent-b；SVG 表现属性不支持 CSS var，用匹配常量
+const A_FILL = "rgba(255,107,26,0.25)";
 const A_STROKE = "#ff6b1a";
-const B_COLOR = "rgba(58,161,255,0.25)";
+const B_FILL = "rgba(58,161,255,0.25)";
 const B_STROKE = "#3aa1ff";
 
 const METRICS = [
@@ -151,7 +152,7 @@ export function MapPoolRadarChart({
         {/* Team B polygon */}
         <polygon
           points={dataPolygon(teamBData)}
-          fill={B_COLOR}
+          fill={B_FILL}
           stroke={B_STROKE}
           strokeWidth={1.5}
         />
@@ -159,7 +160,7 @@ export function MapPoolRadarChart({
         {/* Team A polygon */}
         <polygon
           points={dataPolygon(teamAData)}
-          fill={A_COLOR}
+          fill={A_FILL}
           stroke={A_STROKE}
           strokeWidth={1.5}
         />
@@ -184,11 +185,11 @@ export function MapPoolRadarChart({
 
         {/* Legend */}
         <g transform="translate(272, 340)">
-          <rect x={0} y={0} width={10} height={10} fill={A_COLOR} stroke={A_STROKE} strokeWidth={1} />
+          <rect x={0} y={0} width={10} height={10} fill={A_FILL} stroke={A_STROKE} strokeWidth={1} />
           <text x={14} y={9} fontSize={10} fill="var(--color-fg-mid)">{teamAName}</text>
         </g>
         <g transform="translate(272, 356)">
-          <rect x={0} y={0} width={10} height={10} fill={B_COLOR} stroke={B_STROKE} strokeWidth={1} />
+          <rect x={0} y={0} width={10} height={10} fill={B_FILL} stroke={B_STROKE} strokeWidth={1} />
           <text x={14} y={9} fontSize={10} fill="var(--color-fg-mid)">{teamBName}</text>
         </g>
       </svg>

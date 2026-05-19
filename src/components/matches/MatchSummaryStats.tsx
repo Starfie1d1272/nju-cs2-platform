@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Panel } from "@/components/rivalhub";
 
-interface SummaryPlayer {
+export interface SummaryPlayer {
   userId: string | null;
   perfectName: string;
   teamId: string;
@@ -198,7 +198,7 @@ export function MatchSummaryStats({
             {teamBPlayers.length > 0 && (
               <TeamSection
                 teamName={teamBName}
-                teamColor="#3aa1ff"
+                teamColor="var(--color-accent-b)"
                 players={teamBPlayers}
                 seasonSlug={seasonSlug}
               />

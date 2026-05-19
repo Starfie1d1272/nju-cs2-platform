@@ -46,10 +46,10 @@ export function MatchHeadToHead({
           {teamAWins} 胜
         </span>
         <span className="text-sm" style={{ color: "var(--color-fg-dim)" }}>vs</span>
-        <span className="font-mono font-bold text-base" style={{ color: "#3aa1ff" }}>
+        <span className="font-mono font-bold text-base" style={{ color: "var(--color-accent-b)" }}>
           {teamBWins} 胜
         </span>
-        <span className="font-bold text-sm" style={{ color: "#3aa1ff" }}>
+        <span className="font-bold text-sm" style={{ color: "var(--color-accent-b)" }}>
           {teamBName}
         </span>
       </div>

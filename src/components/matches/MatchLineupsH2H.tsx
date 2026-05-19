@@ -23,7 +23,7 @@ interface MatchLineupsH2HProps {
 }
 
 const A_COLOR = "var(--color-accent)";
-const B_COLOR = "#3aa1ff";
+const B_COLOR = "var(--color-accent-b)";
 
 function CompareBar({
   aVal,

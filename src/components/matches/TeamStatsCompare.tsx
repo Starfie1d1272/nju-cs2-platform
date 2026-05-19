@@ -27,7 +27,7 @@ function compare(a: number | null, b: number | null): Comparison {
 function numColor(side: "a" | "b", winner: Comparison): string {
   if (winner === "equal") return "var(--color-fg)";
   if (side === "a" && winner === "a") return "var(--color-accent)";
-  if (side === "b" && winner === "b") return "#3aa1ff";
+  if (side === "b" && winner === "b") return "var(--color-accent-b)";
   return "var(--color-fg)";
 }
 
@@ -93,7 +93,7 @@ export function TeamStatsCompare({
         <div className="text-center" />
         <div
           className="text-left text-sm font-bold pl-4 truncate"
-          style={{ color: "#3aa1ff" }}
+          style={{ color: "var(--color-accent-b)" }}
         >
           {teamBName}
         </div>

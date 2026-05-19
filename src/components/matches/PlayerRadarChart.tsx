@@ -92,6 +92,12 @@ export function PlayerRadarChart({ players, size = 300 }: PlayerRadarChartProps)
 
   const gridLevels = [0.25, 0.5, 0.75, 1.0];
 
+  // 预先解析颜色，避免多边形和图例中重复推导
+  const resolved = capped.map((player, idx) => {
+    const color = player.color ?? DEFAULT_COLORS[idx] ?? DEFAULT_COLORS[0];
+    return { ...player, color, stroke: player.strokeColor ?? color };
+  });
+
   return (
     <div className="flex flex-col items-center gap-3">
       {/* SVG 雷达图 */}
@@ -126,23 +132,18 @@ export function PlayerRadarChart({ players, size = 300 }: PlayerRadarChartProps)
           );
         })}
 
-        {/* 数据多边形（从后往前渲染，index 0 在最上层） */}
-        {[...capped].reverse().map((player, revIdx) => {
-          const idx = capped.length - 1 - revIdx;
-          const color = player.color ?? DEFAULT_COLORS[idx] ?? DEFAULT_COLORS[0];
-          const stroke = player.strokeColor ?? color;
-          return (
-            <polygon
-              key={idx}
-              points={dataPolygon(cx, cy, r, player.scores)}
-              fill={color}
-              fillOpacity={0.15}
-              stroke={stroke}
-              strokeWidth={player.strokeWidth ?? 1.5}
-              strokeOpacity={0.8}
-            />
-          );
-        })}
+        {/* 数据多边形（倒序渲染，index 0 在最上层） */}
+        {[...resolved].reverse().map((player, revIdx) => (
+          <polygon
+            key={revIdx}
+            points={dataPolygon(cx, cy, r, player.scores)}
+            fill={player.color}
+            fillOpacity={0.15}
+            stroke={player.stroke}
+            strokeWidth={player.strokeWidth ?? 1.5}
+            strokeOpacity={0.8}
+          />
+        ))}
 
         {/* 轴标签 */}
         {AXES.map((axis, i) => {
@@ -165,8 +166,8 @@ export function PlayerRadarChart({ players, size = 300 }: PlayerRadarChartProps)
         {/* 数值标注（仅单人模式） */}
         {isSingle &&
           AXES.map((axis, i) => {
-            const score = Math.round(capped[0].scores[axis.key]);
-            const pos = scorePos(cx, cy, r, i, capped[0].scores[axis.key]);
+            const score = Math.round(resolved[0].scores[axis.key]);
+            const pos = scorePos(cx, cy, r, i, resolved[0].scores[axis.key]);
             return (
               <text
                 key={`score-${axis.key}`}
@@ -185,19 +186,15 @@ export function PlayerRadarChart({ players, size = 300 }: PlayerRadarChartProps)
 
       {/* 图例（HTML，在 SVG 外渲染） */}
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-[var(--color-fg-mid)]">
-        {capped.map((player, idx) => {
-          const color = player.color ?? DEFAULT_COLORS[idx] ?? DEFAULT_COLORS[0];
-          const stroke = player.strokeColor ?? color;
-          return (
-            <span key={idx} className="inline-flex items-center gap-1.5">
-              <span
-                className="inline-block w-2.5 h-2.5 shrink-0 border"
-                style={{ background: color, borderColor: stroke, opacity: 0.8 }}
-              />
-              {player.name}
-            </span>
-          );
-        })}
+        {resolved.map((player, idx) => (
+          <span key={idx} className="inline-flex items-center gap-1.5">
+            <span
+              className="inline-block w-2.5 h-2.5 shrink-0 border"
+              style={{ background: player.color, borderColor: player.stroke, opacity: 0.8 }}
+            />
+            {player.name}
+          </span>
+        ))}
       </div>
     </div>
   );

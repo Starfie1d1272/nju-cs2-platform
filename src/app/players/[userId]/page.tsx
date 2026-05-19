@@ -130,18 +130,13 @@ export default async function PlayerPage({ params }: PlayerPageProps) {
   ]);
 
   // ── 六维数据：仅对有数据的赛季查询 ──────────────────────────────────
-  const hexagonResults = await Promise.all(
-    playerStats.map((ps) =>
-      getSeasonHexagonScores(ps.seasonId).then((m) => ({
-        slug: ps.seasonSlug,
-        scores: m.get(userId),
-      }))
-    )
-  );
-  const hexagonBySeasonSlug = new Map(
-    hexagonResults
-      .filter((r): r is { slug: string; scores: HexagonScores } => r.scores != null)
-      .map((r) => [r.slug, r.scores])
+  const hexagonBySeasonSlug = new Map<string, HexagonScores>();
+  await Promise.all(
+    playerStats.map(async (ps) => {
+      const m = await getSeasonHexagonScores(ps.seasonId);
+      const s = m.get(userId);
+      if (s) hexagonBySeasonSlug.set(ps.seasonSlug, s);
+    })
   );
 
   // ── 队伍归属（registrationId → team）────────────────────────────────

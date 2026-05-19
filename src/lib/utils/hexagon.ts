@@ -104,12 +104,12 @@ export function computeEventStats(players: PlayerMetrics[]): EventStats {
   const mean = {} as Record<MetricKey, number>;
   const std  = {} as Record<MetricKey, number>;
 
+  if (n === 0) {
+    for (const key of METRIC_KEYS) { mean[key] = 0; std[key] = 0; }
+    return { mean, std };
+  }
+
   for (const key of METRIC_KEYS) {
-    if (n === 0) {
-      mean[key] = 0;
-      std[key]  = 0;
-      continue;
-    }
     const sum = players.reduce((s, p) => s + p[key], 0);
     const avg = sum / n;
     const variance = players.reduce((s, p) => s + (p[key] - avg) ** 2, 0) / n;

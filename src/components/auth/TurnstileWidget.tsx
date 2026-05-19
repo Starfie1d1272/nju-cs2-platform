@@ -22,6 +22,8 @@ declare global {
   }
 }
 
+const TURNSTILE_SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onLoadTurnstile";
+
 export function TurnstileWidget({ onVerify, onError }: TurnstileWidgetProps) {
   const ref = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string>("");
@@ -58,12 +60,10 @@ export function TurnstileWidget({ onVerify, onError }: TurnstileWidgetProps) {
       renderWidget();
     };
 
-    const existingScript = document.querySelector(
-      'script[src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onLoadTurnstile"]'
-    );
+    const existingScript = document.querySelector(`script[src="${TURNSTILE_SCRIPT_SRC}"]`);
     if (!existingScript) {
       const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onLoadTurnstile";
+      script.src = TURNSTILE_SCRIPT_SRC;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);

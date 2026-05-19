@@ -128,7 +128,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
   const isFinished = match.status === "finished";
 
   // Phase 3: 所有独立查询并行
-  const [timeProposals, rosterA, rosterB, userSession, allTeamMembers, seasonMatchesA, seasonMatchesB] =
+  const [timeProposals, rosterA, rosterB, userSession, allTeamMembers, seasonMatchesA, seasonMatchesB, seasonHexagonScores] =
     await Promise.all([
       getTimeProposals(match.id),
       getMatchRoster(match.id, match.teamAId),
@@ -150,6 +150,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
         .where(inArray(teamMembers.teamId, [match.teamAId, match.teamBId])),
       getSeasonFinishedMatches(season.id, match.teamAId),
       getSeasonFinishedMatches(season.id, match.teamBId),
+      getSeasonHexagonScores(season.id),
     ]);
 
   // 从赛季对局列表计算战绩、H2H
@@ -263,7 +264,6 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
   const radarDataB = buildRadarData(mapPool, mapWinB, pickStatsB, banStatsB);
 
   // 双方阵容六维雷达图
-  const seasonHexagonScores = await getSeasonHexagonScores(season.id);
   const hexA = starterAUserIds
     .map((uid) => seasonHexagonScores.get(uid))
     .filter((s): s is HexagonScores => s != null);
@@ -799,10 +799,7 @@ export default async function MatchDetailPage({ params }: MatchDetailPageProps) 
 
       {showHexComparison && (
         <section className="space-y-3">
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase" }}>
-            六维能力对比
-          </div>
-          <Panel pad={16}>
+          <Panel label="六维能力对比" pad={16}>
             <PlayerRadarChart
               players={[
                 { name: teamA?.name ?? "队伍 A", scores: teamHexA, color: "var(--color-accent)", strokeColor: "var(--color-accent)" },

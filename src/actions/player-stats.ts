@@ -249,15 +249,15 @@ export async function castMatchMvpVote(
       .where(eq(users.id, session.userId))
       .limit(1);
 
-    if (userRow && userRow.createdAt) {
-      const hoursSinceRegistration =
-        (Date.now() - userRow.createdAt.getTime()) / (1000 * 60 * 60);
-      if (hoursSinceRegistration < 24) {
-        return fail({
-          code: ErrorCode.MATCH_VOTE_TOO_EARLY,
-          message: ERROR_MESSAGES.MATCH_VOTE_TOO_EARLY,
-        });
-      }
+    if (!userRow?.createdAt) {
+      return fail({ code: ErrorCode.UNAUTHORIZED, message: "账号状态异常，请重新登录" });
+    }
+    const hoursSinceRegistration = (Date.now() - userRow.createdAt.getTime()) / 3_600_000;
+    if (hoursSinceRegistration < 24) {
+      return fail({
+        code: ErrorCode.MATCH_VOTE_TOO_EARLY,
+        message: ERROR_MESSAGES.MATCH_VOTE_TOO_EARLY,
+      });
     }
 
     const match = await db.query.matches.findFirst({

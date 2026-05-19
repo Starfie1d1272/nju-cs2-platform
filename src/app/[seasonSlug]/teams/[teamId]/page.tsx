@@ -431,19 +431,14 @@ export default async function TeamDetailPage({ params }: TeamDetailPageProps) {
       {/* 5. 队伍能力图 */}
       {teamScores && hexagonByPlayer.size > 0 && (
         <section className="space-y-3">
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--color-fg-mid)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase" }}>
-            队伍能力图
-          </div>
-          <Panel pad={16}>
+          <Panel label="队伍能力图" pad={16}>
             <PlayerRadarChart
               players={[
-                ...[...hexagonByPlayer.entries()].map(([uid, scores], idx) => {
+                ...[...hexagonByPlayer.entries()].map(([uid, scores]) => {
                   const player = starters.find((s) => s.userId === uid);
-                  const colors = ["var(--color-accent)", "var(--color-accent-b)", "#f59e0b", "#10b981", "#8b5cf6"];
                   return {
                     name: player ? (player.perfectName ?? player.steamName ?? "未知") : uid,
                     scores,
-                    color: colors[idx % 5],
                   };
                 }),
                 {

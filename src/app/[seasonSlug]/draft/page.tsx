@@ -59,7 +59,6 @@ export default async function DraftPage({ params }: DraftPageProps) {
       );
     }
 
-    // 选秀已结束：加载历史记录并以只读模式展示
     const data = await getDraftData(season.id);
     return (
       <main className="container mx-auto max-w-7xl px-4 py-10 space-y-8">
